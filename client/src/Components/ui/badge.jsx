@@ -11,6 +11,9 @@ const badgeVariants = cva(
         primary: "bg-primary-subtle text-primary",
         destructive: "bg-destructive/10 text-destructive",
         outline: "border border-border bg-background text-neutral",
+        push: "bg-category-push text-category-push-ink",
+        pull: "bg-category-pull text-category-pull-ink",
+        legs: "bg-category-legs text-category-legs-ink",
       },
     },
     defaultVariants: {

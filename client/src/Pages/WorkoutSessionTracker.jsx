@@ -119,6 +119,7 @@ function SessionLog({ requested, templates, exercises, prebuilt }) {
       (acc, line) => acc + line.sets.reduce((a, s) => a + (Number(s.weight) || 0) * (Number(s.reps) || 0), 0),
       0
     );
+    const byId = new Map((exercises || []).map((ex) => [ex.id, ex]));
     const saved = await workoutService.saveWorkout({
       title: routineName,
       completedAt: new Date().toLocaleString(undefined, {
@@ -129,13 +130,27 @@ function SessionLog({ requested, templates, exercises, prebuilt }) {
       volume: `${totalVolume.toLocaleString("en-US")} lbs`,
       duration: formatTime(elapsed),
       group: template?.group || "Mixed",
+      lines: lines.map((line) => ({
+        exerciseId: line.exerciseId,
+        name: byId.get(line.exerciseId)?.name || "Exercise",
+        sets: line.sets,
+      })),
     });
     setSavedId(saved.id);
     setTimeout(() => navigate("/saved"), 1400);
   };
 
   const handleExport = async () => {
-    await exportWorkoutPdf({ title: routineName, exercises: lines });
+    if (!totalSets) return;
+    const byId = new Map((exercises || []).map((ex) => [ex.id, ex]));
+    await exportWorkoutPdf({
+      title: routineName,
+      group: template?.group || "Mixed",
+      lines: lines.map((line) => ({
+        name: byId.get(line.exerciseId)?.name || "Exercise",
+        sets: line.sets,
+      })),
+    });
   };
 
   const available = (exercises || []).filter(
@@ -328,7 +343,7 @@ function SessionLog({ requested, templates, exercises, prebuilt }) {
                 <button
                   key={ex.id}
                   onClick={() => addExercise(ex.id)}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-[12px] bg-muted px-3 text-sm font-medium text-neutral transition-colors hover:bg-primary-subtle hover:text-primary"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-[12px] bg-muted px-3 text-sm font-medium text-neutral transition-colors hover:bg-orange-100 hover:text-orange-800"
                 >
                   <IconPlus className="h-3.5 w-3.5" />
                   {ex.name}

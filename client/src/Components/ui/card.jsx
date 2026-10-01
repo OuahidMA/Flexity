@@ -33,16 +33,6 @@ function CardTitle({ className, ...props }) {
   );
 }
 
-function CardDescription({ className, ...props }) {
-  return (
-    <p
-      data-slot="card-description"
-      className={cn("text-sm text-muted-foreground", className)}
-      {...props}
-    />
-  );
-}
-
 function CardContent({ className, ...props }) {
   return (
     <div
@@ -53,4 +43,4 @@ function CardContent({ className, ...props }) {
   );
 }
 
-export { Card, CardHeader, CardTitle, CardDescription, CardContent }
+export { Card, CardHeader, CardTitle, CardContent }

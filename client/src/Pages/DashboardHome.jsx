@@ -12,8 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { GROUPS } from "@/lib/exercises";
-import { useExercises, useRoutineTemplates } from "@/hooks/useWorkoutData";
+import { GROUPS, normalizeCategory } from "@/lib/exercises";
+import { useExercises } from "@/hooks/useWorkoutData";
 import { workoutService } from "@/lib/workoutService";
 import { exportWorkoutPdf } from "@/lib/pdf";
 import { cn } from "@/lib/utils";
@@ -23,16 +23,25 @@ const muscleText = (exercise) =>
     ? exercise.primaryMuscles.join(", ")
     : exercise.targetMuscle;
 
-function ExercisePicker({ exercises, usedIds, onAdd, onClose }) {
+const buildLines = (exerciseById, lines) =>
+  lines.map((line) => ({
+    exerciseId: line.exerciseId,
+    name: exerciseById.get(line.exerciseId)?.name || "Exercise",
+    sets: line.sets,
+    reps: line.reps,
+  }));
+
+function ExercisePicker({ exercises, usedIds, name, onNameChange, onAdd, onClose }) {
   const [group, setGroup] = useState("All");
   const [query, setQuery] = useState("");
 
   const q = query.trim().toLowerCase();
   const filtered = (exercises || []).filter((ex) => {
     const matchesGroup =
-      group === "All" || ex.category === group || ex.group === group;
+      group === "All" ||
+      normalizeCategory(ex.category || ex.group) === group;
     const matchesQuery =
-      !q || `${ex.name} ${muscleText(ex)} ${ex.equipment}`.toLowerCase().includes(q);
+      !q || `${ex.name} ${muscleText(ex)} ${ex.equipment || ""}`.toLowerCase().includes(q);
     return matchesGroup && matchesQuery;
   });
 
@@ -50,7 +59,7 @@ function ExercisePicker({ exercises, usedIds, onAdd, onClose }) {
               Create workout
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Pick exercises by group or search by name — tune sets and reps after.
+              Name your workout, then pick exercises by group or search by name — tune sets and reps after.
             </p>
           </div>
           <button
@@ -63,7 +72,18 @@ function ExercisePicker({ exercises, usedIds, onAdd, onClose }) {
         </div>
 
         <div className="border-b border-sidebar-border px-6 py-4">
-          <div className="flex items-center gap-2 rounded-[12px] border border-input bg-background px-3.5 py-2.5 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30">
+          <label className="block">
+            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Workout name
+            </span>
+            <input
+              value={name}
+              onChange={(e) => onNameChange(e.target.value)}
+              placeholder="e.g. Upper Body Strength"
+              className="mt-2 w-full rounded-[12px] border border-input bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-3 focus:ring-ring/30"
+            />
+          </label>
+          <div className="mt-3 flex items-center gap-2 rounded-[12px] border border-input bg-background px-3.5 py-2.5 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30">
             <IconSearch className="h-4 w-4 text-muted-foreground" />
             <input
               value={query}
@@ -81,7 +101,7 @@ function ExercisePicker({ exercises, usedIds, onAdd, onClose }) {
                 className={cn(
                   "relative inline-flex h-8 items-center rounded-[12px] px-3.5 text-sm font-medium transition-colors",
                   group === g
-                    ? "bg-primary text-white shadow-micro"
+                    ? "bg-orange-600 text-white shadow-micro hover:bg-orange-700 focus-visible:ring-2 focus-visible:ring-orange-500/50"
                     : "bg-muted text-neutral hover:bg-secondary hover:text-foreground"
                 )}
               >
@@ -100,7 +120,8 @@ function ExercisePicker({ exercises, usedIds, onAdd, onClose }) {
                   <div>
                     <p className="text-sm font-semibold text-foreground">{ex.name}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {muscleText(ex)} · {ex.equipment}
+                      {muscleText(ex)}
+                      {ex.equipment ? ` · ${ex.equipment}` : ""}
                     </p>
                   </div>
                   <Button
@@ -134,7 +155,7 @@ function ExercisePicker({ exercises, usedIds, onAdd, onClose }) {
         </div>
 
         <div className="flex justify-end border-t border-sidebar-border px-6 py-4">
-          <Button variant="white" onClick={onClose}>
+          <Button variant="white" onClick={onClose} disabled={!name.trim()}>
             Done
           </Button>
         </div>
@@ -145,43 +166,21 @@ function ExercisePicker({ exercises, usedIds, onAdd, onClose }) {
 
 export default function DashboardHome() {
   const { data: exercises } = useExercises();
-  const { data: templates } = useRoutineTemplates();
-  const [templateKey, setTemplateKey] = useState("free");
   const [routineName, setRoutineName] = useState("");
   const [lines, setLines] = useState([]);
   const [showPicker, setShowPicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedNote, setSavedNote] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportedNote, setExportedNote] = useState(false);
+  const [exportError, setExportError] = useState(false);
 
-  const templateOptions = [
-    { key: "free", label: "Free", template: null },
-    ...(templates || []).map((template) => ({
-      key: template.group.toLowerCase(),
-      label: template.group,
-      template,
-    })),
-  ];
+  const all = exercises || [];
+  const exerciseById = new Map(all.map((ex) => [ex.id, ex]));
+  const usedIds = new Set(lines.map((line) => line.exerciseId));
 
-  const applyTemplate = (option) => {
-    setTemplateKey(option.key);
-    if (option.template) {
-      setRoutineName(option.template.name);
-      setLines(
-        option.template.exercises.map((line) => ({
-          exerciseId: line.id,
-          sets: line.sets,
-          reps: line.reps,
-        }))
-      );
-    } else {
-      setRoutineName("");
-      setLines([]);
-    }
-    setSavedNote(false);
-    setExportedNote(false);
-  };
+  const totalSets = lines.reduce((acc, line) => acc + line.sets, 0);
 
   const addExercise = (exerciseId) => {
     setLines((prev) => [...prev, { exerciseId, sets: 3, reps: 10 }]);
@@ -206,45 +205,48 @@ export default function DashboardHome() {
   const removeLine = (index) => setLines((prev) => prev.filter((_, i) => i !== index));
 
   const handleSave = async () => {
-    if (!lines.length) return;
+    if (!lines.length || !routineName.trim()) return;
     setSaving(true);
-    const saved = await workoutService.saveCustomRoutine({
-      name: routineName || "My Routine",
-      group: "Custom",
-      description: "",
-      exercises: lines.map((line) => ({
-        exerciseId: line.exerciseId,
-        sets: line.sets,
-        reps: line.reps,
-      })),
-    });
-    setRoutineName(saved.name);
-    setSaving(false);
-    setSavedNote(true);
-    setTimeout(() => setSavedNote(false), 2500);
+    try {
+      const saved = await workoutService.saveCustomRoutine({
+        name: routineName.trim(),
+        group: "Custom",
+        description: "",
+        exercises: buildLines(exerciseById, lines),
+      });
+      setRoutineName(saved.name);
+      setSavedNote(true);
+    } catch {
+      setSaveError(true);
+    } finally {
+      setSaving(false);
+    }
+    setTimeout(() => {
+      setSavedNote(false);
+      setSaveError(false);
+    }, 2500);
   };
 
   const handleExport = async () => {
     if (!lines.length) return;
     setExporting(true);
-    await exportWorkoutPdf({
-      title: routineName || "Built workout",
-      exercises: lines.map((line) => ({
-        exerciseId: line.exerciseId,
-        sets: line.sets,
-        reps: line.reps,
-      })),
-    });
-    setExporting(false);
-    setExportedNote(true);
-    setTimeout(() => setExportedNote(false), 2500);
+    try {
+      await exportWorkoutPdf({
+        title: routineName || "Built workout",
+        group: "Custom",
+        lines: buildLines(exerciseById, lines),
+      });
+      setExportedNote(true);
+    } catch {
+      setExportError(true);
+    } finally {
+      setExporting(false);
+    }
+    setTimeout(() => {
+      setExportedNote(false);
+      setExportError(false);
+    }, 2500);
   };
-
-  const all = exercises || [];
-  const exerciseById = new Map(all.map((ex) => [ex.id, ex]));
-  const usedIds = new Set(lines.map((line) => line.exerciseId));
-
-  const totalSets = lines.reduce((acc, line) => acc + line.sets, 0);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
@@ -261,13 +263,25 @@ export default function DashboardHome() {
           {savedNote && (
             <Badge variant="success">
               <IconCheck className="h-3.5 w-3.5" />
-              Routine saved locally
+              Routine saved
+            </Badge>
+          )}
+          {saveError && (
+            <Badge variant="outline" className="text-destructive">
+              <IconX className="h-3.5 w-3.5" />
+              Could not save routine
             </Badge>
           )}
           {exportedNote && (
             <Badge variant="primary">
               <IconFileTypePdf className="h-3.5 w-3.5" />
               PDF exported
+            </Badge>
+          )}
+          {exportError && (
+            <Badge variant="outline" className="text-destructive">
+              <IconX className="h-3.5 w-3.5" />
+              Could not export PDF
             </Badge>
           )}
           <Button variant="white" onClick={handleExport} disabled={!lines.length || exporting}>
@@ -278,81 +292,39 @@ export default function DashboardHome() {
             <IconCheck className="h-4 w-4" />
             {saving ? "Saving…" : "Save routine"}
           </Button>
-          <Button onClick={() => setShowPicker(true)} className="shrink-0">
+<Button onClick={() => setShowPicker(true)} className="shrink-0">
             <IconPlus className="h-5 w-5" />
             Create workout
           </Button>
+      </div>
+    </div>
+
+    <Card className="mt-8 w-full">
+      <div className="flex items-center justify-between border-b border-sidebar-border px-6 py-5">
+        <div>
+          <p className="font-display text-lg font-bold text-foreground">
+            {routineName || "Built workout"}
+          </p>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {lines.length} exercises · {totalSets} sets
+          </p>
         </div>
       </div>
 
-      <div className="mt-8 grid gap-5 lg:grid-cols-5">
-        <div className="lg:col-span-2">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Templates
-          </p>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            {templateOptions.map((option) => (
-              <button
-                key={option.key}
-                onClick={() => applyTemplate(option)}
-                className={cn(
-                  "rounded-[16px] border p-4 text-left shadow-subtle transition-colors",
-                  templateKey === option.key
-                    ? "border-primary/50 bg-primary-subtle/50"
-                    : "border-sidebar-border bg-card hover:border-primary/40 hover:bg-primary-subtle/40"
-                )}
-              >
-                <p className="font-display text-base font-bold text-foreground">{option.label}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {option.template
-                    ? `${option.template.exercises.length} exercises`
-                    : "Start from scratch"}
-                </p>
-              </button>
-            ))}
+      {lines.length === 0 ? (
+        <div className="flex flex-col items-center gap-4 px-6 py-14 text-center">
+          <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-primary-subtle text-primary">
+            <IconDumbbell className="h-6 w-6" />
           </div>
-          <button
-            onClick={() => setShowPicker(true)}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-[16px] border border-dashed border-border bg-card px-4 py-4 text-sm font-semibold text-primary transition-colors hover:border-primary/50 hover:bg-primary-subtle/50"
-          >
-            <IconPlus className="h-4 w-4" />
-            Create workout
-          </button>
+          <div>
+            <p className="text-base font-semibold text-foreground">Workout is empty</p>
+            <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+              Hit "Create workout" to name your workout and pick exercises by
+              group or search by name.
+            </p>
+          </div>
         </div>
-
-        <Card className="lg:col-span-3">
-          <div className="flex items-center justify-between border-b border-sidebar-border px-6 py-5">
-            <div>
-              <p className="font-display text-lg font-bold text-foreground">
-                {routineName || "Built workout"}
-              </p>
-              <p className="mt-0.5 text-sm text-muted-foreground">
-                {lines.length} exercises · {totalSets} sets
-              </p>
-            </div>
-            {lines.length > 0 && templateKey !== "free" && (
-              <Badge variant="primary">{templateKey}</Badge>
-            )}
-          </div>
-
-          {lines.length === 0 ? (
-            <div className="flex flex-col items-center gap-4 px-6 py-14 text-center">
-              <div className="grid h-12 w-12 place-items-center rounded-[14px] bg-primary-subtle text-primary">
-                <IconDumbbell className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-base font-semibold text-foreground">Workout is empty</p>
-                <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-                  Hit "Create workout" to pick exercises by group or search by
-                  name, or load a template above.
-                </p>
-              </div>
-              <Button onClick={() => setShowPicker(true)}>
-                <IconPlus className="h-4 w-4" />
-                Create workout
-              </Button>
-            </div>
-          ) : (
+      ) : (
             <div className="divide-y divide-sidebar-border">
               {lines.map((line, index) => {
                 const exercise = exerciseById.get(line.exerciseId);
@@ -373,9 +345,11 @@ export default function DashboardHome() {
                               ? ` · Secondary: ${exercise.secondaryMuscles.join(", ")}`
                               : ""}
                           </p>
-                          <p className="mt-1 text-xs font-medium text-neutral">
-                            {exercise ? exercise.equipment : ""}
-                          </p>
+                          {exercise && exercise.equipment && (
+                            <p className="mt-1 text-xs font-medium text-neutral">
+                              {exercise.equipment}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -424,12 +398,13 @@ export default function DashboardHome() {
             </div>
           )}
         </Card>
-      </div>
 
       {showPicker && (
         <ExercisePicker
           exercises={all}
           usedIds={usedIds}
+          name={routineName}
+          onNameChange={setRoutineName}
           onAdd={addExercise}
           onClose={() => setShowPicker(false)}
         />

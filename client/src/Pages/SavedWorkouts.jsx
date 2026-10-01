@@ -2,7 +2,6 @@ import { useState } from "react";
 import {
   IconFileTypePdf,
   IconTrash,
-  IconDownload,
   IconFolderOpen,
   IconCheck,
 } from "@tabler/icons-react";
@@ -12,16 +11,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSavedWorkouts } from "@/hooks/useWorkoutData";
 import { workoutService } from "@/lib/workoutService";
 import { exportWorkoutPdf } from "@/lib/pdf";
+import { CATEGORY_BADGE_VARIANT, normalizeCategory } from "@/lib/exercises";
 
 export default function SavedWorkouts() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [exportingId, setExportingId] = useState(null);
+  const [exportError, setExportError] = useState(null);
   const { data: workouts, loading } = useSavedWorkouts(refreshKey);
 
   const handleExport = async (workout) => {
     setExportingId(workout.id);
-    await exportWorkoutPdf(workout);
-    setTimeout(() => setExportingId(null), 1800);
+    setExportError(null);
+    try {
+      await exportWorkoutPdf({
+        title: workout.title,
+        group: workout.group,
+        description: workout.description,
+        duration: workout.duration,
+        lines: workout.lines || [],
+      });
+    } catch {
+      setExportError("Could not export PDF. Try again.");
+    } finally {
+      setTimeout(() => setExportingId(null), 1800);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -41,10 +54,6 @@ export default function SavedWorkouts() {
             PDF export.
           </p>
         </div>
-        <Button variant="white">
-          <IconDownload className="h-4 w-4" />
-          Import routine
-        </Button>
       </div>
 
       <Card className="mt-6">
@@ -75,11 +84,7 @@ export default function SavedWorkouts() {
                     <CardTitle className="text-lg">{workout.title}</CardTitle>
                     <p className="mt-1 text-xs text-muted-foreground">{workout.completedAt}</p>
                   </div>
-                  <Badge
-                    variant={
-                      workout.group === "Push" ? "primary" : workout.group === "Pull" ? "neutral" : "success"
-                    }
-                  >
+                  <Badge variant={CATEGORY_BADGE_VARIANT[normalizeCategory(workout.group)] || "outline"}>
                     {workout.group}
                   </Badge>
                 </CardHeader>
@@ -94,13 +99,13 @@ export default function SavedWorkouts() {
                     <div>
                       <p className="text-xs text-muted-foreground">Volume</p>
                       <p className="mt-0.5 text-base font-semibold text-foreground">
-                        {workout.volume}
+                        {workout.volume || "—"}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Duration</p>
                       <p className="mt-0.5 text-base font-semibold text-foreground">
-                        {workout.duration}
+                        {workout.duration || "—"}
                       </p>
                     </div>
                   </div>
@@ -136,12 +141,21 @@ export default function SavedWorkouts() {
             ))}
       </div>
 
+      {exportError && (
+        <Card className="mt-6">
+          <CardContent className="px-6 py-4 text-sm text-destructive">
+            {exportError}
+          </CardContent>
+        </Card>
+      )}
+
       {!loading && workouts && workouts.length === 0 && (
         <Card className="mt-6">
           <CardContent className="px-6 py-10 text-center">
             <p className="text-base font-medium text-foreground">No saved workouts yet</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Complete a tracked session and it will appear here, ready for export.
+              Save a routine from the dashboard or the routine builder, or finish a
+              tracked session, and it will appear here ready for export.
             </p>
           </CardContent>
         </Card>

@@ -74,7 +74,7 @@ export default function Layout() {
 }
 
 const LogoMark = () => (
-  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-gradient-to-br from-primary to-primary-deep shadow-micro">
+  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-gradient-to-br from-orange-500 to-orange-700 shadow-micro">
     <IconDumbbell className="h-5 w-5 text-white" strokeWidth={2.25} />
   </div>
 );

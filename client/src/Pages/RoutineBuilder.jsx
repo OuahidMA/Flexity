@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useExercises, useRoutineTemplates } from "@/hooks/useWorkoutData";
 import { workoutService } from "@/lib/workoutService";
 import { exportWorkoutPdf } from "@/lib/pdf";
+import { CATEGORY_BADGE_VARIANT, normalizeCategory } from "@/lib/exercises";
 
 const blankDraft = {
   name: "",
@@ -25,7 +26,22 @@ export default function RoutineBuilder() {
   const { data: exercises } = useExercises();
   const [draft, setDraft] = useState(blankDraft);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const [pdfState, setPdfState] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const usedIds = new Set(draft.exercises.map((line) => line.exerciseId));
+  const available = (exercises || []).filter((ex) => !usedIds.has(ex.id));
+  const exerciseById = new Map((exercises || []).map((ex) => [ex.id, ex]));
+
+  const buildLines = () =>
+    draft.exercises.map((line) => ({
+      exerciseId: line.exerciseId,
+      name: exerciseById.get(line.exerciseId)?.name || "Exercise",
+      sets: line.sets,
+      reps: line.reps,
+    }));
 
   const loadTemplate = (template) => {
     setDraft({
@@ -71,20 +87,43 @@ export default function RoutineBuilder() {
   };
 
   const handleSave = async () => {
-    if (!draft.exercises.length) return;
-    const savedRoutine = await workoutService.saveCustomRoutine(draft);
-    setDraft((prev) => ({ ...prev, name: savedRoutine.name }));
-    setSaved(true);
+    if (!draft.exercises.length || !draft.name.trim()) return;
+    setSaving(true);
+    setError("");
+    try {
+      const savedRoutine = await workoutService.saveCustomRoutine({
+        ...draft,
+        name: draft.name.trim(),
+        exercises: buildLines(),
+      });
+      setDraft((prev) => ({ ...prev, name: savedRoutine.name }));
+      setSaved(true);
+    } catch {
+      setError("Could not save routine. Try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleExport = async () => {
-    await exportWorkoutPdf({ title: draft.name || "Untitled routine", exercises: draft.exercises });
-    setPdfState(true);
+    if (!draft.exercises.length) return;
+    setExporting(true);
+    setError("");
+    try {
+      await exportWorkoutPdf({
+        title: draft.name.trim() || "Untitled routine",
+        group: draft.group || "Custom",
+        description: draft.description,
+        lines: buildLines(),
+      });
+      setPdfState(true);
+    } catch {
+      setError("Could not export PDF. Try again.");
+    } finally {
+      setExporting(false);
+    }
     setTimeout(() => setPdfState(false), 2500);
   };
-
-  const usedIds = new Set(draft.exercises.map((line) => line.exerciseId));
-  const available = (exercises || []).filter((ex) => !usedIds.has(ex.id));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
@@ -98,13 +137,20 @@ export default function RoutineBuilder() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="white" onClick={handleExport} disabled={!draft.exercises.length || pdfState}>
+          <Button
+            variant="white"
+            onClick={handleExport}
+            disabled={!draft.exercises.length || exporting}
+          >
             <IconFileTypePdf className="h-4 w-4" />
-            {pdfState ? "Exported" : "Export PDF"}
+            {exporting ? "Exporting…" : pdfState ? "Exported" : "Export PDF"}
           </Button>
-          <Button onClick={handleSave} disabled={!draft.exercises.length}>
+          <Button
+            onClick={handleSave}
+            disabled={!draft.exercises.length || !draft.name.trim() || saving}
+          >
             <IconCheck className="h-4 w-4" />
-            {saved ? "Saved" : "Save routine"}
+            {saving ? "Saving…" : saved ? "Saved" : "Save routine"}
           </Button>
         </div>
       </div>
@@ -117,9 +163,9 @@ export default function RoutineBuilder() {
           <div className="mt-3 grid gap-3">
             <button
               onClick={startBlank}
-              className="group rounded-[16px] border border-sidebar-border bg-background p-5 text-left shadow-subtle transition-colors hover:border-primary/40 hover:bg-primary-subtle/40"
+              className="group rounded-[16px] border border-sidebar-border bg-background p-5 text-left shadow-subtle transition-colors hover:border-orange-700/40 hover:bg-orange-100/40"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-primary-subtle text-primary">
+              <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-orange-100 text-orange-700">
                 <IconPlus className="h-5 w-5" />
               </div>
               <p className="mt-3 text-lg font-semibold text-foreground">Blank routine</p>
@@ -133,13 +179,13 @@ export default function RoutineBuilder() {
                   <button
                     key={template.id}
                     onClick={() => loadTemplate(template)}
-                    className="group rounded-[16px] border border-sidebar-border bg-background p-5 text-left shadow-subtle transition-colors hover:border-primary/40 hover:bg-primary-subtle/40"
+                    className="group rounded-[16px] border border-sidebar-border bg-background p-5 text-left shadow-subtle transition-colors hover:border-orange-700/40 hover:bg-orange-100/40"
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-primary-subtle text-primary">
+                      <div className="grid h-10 w-10 place-items-center rounded-[12px] bg-orange-100 text-orange-700">
                         <IconClipboardList className="h-5 w-5" />
                       </div>
-                      <Badge variant={template.group === "Push" ? "primary" : template.group === "Pull" ? "neutral" : "success"}>
+                      <Badge variant={CATEGORY_BADGE_VARIANT[normalizeCategory(template.group)] || "outline"}>
                         {template.group}
                       </Badge>
                     </div>
@@ -164,9 +210,10 @@ export default function RoutineBuilder() {
             {saved && (
               <Badge variant="success">
                 <IconCheck className="h-3.5 w-3.5" />
-                Saved locally
+                Saved
               </Badge>
             )}
+            {error && <Badge variant="outline">{error}</Badge>}
           </CardHeader>
           <CardContent className="pt-0">
             <label className="block">
@@ -246,7 +293,7 @@ export default function RoutineBuilder() {
                   <button
                     key={ex.id}
                     onClick={() => addExercise(ex.id)}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-[12px] bg-muted px-3 text-sm font-medium text-neutral transition-colors hover:bg-primary-subtle hover:text-primary"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-[12px] bg-muted px-3 text-sm font-medium text-neutral transition-colors hover:bg-orange-100 hover:text-orange-800"
                   >
                     <IconPlus className="h-3.5 w-3.5" />
                     {ex.name}

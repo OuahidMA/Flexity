@@ -1,12 +1,12 @@
-# Design System Inspired by Kraken
+# Flexboard Design System
 
 ## 1. Visual Theme & Atmosphere
 
-Kraken's website is a clean, trustworthy crypto exchange that uses purple as its commanding brand color. The design operates on white backgrounds with Kraken Purple (`#7132f5`, `#5741d8`, `#5b1ecf`) creating a distinctive, professional crypto identity. The proprietary Kraken-Brand font handles display headings with bold (700) weight and negative tracking, while Kraken-Product (with IBM Plex Sans fallback) serves as the UI workhorse.
+Flexboard uses orange as its commanding brand color. The design operates on white backgrounds with Brand Orange (`#ea580c`, `#f97316`, `#9a3412`) creating a warm, energetic identity. IBM Plex Sans handles display headings with bold (700) weight and negative tracking while serving as the UI workhorse.
 
 **Key Characteristics:**
-- Kraken Purple (`#7132f5`) as primary brand with darker variants (`#5741d8`, `#5b1ecf`)
-- Kraken-Brand (display) + Kraken-Product (UI) dual font system
+- Brand Orange (`#ea580c`) as primary brand with darker variants (`#c2410c`, `#9a3412`)
+- IBM Plex Sans (display) + IBM Plex Sans (UI) dual font system
 - Near-black (`#101114`) text with cool blue-gray neutral scale
 - 12px radius buttons (rounded but not pill)
 - Subtle shadows (`rgba(0,0,0,0.03) 0px 4px 24px`) — whisper-level
@@ -15,10 +15,10 @@ Kraken's website is a clean, trustworthy crypto exchange that uses purple as its
 ## 2. Color Palette & Roles
 
 ### Primary
-- **Kraken Purple** (`#7132f5`): Primary CTA, brand accent, links
-- **Purple Dark** (`#5741d8`): Button borders, outlined variants
-- **Purple Deep** (`#5b1ecf`): Deepest purple
-- **Purple Subtle** (`rgba(133,91,251,0.16)`): Purple at 16% — subtle button backgrounds
+- **Brand Orange** (`#ea580c`): Primary CTA, brand accent, links
+- **Orange Dark** (`#c2410c`): Button borders, outlined variants
+- **Orange Deep** (`#9a3412`): Deepest orange
+- **Orange Subtle** (`rgba(234,88,12,0.16)`): Orange at 16% — subtle button backgrounds
 - **Near Black** (`#101114`): Primary text
 
 ### Neutral
@@ -34,43 +34,43 @@ Kraken's website is a clean, trustworthy crypto exchange that uses purple as its
 ## 3. Typography Rules
 
 ### Font Families
-- **Display**: `Kraken-Brand`, fallbacks: `IBM Plex Sans, Helvetica, Arial`
-- **UI / Body**: `Kraken-Product`, fallbacks: `Helvetica Neue, Helvetica, Arial`
+- **Display**: `IBM Plex Sans`, fallbacks: `IBM Plex Sans, Helvetica, Arial`
+- **UI / Body**: `IBM Plex Sans`, fallbacks: `Helvetica Neue, Helvetica, Arial`
 
 ### Hierarchy
 
 | Role | Font | Size | Weight | Line Height | Letter Spacing |
 |------|------|------|--------|-------------|----------------|
-| Display Hero | Kraken-Brand | 48px | 700 | 1.17 | -1px |
-| Section Heading | Kraken-Brand | 36px | 700 | 1.22 | -0.5px |
-| Sub-heading | Kraken-Brand | 28px | 700 | 1.29 | -0.5px |
-| Feature Title | Kraken-Product | 22px | 600 | 1.20 | normal |
-| Body | Kraken-Product | 16px | 400 | 1.38 | normal |
-| Body Medium | Kraken-Product | 16px | 500 | 1.38 | normal |
-| Button | Kraken-Product | 16px | 500–600 | 1.38 | normal |
-| Caption | Kraken-Product | 14px | 400–700 | 1.43–1.71 | normal |
-| Small | Kraken-Product | 12px | 400–500 | 1.33 | normal |
-| Micro | Kraken-Product | 7px | 500 | 1.00 | uppercase |
+| Display Hero | IBM Plex Sans | 48px | 700 | 1.17 | -1px |
+| Section Heading | IBM Plex Sans | 36px | 700 | 1.22 | -0.5px |
+| Sub-heading | IBM Plex Sans | 28px | 700 | 1.29 | -0.5px |
+| Feature Title | IBM Plex Sans | 22px | 600 | 1.20 | normal |
+| Body | IBM Plex Sans | 16px | 400 | 1.38 | normal |
+| Body Medium | IBM Plex Sans | 16px | 500 | 1.38 | normal |
+| Button | IBM Plex Sans | 16px | 500–600 | 1.38 | normal |
+| Caption | IBM Plex Sans | 14px | 400–700 | 1.43–1.71 | normal |
+| Small | IBM Plex Sans | 12px | 400–500 | 1.33 | normal |
+| Micro | IBM Plex Sans | 7px | 500 | 1.00 | uppercase |
 
 ## 4. Component Stylings
 
 ### Buttons
 
-**Primary Purple**
-- Background: `#7132f5`
+**Primary Orange**
+- Background: `#ea580c`
 - Text: `#ffffff`
 - Padding: 13px 16px
 - Radius: 12px
 
-**Purple Outlined**
+**Orange Outlined**
 - Background: `#ffffff`
-- Text: `#5741d8`
-- Border: `1px solid #5741d8`
+- Text: `#c2410c`
+- Border: `1px solid #c2410c`
 - Radius: 12px
 
-**Purple Subtle**
-- Background: `rgba(133,91,251,0.16)`
-- Text: `#7132f5`
+**Orange Subtle**
+- Background: `rgba(234,88,12,0.16)`
+- Text: `#c2410c`
 - Padding: 8px
 - Radius: 12px
 
@@ -101,13 +101,13 @@ Kraken's website is a clean, trustworthy crypto exchange that uses purple as its
 ## 7. Do's and Don'ts
 
 ### Do
-- Use Kraken Purple (#7132f5) for CTAs and links
+- Use Brand Orange (#ea580c) for CTAs and links
 - Apply 12px radius on all buttons
-- Use Kraken-Brand for headings, Kraken-Product for body
+- Use IBM Plex Sans for headings and body
 
 ### Don't
 - Don't use pill buttons — 12px is the max radius for buttons
-- Don't use other purples outside the defined scale
+- Don't use colors outside the defined scale
 
 ## 8. Responsive Behavior
 Breakpoints: 375px, 425px, 640px, 768px, 1024px, 1280px, 1536px
@@ -115,11 +115,11 @@ Breakpoints: 375px, 425px, 640px, 768px, 1024px, 1280px, 1536px
 ## 9. Agent Prompt Guide
 
 ### Quick Color Reference
-- Brand: Kraken Purple (`#7132f5`)
-- Dark variant: `#5741d8`
+- Brand: Brand Orange (`#ea580c`)
+- Dark variant: `#c2410c`
 - Text: Near Black (`#101114`)
 - Secondary text: `#9497a9`
 - Background: White (`#ffffff`)
 
 ### Example Component Prompts
-- "Create hero: white background. Kraken-Brand 48px weight 700, letter-spacing -1px. Purple CTA (#7132f5, 12px radius, 13px 16px padding)."
+- "Create hero: white background. IBM Plex Sans 48px weight 700, letter-spacing -1px. Orange CTA (#ea580c, 12px radius, 13px 16px padding)."

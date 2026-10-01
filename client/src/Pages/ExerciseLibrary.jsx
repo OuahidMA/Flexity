@@ -2,19 +2,16 @@ import { useState } from "react";
 import { IconSearch, IconPlus, IconTrash, IconX, IconCheck } from "@tabler/icons-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GROUPS } from "@/lib/exercises";
+import { Card } from "@/components/ui/card";
+import { ProgressiveBlur } from "@/components/ui/progressive-blur";
+import { GROUPS, CATEGORY_BADGE_VARIANT, normalizeCategory } from "@/lib/exercises";
 import { useExercises } from "@/hooks/useWorkoutData";
 import { workoutService } from "@/lib/workoutService";
 import { cn } from "@/lib/utils";
 
-const badgeVariant = (category) =>
-  category === "Push"
-    ? "primary"
-    : category === "Pull"
-      ? "neutral"
-      : category === "Legs"
-        ? "success"
-        : "outline";
+const badgeVariant = (category) => CATEGORY_BADGE_VARIANT[category] || "outline";
+
+const categoryOf = (exercise) => normalizeCategory(exercise.category || exercise.group);
 
 const muscleText = (exercise) =>
   exercise.primaryMuscles && exercise.primaryMuscles.length
@@ -111,7 +108,7 @@ function ExerciseForm({ onClose, onCreated }) {
                   className={cn(
                     "relative inline-flex h-9 items-center rounded-[12px] px-4 text-sm font-medium transition-colors",
                     form.category === g
-                      ? "bg-primary text-white shadow-micro"
+                      ? "bg-orange-600 text-white shadow-micro hover:bg-orange-700 focus-visible:ring-2 focus-visible:ring-orange-500/50"
                       : "bg-muted text-neutral hover:bg-secondary hover:text-foreground"
                   )}
                 >
@@ -187,7 +184,7 @@ export default function ExerciseLibrary() {
   const [query, setQuery] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [showForm, setShowForm] = useState(false);
-  const { data: list, loading } = useExercises(refreshKey);
+  const { data: list, loading, error } = useExercises(refreshKey);
 
   const handleCreated = () => {
     setShowForm(false);
@@ -200,8 +197,7 @@ export default function ExerciseLibrary() {
   };
 
   const filtered = (list || []).filter((exercise) => {
-    const matchesGroup =
-      group === "All" || exercise.category === group || exercise.group === group;
+    const matchesGroup = group === "All" || categoryOf(exercise) === group;
     const q = query.trim().toLowerCase();
     const haystack = [
       exercise.name,
@@ -215,10 +211,11 @@ export default function ExerciseLibrary() {
   });
 
   const counts = (list || []).reduce((acc, exercise) => {
-    const category = exercise.category || exercise.group;
+    const category = categoryOf(exercise);
     acc[category] = (acc[category] || 0) + 1;
     return acc;
   }, {});
+  const categories = ["All", ...GROUPS];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
@@ -230,7 +227,9 @@ export default function ExerciseLibrary() {
           <p className="mt-2 text-base text-muted-foreground">
             {loading && !list
               ? "Loading exercises…"
-              : `${(list || []).length} movements across ${GROUPS.join(", ")}.`}
+              : error && !list
+                ? "Exercises could not be loaded."
+                : `${(list || []).length} movements from the exercise library.`}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -251,14 +250,14 @@ export default function ExerciseLibrary() {
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-2">
-        {["All", ...GROUPS].map((g) => (
+        {["All", ...categories].map((g) => (
           <button
             key={g}
             onClick={() => setGroup(g)}
             className={cn(
               "relative inline-flex h-9 items-center rounded-[12px] px-4 text-sm font-medium transition-colors",
               group === g
-                ? "bg-primary text-white shadow-micro"
+                ? "bg-orange-600 text-white shadow-micro hover:bg-orange-700 focus-visible:ring-2 focus-visible:ring-orange-500/50"
                 : "bg-muted text-neutral hover:bg-secondary hover:text-foreground"
             )}
           >
@@ -277,81 +276,103 @@ export default function ExerciseLibrary() {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {loading && !list
-          ? [...Array(6)].map((_, idx) => (
-              <div key={idx} className="h-44 animate-pulse rounded-[16px] bg-muted" />
-            ))
-          : filtered.map((exercise) => (
-              <div
-                key={exercise.id}
-                className="group rounded-[16px] border border-sidebar-border bg-card p-5 shadow-subtle transition-shadow hover:shadow-micro"
+      <div className="relative mt-6">
+        <div className="h-[65vh] max-h-[760px] min-h-[360px] overflow-y-auto pb-28 pr-1">
+          {error && (
+            <div className="mb-4 rounded-[16px] border border-destructive/30 bg-destructive/10 p-5">
+              <p className="font-medium text-destructive">Unable to load exercises</p>
+              <p className="mt-1 text-sm text-muted-foreground">{error.message}</p>
+              <Button
+                variant="secondary"
+                className="mt-4"
+                onClick={() => setRefreshKey((key) => key + 1)}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-lg font-semibold leading-tight text-foreground">
-                    {exercise.name}
-                  </h3>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <Badge variant={badgeVariant(exercise.category)}>{exercise.category}</Badge>
-                    {exercise.custom && (
-                      <button
-                        onClick={() => handleDelete(exercise.id)}
-                        aria-label={`Delete ${exercise.name}`}
-                        className="grid h-7 w-7 place-items-center rounded-[8px] text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <IconTrash className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Target muscles</p>
-                    <p className="text-sm font-medium text-foreground">{muscleText(exercise)}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Equipment</p>
-                    <p className="text-sm font-medium text-foreground">{exercise.equipment}</p>
-                  </div>
-                </div>
-                {exercise.secondaryMuscles && exercise.secondaryMuscles.length > 0 && (
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Secondary: {exercise.secondaryMuscles.join(", ")}
-                  </p>
-                )}
-                {exercise.custom && (
-                  <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
-                    <IconCheck className="h-3.5 w-3.5" />
-                    Added by you
-                  </p>
-                )}
-              </div>
-            ))}
-      </div>
+                Try again
+              </Button>
+            </div>
+          )}
 
-      {!loading && list && filtered.length === 0 && (
-        <div className="mt-6 rounded-[16px] border border-dashed border-border bg-card p-10 text-center">
-          <p className="text-base font-medium text-foreground">No exercises found</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Try a different search, or add the movement yourself.
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setQuery("");
-                setGroup("All");
-              }}
-            >
-              Reset filters
-            </Button>
-            <Button onClick={() => setShowForm(true)}>
-              <IconPlus className="h-4 w-4" />
-              Add exercise
-            </Button>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {loading && !list
+              ? [...Array(6)].map((_, index) => (
+                  <div
+                    key={index}
+                    className="h-44 animate-pulse rounded-[16px] bg-muted"
+                  />
+                ))
+              : filtered.map((exercise) => (
+                  <Card
+                    key={exercise.id}
+                    className="group p-5 transition-shadow hover:shadow-micro"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="text-lg font-semibold leading-tight text-foreground">
+                        {exercise.name}
+                      </h3>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <Badge variant={badgeVariant(categoryOf(exercise))}>
+                          {categoryOf(exercise)}
+                        </Badge>
+                        {exercise.custom && (
+                          <button
+                            onClick={() => handleDelete(exercise.id)}
+                            aria-label={`Delete ${exercise.name}`}
+                            className="grid h-7 w-7 place-items-center rounded-[8px] text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <IconTrash className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <p className="text-xs text-muted-foreground">Target muscles</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {muscleText(exercise)}
+                      </p>
+                    </div>
+                    {exercise.secondaryMuscles.length > 0 && (
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        Secondary: {exercise.secondaryMuscles.join(", ")}
+                      </p>
+                    )}
+                    {exercise.custom && (
+                      <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
+                        <IconCheck className="h-3.5 w-3.5" />
+                        Added by you
+                      </p>
+                    )}
+                  </Card>
+                ))}
           </div>
+
+          {!loading && list && filtered.length === 0 && (
+            <div className="rounded-[16px] border border-dashed border-border bg-card p-10 text-center">
+              <p className="text-base font-medium text-foreground">No exercises found</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Try a different search, or add the movement yourself.
+              </p>
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setQuery("");
+                    setGroup("All");
+                  }}
+                >
+                  Reset filters
+                </Button>
+                <Button onClick={() => setShowForm(true)}>
+                  <IconPlus className="h-4 w-4" />
+                  Add exercise
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+        {(loading || filtered.length > 3) && (
+          <ProgressiveBlur height="20%" position="bottom" />
+        )}
+      </div>
 
       {showForm && <ExerciseForm onClose={() => setShowForm(false)} onCreated={handleCreated} />}
     </div>

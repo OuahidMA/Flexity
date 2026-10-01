@@ -5,7 +5,7 @@ export default function Footer() {
     <footer className="border-t border-sidebar-border bg-background">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 py-6 text-sm text-muted-foreground sm:flex-row">
         <div className="flex items-center gap-2">
-          <div className="grid h-6 w-6 place-items-center rounded-[8px] bg-gradient-to-br from-primary to-primary-deep">
+          <div className="grid h-6 w-6 place-items-center rounded-[8px] bg-gradient-to-br from-orange-500 to-orange-700">
             <IconDumbbell className="h-3.5 w-3.5 text-white" strokeWidth={2.25} />
           </div>
           <span className="font-medium text-foreground">Flexboard</span>
