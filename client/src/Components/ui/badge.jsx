@@ -1,23 +1,25 @@
-import { cva } from "class-variance-authority";
+import { cva } from "class-variance-authority"
+
 import { cn } from "cn"
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1 rounded-[8px] px-2 py-1 text-sm font-medium whitespace-nowrap",
+  "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-[2px] border px-2.5 py-0.5 text-[10px] font-normal tracking-[0.12em] uppercase whitespace-nowrap transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 [&>svg]:pointer-events-none [&>svg]:size-3",
   {
     variants: {
       variant: {
-        success: "bg-success-subtle text-success-foreground",
-        neutral: "bg-secondary text-secondary-foreground",
-        primary: "bg-primary-subtle text-primary",
-        destructive: "bg-destructive/10 text-destructive",
-        outline: "border border-border bg-background text-neutral",
-        push: "bg-category-push text-category-push-ink",
-        pull: "bg-category-pull text-category-pull-ink",
-        legs: "bg-category-legs text-category-legs-ink",
+        default: "border-transparent bg-primary text-primary-foreground",
+        secondary: "border-[#3a3a3a] bg-[#181818] text-white",
+        destructive:
+          "border-[#F04438]/40 bg-[#F04438]/10 text-[#FFA198]",
+        success:
+          "border-[#7D7D7D]/50 bg-[#202020] text-white",
+        warning:
+          "border-[#7D7D7D]/40 bg-[#202020] text-[#E6E6E6]",
+        outline: "border-[#494949] bg-transparent text-[#E6E6E6]",
       },
     },
     defaultVariants: {
-      variant: "neutral",
+      variant: "default",
     },
   }
 )
@@ -29,7 +31,7 @@ function Badge({ className, variant, ...props }) {
       className={cn(badgeVariants({ variant }), className)}
       {...props}
     />
-  );
+  )
 }
 
 export { Badge }

@@ -1,21 +1,20 @@
 {
-  "name": "server",
+  "name": "flexity-server",
   "version": "1.0.0",
-  "description": "",
+  "private": true,
+  "description": "Multi-tenant white-label gym SaaS API",
+  "type": "module",
   "main": "server.js",
   "scripts": {
-    "check": "node --check server.js && node --check controllers/exerciseController.js && node --check modules/exercise.js && node --check routes/exerciseRoutes.js",
-    "test": "node --test",
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
-    "dotenv": "^18.0.3",
-    "express": "^5.2.1",
-    "mongoose": "^9.10.2"
+    "dotenv": "^18.0.7",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.11.1"
   }
 }
