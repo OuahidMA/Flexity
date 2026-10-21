@@ -14,7 +14,7 @@ export const DEFAULT_BRANDING = {
   logoUrl: "",
   primaryColor: "#000000",
   secondaryColor: "#FFFFFF",
-  accentColor: "#FFC000",
+  accentColor: "#ffed00",
 };
 
 /**

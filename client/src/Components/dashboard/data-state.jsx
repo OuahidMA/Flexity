@@ -13,8 +13,8 @@ import { Button } from "@/components/ui/button"
  */
 export function LoadingState({ label = "Loading..." }) {
   return (
-    <div className="flex min-h-40 items-center justify-center gap-2 text-[10px] tracking-[0.24em] text-[#7D7D7D] uppercase">
-      <Loader2 className="size-4 animate-spin text-white" />
+    <div className="flex min-h-40 items-center justify-center gap-2 text-[10px] tracking-[0.24em] text-ink-subtle uppercase">
+      <Loader2 className="size-4 animate-spin text-ink" />
       {label}
     </div>
   )
@@ -29,9 +29,9 @@ export function LoadingState({ label = "Loading..." }) {
  */
 export function ErrorState({ message, onRetry }) {
   return (
-    <div className="flex min-h-40 flex-col items-center justify-center gap-3 border border-[#262626] bg-[#181818] p-6 text-center">
-      <AlertCircle className="size-6 text-[#F04438]" />
-      <p className="max-w-md text-sm text-[#7D7D7D]">
+    <div className="flex min-h-40 flex-col items-center justify-center gap-3 border border-hairline bg-surface-2 p-6 text-center">
+      <AlertCircle className="size-6 text-destructive" />
+      <p className="max-w-md text-sm text-ink-subtle">
         {message || "Unable to load this data. Please try again."}
       </p>
       {onRetry && (
@@ -52,13 +52,13 @@ export function ErrorState({ message, onRetry }) {
  */
 export function EmptyState({ title, description, action }) {
   return (
-    <div className="flex min-h-40 flex-col items-center justify-center gap-2 border border-dashed border-[#3a3a3a] bg-[#181818] p-8 text-center">
-      <Inbox className="size-6 text-[#494949]" />
-      <p className="text-sm font-normal tracking-[0.08em] text-white uppercase">
+    <div className="flex min-h-40 flex-col items-center justify-center gap-2 border border-dashed border-hairline-strong bg-surface-2 p-8 text-center">
+      <Inbox className="size-6 text-ink-tertiary" />
+      <p className="text-sm font-bold tracking-[0.08em] text-ink uppercase">
         {title}
       </p>
       {description && (
-        <p className="max-w-md text-sm text-[#7D7D7D]">{description}</p>
+        <p className="max-w-md text-sm text-ink-subtle">{description}</p>
       )}
       {action}
     </div>

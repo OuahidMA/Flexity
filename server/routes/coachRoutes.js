@@ -1,12 +1,14 @@
 /**
- * Coach routes: manage the coach's own clients and read dashboard stats.
+ * Coach routes: browse gym clients, manage the coach's roster, and read
+ * dashboard stats.
  *
- * Coaches are embedded members, so a coach only sees clients whose `coachId`
- * points at their subdocument id inside the gym admin's `clients` array. Every
- * query is additionally scoped by `req.user.gymId`.
+ * Clients are created only by the gym administrator. Coaches browse the full
+ * admin-created roster through /all-clients and explicitly select the clients
+ * they want to coach. A selected client stores this coach's subdocument id in
+ * `coachId` and two initials in `coach` (for example "S.Q.").
  *
- * Deleting a client here is a soft unassign: the client account remains in the
- * gym (and can still sign in) but its coachId is cleared.
+ * Unassigning is a soft removal: the client account remains in the gym and can
+ * be selected by another coach later.
  */
 
 import { Router } from "express";
@@ -15,15 +17,12 @@ import Routine from "../models/Routine.js";
 import auth from "../middleware/auth.js";
 import checkAccess from "../middleware/checkAccess.js";
 import requireRole from "../middleware/requireRole.js";
-import { normalizeEmail } from "../utils/session.js";
-import { findAccountByEmail, getGymAdmin } from "../utils/members.js";
+import { coachInitials, getGymAdmin } from "../utils/members.js";
 
 const router = Router();
 
 // Every endpoint below requires a coach in an active gym subscription.
 router.use(auth, checkAccess, requireRole("coach"));
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
  * Shapes an embedded client for coach-facing responses. Routine references are
@@ -38,6 +37,7 @@ function serializeClient(client) {
     name: client.profile?.name || "",
     email: client.email,
     active: client.profile?.isActive !== false,
+    coach: client.coach || "",
     workoutRoutines: (client.workoutRoutines ?? []).map((routine) => ({
       routineId: routine.routineId,
       name: routine.name,
@@ -71,55 +71,94 @@ router.get("/clients", async (req, res, next) => {
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/coach/clients - create and auto-assign a client
+// GET /api/coach/all-clients - every client created by the gym admin
 // ---------------------------------------------------------------------------
-router.post("/clients", async (req, res, next) => {
+router.get("/all-clients", async (req, res, next) => {
   try {
-    const name = String(req.body.name ?? "").trim();
-    const email = normalizeEmail(req.body.email);
-    const password = String(req.body.password ?? "");
+    const admin = await getGymAdmin(req.user.gymId);
+    const coachNames = new Map(
+      admin.coaches.map((coach) => [
+        String(coach._id),
+        coach.profile?.name || coach.email,
+      ])
+    );
 
-    if (!name) {
-      return res.status(400).json({ message: "Name is required." });
-    }
+    const clients = [...admin.clients]
+      .sort(
+        (first, second) =>
+          new Date(second.createdAt).getTime() -
+          new Date(first.createdAt).getTime()
+      )
+      .map((client) => {
+        const assignedCoachId = client.coachId
+          ? String(client.coachId)
+          : null;
+        const assignedToMe = assignedCoachId === String(req.user.userId);
 
-    if (!EMAIL_PATTERN.test(email)) {
-      return res.status(400).json({ message: "Enter a valid email address." });
-    }
-
-    if (password.length < 8) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 8 characters." });
-    }
-
-    // Emails must be globally unique across top-level users and embedded members.
-    if (await findAccountByEmail(email)) {
-      return res.status(409).json({
-        message: "An account with that email already exists.",
+        return {
+          id: String(client._id),
+          name: client.profile?.name || "",
+          email: client.email,
+          active: client.profile?.isActive !== false,
+          coachId: assignedCoachId,
+          coachName: assignedCoachId
+            ? coachNames.get(assignedCoachId) ?? ""
+            : "",
+          coach: client.coach || "",
+          assignedToMe,
+          // A client can only be coached by one person at a time.
+          available: !assignedCoachId || assignedToMe,
+          joinedAt: client.createdAt,
+        };
       });
+
+    return res.json(clients);
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/coach/clients/:id/select - add a gym client to this coach's roster
+// ---------------------------------------------------------------------------
+router.post("/clients/:id/select", async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: "Invalid client id." });
     }
 
     const admin = await getGymAdmin(req.user.gymId);
+    const client = admin.clients.find(
+      (candidate) => String(candidate._id) === String(req.params.id)
+    );
 
-    // Pushing onto the admin document lets the client subdocument's pre-save
-    // hook hash the password when admin.save() runs.
-    admin.clients.push({
-      email,
-      password,
-      role: "client",
-      coachId: req.user.userId,
-      profile: {
-        name,
-        phone: String(req.body.phone ?? "").trim(),
-      },
-    });
+    if (!client) {
+      return res.status(404).json({ message: "Client not found." });
+    }
+
+    // Never steal a client from another coach; the gym admin owns reassignment.
+    if (client.coachId && String(client.coachId) !== String(req.user.userId)) {
+      return res.status(409).json({
+        message: "This client is already assigned to another coach.",
+      });
+    }
+
+    const coach = admin.coaches.find(
+      (candidate) => String(candidate._id) === String(req.user.userId)
+    );
+
+    client.coachId = req.user.userId;
+    client.coach = coachInitials(coach?.profile?.name || coach?.email || "");
 
     await admin.save();
 
-    return res
-      .status(201)
-      .json(serializeClient(admin.clients[admin.clients.length - 1]));
+    return res.json({
+      ...serializeClient(client),
+      coachId: String(req.user.userId),
+      coachName: coach?.profile?.name || coach?.email || "",
+      assignedToMe: true,
+      available: true,
+    });
   } catch (error) {
     return next(error);
   }
@@ -147,7 +186,37 @@ router.delete("/clients/:id", async (req, res, next) => {
       return res.status(404).json({ message: "Client not found." });
     }
 
+    // Unassigning also removes this coach's routines from the client so they do
+    // not keep seeing workouts from a coach who no longer tracks them.
+    const routines = await Routine.find({
+      gymId: req.user.gymId,
+      coachId: req.user.userId,
+      clientId: client._id,
+    })
+      .select("routineCode")
+      .lean();
+
+    const routineIds = new Set(
+      routines.map((routine) => routine.routineCode).filter(Boolean)
+    );
+
+    if (routineIds.size > 0) {
+      client.workoutRoutines = (client.workoutRoutines ?? []).filter(
+        (routine) => !routineIds.has(routine.routineId)
+      );
+
+      await Routine.updateMany(
+        {
+          gymId: req.user.gymId,
+          coachId: req.user.userId,
+          clientId: client._id,
+        },
+        { $set: { clientId: null } }
+      );
+    }
+
     client.coachId = null;
+    client.coach = "";
     await admin.save();
 
     return res.json({ success: true });

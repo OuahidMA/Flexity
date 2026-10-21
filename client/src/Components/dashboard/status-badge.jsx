@@ -18,6 +18,9 @@ const VARIANTS = {
   Rest: "secondary",
   Paused: "secondary",
   Draft: "outline",
+  Available: "success",
+  "On my roster": "success",
+  Assigned: "secondary",
 }
 
 /**

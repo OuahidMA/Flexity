@@ -13,11 +13,11 @@ import { cn } from "@/lib/utils";
 
 const COLORS = {
   background: "#000000",
-  surface: "#202020",
+  surface: "#242424",
   text: "#FFFFFF",
-  textMuted: "#7D7D7D",
-  accent: "#FFC000",
-  border: "#202020",
+  textMuted: "#888888",
+  accent: "#faff69",
+  border: "#242424",
 };
 
 const NAV_LINKS = [
@@ -60,7 +60,7 @@ export default function Navbar({ brand = "Flexity" }) {
             <NavLink
               key={link.label}
               to={link.to}
-              className="text-sm transition-colors hover:text-[#FFC000]"
+              className="text-sm transition-colors hover:text-[#faff69]"
               style={{ color: COLORS.textMuted }}
             >
               {link.label}
@@ -111,7 +111,7 @@ export default function Navbar({ brand = "Flexity" }) {
               key={link.label}
               to={link.to}
               onClick={() => setOpen(false)}
-              className="py-2 text-sm transition-colors hover:text-[#FFC000]"
+              className="py-2 text-sm transition-colors hover:text-[#faff69]"
               style={{ color: COLORS.textMuted }}
             >
               {link.label}

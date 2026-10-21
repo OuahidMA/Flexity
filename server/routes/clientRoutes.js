@@ -51,31 +51,51 @@ router.get("/workouts", async (req, res, next) => {
     );
 
     return res.json(
-      routines.map((routine) => ({
-        id: String(routine._id),
-        routineCode: routine.routineCode ?? null,
-        name: routine.name,
-        description: routine.description ?? "",
-        goal: routine.goal ?? "",
-        status: routine.status,
-        coachName: coachNames.get(String(routine.coachId)) ?? "",
-        exercises: (routine.exercises ?? []).map((item) => ({
+      routines.map((routine) => {
+        const mapExercise = (item) => ({
           exerciseId: String(item.exerciseId),
           name: item.name,
           primaryMuscle: item.primaryMuscle ?? "",
           sets: item.sets,
+          trackingType: item.trackingType ?? "reps",
           reps: item.reps,
+          timeSec: item.timeSec ?? 30,
           restSec: item.restSec,
           notes: item.notes ?? "",
           order: item.order,
-        })),
-        exerciseCount: routine.exercises?.length ?? 0,
-        totalSets: (routine.exercises ?? []).reduce(
-          (total, item) => total + (Number(item.sets) || 0),
-          0
-        ),
-        updatedAt: routine.updatedAt,
-      }))
+        });
+        // `days` fuels the client calendar. Older routines without a schedule
+        // fall back to their flat exercise list.
+        const days = (routine.days ?? []).map((day) => ({
+          dayOfWeek: day.dayOfWeek,
+          isRest: Boolean(day.isRest),
+          label: day.label ?? "",
+          exercises: (day.exercises ?? []).map(mapExercise),
+        }));
+        const allExercises = days.length
+          ? days.flatMap((day) => day.exercises)
+          : (routine.exercises ?? []).map(mapExercise);
+
+        return {
+          id: String(routine._id),
+          routineCode: routine.routineCode ?? null,
+          name: routine.name,
+          description: routine.description ?? "",
+          goal: routine.goal ?? "",
+          splitType: routine.splitType ?? "push_pull_legs",
+          scheduleMode: routine.scheduleMode ?? "week",
+          days,
+          status: routine.status,
+          coachName: coachNames.get(String(routine.coachId)) ?? "",
+          exercises: allExercises,
+          exerciseCount: allExercises.length,
+          totalSets: allExercises.reduce(
+            (total, item) => total + (Number(item.sets) || 0),
+            0
+          ),
+          updatedAt: routine.updatedAt,
+        };
+      })
     );
   } catch (error) {
     return next(error);
@@ -91,7 +111,10 @@ router.get("/progress", async (req, res, next) => {
       gymId: req.user.gymId,
       clientId: req.user.userId,
     })
-      .populate("exerciseId", "name primaryMuscle")
+      .populate(
+        "exerciseId",
+        "name title body_part primaryMuscle targetMuscles"
+      )
       .sort({ date: -1 })
       .lean();
 
@@ -112,8 +135,13 @@ router.get("/progress", async (req, res, next) => {
           exerciseId: log.exerciseId?._id
             ? String(log.exerciseId._id)
             : String(log.exerciseId ?? ""),
-          exerciseName: log.exerciseId?.name || "Exercise",
-          primaryMuscle: log.exerciseId?.primaryMuscle || "",
+          exerciseName:
+            log.exerciseId?.title || log.exerciseId?.name || "Exercise",
+          primaryMuscle:
+            log.exerciseId?.body_part ||
+            log.exerciseId?.primaryMuscle ||
+            log.exerciseId?.targetMuscles?.primary?.[0] ||
+            "",
           sets: sets.length,
           volume,
         };

@@ -12,6 +12,7 @@ import { Copy, Pencil, Plus, Trash } from "lucide-react"
 
 import { useAuth } from "@/hooks/useAuth"
 import { useApiData } from "@/hooks/useApiData"
+import { getSplitLabel } from "@/lib/workout-splits"
 import { DataTable, RowActions } from "@/components/data-table"
 import { ErrorState, LoadingState } from "@/components/dashboard/data-state"
 import { PageHeader } from "@/components/dashboard/page-header"
@@ -123,10 +124,12 @@ export default function CoachRoutines() {
         accessorKey: "name",
         cell: ({ row }) => (
           <div className="min-w-0">
-            <p className="truncate font-medium text-foreground">
+            <p className="truncate font-bold text-foreground">
               {row.getValue("name")}
             </p>
             <p className="truncate text-xs text-muted-foreground">
+              {getSplitLabel(row.original.splitType)}
+              {" · "}
               {row.original.goal || row.original.description || "No goal set"}
             </p>
           </div>
@@ -135,7 +138,7 @@ export default function CoachRoutines() {
         filterFn: (row, columnId, filterValue) => {
           const term = (filterValue ?? "").toLowerCase()
           if (!term) return true
-          return `${row.original.name} ${row.original.goal} ${row.original.description}`
+          return `${row.original.name} ${row.original.goal} ${row.original.description} ${getSplitLabel(row.original.splitType)}`
             .toLowerCase()
             .includes(term)
         },
@@ -222,10 +225,11 @@ export default function CoachRoutines() {
       <PageHeader
         eyebrow="Coach workspace"
         title="Routines"
-        description="Build named workout routines, order the exercises, and assign them to clients."
+        description="Choose a split, schedule training and rest days, build each day's exercises, and assign it to a client."
         actions={
           <Button
             className="gap-2"
+            nativeButton={false}
             render={<Link to="/dashboard/coach/routines/new" />}
           >
             <Plus className="size-4" />

@@ -7,11 +7,12 @@
  * endpoint (`/gym/users/:id`) and updates the local cache.
  */
 import { useCallback, useMemo, useState } from "react"
-import { Copy, Download, Trash, UserPlus } from "lucide-react"
+import { Copy, Download, KeyRound, Trash, UserPlus } from "lucide-react"
 
 import { useAuth } from "@/hooks/useAuth"
 import { useApiData } from "@/hooks/useApiData"
 import { exportToCsv } from "@/lib/csv"
+import { formatPin } from "@/lib/pins"
 import { DataTable, RowActions } from "@/components/data-table"
 import { ErrorState, LoadingState } from "@/components/dashboard/data-state"
 import { PageHeader } from "@/components/dashboard/page-header"
@@ -51,12 +52,16 @@ export default function GymCoaches() {
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState("")
 
-  // Add the display status expected by StatusBadge and the faceted filter.
+  // Unredeemed setup PINs surface as Pending so onboarding gaps are visible.
   const rows = useMemo(
     () =>
       (coaches ?? []).map((coach) => ({
         ...coach,
-        status: coach.active ? "Active" : "Inactive",
+        status: coach.setupRequired
+          ? "Pending"
+          : coach.active
+            ? "Active"
+            : "Inactive",
       })),
     [coaches]
   )
@@ -106,8 +111,15 @@ export default function GymCoaches() {
     }
   }
 
-  // Columns: selection, coach identity + text filter, speciality, client count,
-  // status facet, joined date, and row actions.
+  // The invite dialog generates the PIN before the create request so the admin
+  // can hand it over immediately.
+  const handleGeneratePin = useCallback(async () => {
+    const data = await request("/gym/access-pin", { method: "POST" })
+    return data.pin
+  }, [request])
+
+  // Columns: selection, coach identity + text filter, setup PIN, speciality,
+  // client count, status facet, joined date, and row actions.
   const columns = useMemo(
     () => [
       {
@@ -140,12 +152,12 @@ export default function GymCoaches() {
         header: "Coach",
         accessorKey: "name",
         cell: ({ row }) => (
-          <div className="min-w-0">
-            <p className="truncate font-medium text-foreground">
+          <div className="min-w-0 space-y-1 py-1.5">
+            <p className="truncate font-bold text-foreground">
               {row.getValue("name") || "—"}
             </p>
             <p className="truncate text-xs text-muted-foreground">
-              {row.original.email}
+              {row.original.email || "Awaiting setup"}
             </p>
           </div>
         ),
@@ -160,10 +172,23 @@ export default function GymCoaches() {
         enableHiding: false,
       },
       {
+        header: "Setup PIN",
+        accessorKey: "pin",
+        cell: ({ row }) =>
+          row.original.setupRequired ? (
+            <span className="font-mono text-xs font-bold tracking-[0.16em] text-foreground">
+              {formatPin(row.original.pin)}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">Activated</span>
+          ),
+        size: 130,
+      },
+      {
         header: "Speciality",
         accessorKey: "speciality",
         cell: ({ row }) => (
-          <Badge variant="outline">
+          <Badge variant="outline" className="my-1.5">
             {row.getValue("speciality") || "General"}
           </Badge>
         ),
@@ -201,12 +226,26 @@ export default function GymCoaches() {
           <RowActions
             label={`Actions for ${row.original.name}`}
             items={[
-              {
-                label: "Copy email",
-                icon: Copy,
-                onClick: () =>
-                  navigator.clipboard?.writeText(row.original.email),
-              },
+              ...(row.original.email
+                ? [
+                    {
+                      label: "Copy email",
+                      icon: Copy,
+                      onClick: () =>
+                        navigator.clipboard?.writeText(row.original.email),
+                    },
+                  ]
+                : []),
+              ...(row.original.setupRequired
+                ? [
+                    {
+                      label: "Copy setup PIN",
+                      icon: KeyRound,
+                      onClick: () =>
+                        navigator.clipboard?.writeText(row.original.pin),
+                    },
+                  ]
+                : []),
               { separator: true },
               {
                 label: "Remove coach",
@@ -230,6 +269,7 @@ export default function GymCoaches() {
     exportToCsv("gym-coaches.csv", rows, [
       { header: "Name", value: (row) => row.name },
       { header: "Email", value: (row) => row.email },
+      { header: "Setup PIN", value: (row) => formatPin(row.pin) },
       { header: "Speciality", value: (row) => row.speciality },
       { header: "Clients", value: (row) => row.clients },
       { header: "Status", value: (row) => row.status },
@@ -274,13 +314,14 @@ export default function GymCoaches() {
         />
       )}
 
-      {/* Coach mode exposes the speciality field and posts to `/gym/coaches`. */}
+      {/* Coach mode posts the generated PIN to `/gym/coaches`. */}
       <UserFormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         mode="coach"
         saving={saving}
         error={formError}
+        onGeneratePin={handleGeneratePin}
         onSubmit={handleCreate}
       />
     </div>

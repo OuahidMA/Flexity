@@ -1,13 +1,16 @@
 /**
- * Create-user dialog shared by gym members, gym coaches, and coach clients.
+ * Create-user dialog shared by gym members and gym coaches.
  *
- * One form adapts to a `mode`: coaches expose a speciality field, clients can
- * optionally be assigned to an existing coach. The parent owns the open state,
- * save status, error text, and the API call, so the same dialog works for every
- * role's endpoint.
+ * The admin enters only a name, generates a one-time setup PIN, then creates the
+ * account. The member redeems the PIN on the account page and chooses their own
+ * email/password. Coach assignment remains a coach-side action, never an admin
+ * one. The parent owns the open state, save status, error text, and the API
+ * calls so the same dialog works for both roles' endpoints.
  */
 import { useState } from "react"
+import { Check, Copy, KeyRound, RefreshCw } from "lucide-react"
 
+import { formatPin } from "@/lib/pins"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -20,67 +23,79 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-const EMPTY = {
-  name: "",
-  email: "",
-  password: "",
-  speciality: "",
-  coachId: "",
-}
-
 /**
  * Inner form, mounted only while the dialog is open so its local state resets
  * every time it is reopened.
  *
  * @param {object} props
- * @param {"client"|"coach"} props.mode - Controls copy and mode-specific fields.
- * @param {Array<{ id: string, name?: string, email?: string }>} props.coaches -
- *   Assignment options shown when creating a client.
- * @param {boolean} props.saving - Disables actions while the request runs.
+ * @param {"client"|"coach"} props.mode - Controls copy and submit label.
+ * @param {boolean} props.saving - Disables actions while the create request runs.
  * @param {string} props.error - Server/validation error to display.
  * @param {(open: boolean) => void} props.onOpenChange - Dialog visibility setter.
- * @param {(values: object) => void} props.onSubmit - Receives normalized form values.
+ * @param {() => Promise<string>} props.onGeneratePin - Requests a fresh PIN.
+ * @param {(values: {name: string, pin: string}) => void} props.onSubmit
  * @returns {JSX.Element} The dialog form.
  */
 function UserForm({
   mode,
-  coaches,
   saving,
   error,
   onOpenChange,
+  onGeneratePin,
   onSubmit,
 }) {
-  const [values, setValues] = useState(EMPTY)
+  const [name, setName] = useState("")
+  const [pin, setPin] = useState("")
+  const [generating, setGenerating] = useState(false)
+  const [pinError, setPinError] = useState("")
+  const [copied, setCopied] = useState(false)
 
   const isCoach = mode === "coach"
 
-  const update = (key) => (event) => {
-    const value = event.target.value
-    setValues((current) => ({ ...current, [key]: value }))
+  async function handleGeneratePin() {
+    setGenerating(true)
+    setPinError("")
+    setCopied(false)
+
+    try {
+      const nextPin = await onGeneratePin()
+      setPin(nextPin)
+    } catch (generateError) {
+      setPinError(generateError.message ?? "Unable to generate a PIN.")
+    } finally {
+      setGenerating(false)
+    }
   }
 
-  // Send only the fields relevant to the current mode; an empty coach selection
-  // becomes undefined so the API leaves the client unassigned.
-  const handleSubmit = (event) => {
+  async function handleCopy() {
+    try {
+      await navigator.clipboard?.writeText(pin)
+      setCopied(true)
+    } catch {
+      // Clipboard access can be denied; the PIN stays visible to copy manually.
+    }
+  }
+
+  // Send only the fields the API needs. Clients are always created unassigned;
+  // a coach claims them from their own dashboard.
+  function handleSubmit(event) {
     event.preventDefault()
-    onSubmit?.({
-      name: values.name,
-      email: values.email,
-      password: values.password,
-      ...(isCoach
-        ? { speciality: values.speciality }
-        : { coachId: values.coachId || undefined }),
-    })
+
+    if (!name.trim() || !pin) return
+
+    onSubmit?.({ name: name.trim(), pin })
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <DialogHeader>
-        <DialogTitle>{isCoach ? "Invite coach" : "Add member"}</DialogTitle>
+        <DialogTitle>
+          {isCoach ? "Invite coach" : "Add member"}
+        </DialogTitle>
         <DialogDescription>
           {isCoach
-            ? "Create a coach account for your gym. They can sign in and build routines."
-            : "Create a client account and optionally assign them to a coach."}
+            ? "Create a coach account with a one-time PIN. They choose their own email and password when they first sign in."
+            : "Create a client account with a one-time PIN. They choose their own email and password when they first sign in."}
         </DialogDescription>
       </DialogHeader>
 
@@ -88,69 +103,81 @@ function UserForm({
         <Label htmlFor="user-name">Full name</Label>
         <Input
           id="user-name"
-          value={values.name}
-          onChange={update("name")}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
           placeholder="Alex Morgan"
           required
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="user-email">Email</Label>
-        <Input
-          id="user-email"
-          type="email"
-          value={values.email}
-          onChange={update("email")}
-          placeholder="alex@example.com"
-          required
-        />
-      </div>
+        <Label>Setup PIN</Label>
 
-      <div className="space-y-2">
-        <Label htmlFor="user-password">Temporary password</Label>
-        <Input
-          id="user-password"
-          type="password"
-          value={values.password}
-          onChange={update("password")}
-          placeholder="At least 8 characters"
-          minLength={8}
-          required
-        />
-      </div>
+        {pin ? (
+          <div className="border border-hairline bg-surface-1 p-4">
+            <p className="font-mono text-2xl font-bold tracking-[0.24em] text-ink">
+              {formatPin(pin)}
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              Share this PIN with {name.trim() || "the member"}. It is deleted
+              from their account as soon as they finish setup.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={handleCopy}
+              >
+                {copied ? (
+                  <Check className="size-3.5" />
+                ) : (
+                  <Copy className="size-3.5" />
+                )}
+                {copied ? "Copied" : "Copy PIN"}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={handleGeneratePin}
+                disabled={generating || saving}
+              >
+                <RefreshCw
+                  className={`size-3.5 ${generating ? "animate-spin" : ""}`}
+                />
+                Regenerate
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="border border-dashed border-hairline bg-surface-1 p-4">
+            <p className="text-sm text-muted-foreground">
+              Generate a PIN before creating the account. It is shown here so you
+              can hand it to the member.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-3 gap-2"
+              onClick={handleGeneratePin}
+              disabled={generating || saving}
+            >
+              <KeyRound className="size-4" />
+              {generating ? "Generating..." : "Generate PIN"}
+            </Button>
+          </div>
+        )}
 
-      {isCoach ? (
-        <div className="space-y-2">
-          <Label htmlFor="user-speciality">Speciality</Label>
-          <Input
-            id="user-speciality"
-            value={values.speciality}
-            onChange={update("speciality")}
-            placeholder="Strength & conditioning"
-          />
-        </div>
-      ) : (
-        <div className="space-y-2">
-          <Label htmlFor="user-coach">Coach</Label>
-          <select
-            id="user-coach"
-            value={values.coachId}
-            onChange={update("coachId")}
-            className="h-10 w-full rounded-none border border-input bg-[#0A0A0A] px-3 text-sm text-white outline-none focus-visible:border-white focus-visible:ring-2 focus-visible:ring-white/30"
-          >
-            <option value="">Unassigned</option>
-            {coaches.map((coach) => (
-              <option key={coach.id} value={coach.id}>
-                {coach.name || coach.email}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+        {pinError && (
+          <p className="text-sm text-destructive">{pinError}</p>
+        )}
+      </div>
 
       {error && (
-        <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="rounded-xs border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
         </p>
       )}
@@ -164,8 +191,11 @@ function UserForm({
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={saving}>
-          {saving ? "Saving..." : isCoach ? "Create coach" : "Create client"}
+        <Button
+          type="submit"
+          disabled={saving || generating || !pin || !name.trim()}
+        >
+          {saving ? "Saving..." : isCoach ? "Create coach" : "Add member"}
         </Button>
       </DialogFooter>
     </form>
@@ -182,9 +212,9 @@ function UserForm({
  * @param {boolean} props.open - Whether the dialog is visible.
  * @param {(open: boolean) => void} props.onOpenChange
  * @param {"client"|"coach"} [props.mode="client"]
- * @param {Array<object>} [props.coaches]
  * @param {boolean} [props.saving=false]
  * @param {string} [props.error=""]
+ * @param {() => Promise<string>} [props.onGeneratePin]
  * @param {(values: object) => void} [props.onSubmit]
  * @returns {JSX.Element} The modal dialog.
  */
@@ -192,9 +222,9 @@ export function UserFormDialog({
   open,
   onOpenChange,
   mode = "client",
-  coaches = [],
   saving = false,
   error = "",
+  onGeneratePin,
   onSubmit,
 }) {
   return (
@@ -204,10 +234,10 @@ export function UserFormDialog({
           <UserForm
             key={mode}
             mode={mode}
-            coaches={coaches}
             saving={saving}
             error={error}
             onOpenChange={onOpenChange}
+            onGeneratePin={onGeneratePin}
             onSubmit={onSubmit}
           />
         )}

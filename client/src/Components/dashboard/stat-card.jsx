@@ -30,19 +30,19 @@ export function StatCard({
   const TrendIcon = trendDirection === "down" ? ArrowDownRight : ArrowUpRight
 
   return (
-    <div className="relative overflow-hidden border border-[#262626] bg-[#202020] p-5 transition-colors hover:border-[#3a3a3a]">
-      <div className="absolute inset-x-0 top-0 h-px bg-[#3a3a3a]" />
+    <div className="relative overflow-hidden border border-hairline bg-surface-3 p-5 transition-colors hover:border-hairline-strong">
+      <div className="absolute inset-x-0 top-0 h-px bg-hairline-strong" />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-normal tracking-[0.24em] text-[#7D7D7D] uppercase">
+          <p className="text-[10px] font-normal tracking-[0.24em] text-ink-subtle uppercase">
             {label}
           </p>
-          <p className="mt-3 text-4xl leading-none font-normal tracking-[-0.03em] text-white">
+          <p className="mt-3 text-4xl leading-[0.95] font-bold tracking-[-0.02em] text-ink">
             {value}
           </p>
         </div>
         {Icon && (
-          <span className="grid size-9 shrink-0 place-items-center border border-[#3a3a3a] bg-black text-[#7D7D7D]">
+          <span className="grid size-9 shrink-0 place-items-center border border-hairline-strong bg-canvas text-ink-subtle">
             <Icon className="size-4" />
           </span>
         )}
@@ -52,7 +52,7 @@ export function StatCard({
           <span
             className={cn(
               "inline-flex items-center gap-1 font-normal tracking-[0.06em] uppercase",
-              trendDirection === "down" ? "text-[#F04438]" : "text-white"
+              trendDirection === "down" ? "text-destructive" : "text-ink"
             )}
           >
             <TrendIcon className="size-3.5" />
@@ -60,7 +60,7 @@ export function StatCard({
           </span>
         )}
         {hint && (
-          <span className="text-[#7D7D7D]">{hint}</span>
+          <span className="text-ink-subtle">{hint}</span>
         )}
       </div>
     </div>

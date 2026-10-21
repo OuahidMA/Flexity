@@ -14,6 +14,7 @@
 
 import mongoose from "mongoose";
 import User from "../models/User.js";
+import { isValidPin, normalizePin } from "./pins.js";
 import { normalizeEmail } from "./session.js";
 
 /**
@@ -72,6 +73,10 @@ export function findMember(admin, memberId) {
  */
 export async function findAccountByEmail(email) {
   const normalized = normalizeEmail(email);
+
+  // Pending members share an empty email; it must never resolve to an account.
+  if (!normalized) return null;
+
   const topLevel = await User.findOne({ email: normalized });
 
   if (topLevel) {
@@ -134,6 +139,64 @@ export async function findEmbeddedMemberById(memberId) {
     embedded: true,
     owner: admin,
   };
+}
+
+/**
+ * Locates a pending embedded coach/client by their one-time setup PIN.
+ *
+ * Used by PIN login before the member has an email/password. The PIN is cleared
+ * after account setup, so a redeemed PIN can never resolve twice.
+ *
+ * @param {unknown} rawPin User-entered PIN (dashes/spaces allowed).
+ * @returns {Promise<{user: object, gymId: unknown, embedded: boolean, owner: object}|null>}
+ */
+export async function findEmbeddedMemberByPin(rawPin) {
+  const pin = normalizePin(rawPin);
+
+  if (!isValidPin(pin)) return null;
+
+  const admin = await User.findOne({
+    role: "gym_admin",
+    $or: [{ "coaches.claimPin": pin }, { "clients.claimPin": pin }],
+  });
+
+  if (!admin) return null;
+
+  const member = [...admin.coaches, ...admin.clients].find(
+    (candidate) => candidate.claimPin === pin
+  );
+
+  if (!member) return null;
+
+  return {
+    user: member,
+    gymId: admin.gymId,
+    embedded: true,
+    owner: admin,
+  };
+}
+
+/**
+ * Derives two initials with trailing dots from a coach's display name.
+ *
+ * Used for the denormalized `coach` field stored on clients, for example
+ * "Sarah Quinn" becomes "S.Q.".
+ *
+ * @param {unknown} name Coach display name.
+ * @returns {string} Initials, or an empty string when no name is available.
+ */
+export function coachInitials(name) {
+  const parts = String(name ?? "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (parts.length === 0) return "";
+
+  const first = parts[0].charAt(0);
+  const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : "";
+
+  return `${first}.${last ? `${last}.` : ""}`.toUpperCase();
 }
 
 /**

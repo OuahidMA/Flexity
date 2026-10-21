@@ -11,14 +11,15 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import ProtectedRoute from "@/routes/ProtectedRoute";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
-import Setup from "@/pages/Setup";
 import Suspended from "@/pages/Suspended";
 import DashboardHome from "@/pages/DashboardHome";
+import Account from "@/pages/Account";
 import RoleHomeRedirect from "@/routes/RoleHomeRedirect";
 import GymDashboard from "@/pages/gym/GymDashboard";
 import GymMembers from "@/pages/gym/GymMembers";
 import GymCoaches from "@/pages/gym/GymCoaches";
 import CoachDashboard from "@/pages/coach/CoachDashboard";
+import AllClients from "@/pages/coach/AllClients";
 import ExerciseLibrary from "@/pages/coach/ExerciseLibrary";
 import CoachRoutines from "@/pages/coach/CoachRoutines";
 import RoutineBuilder from "@/pages/coach/RoutineBuilder";
@@ -36,9 +37,8 @@ const ALL_ROLES = ["super_admin", "gym_admin", "coach", "client"];
 export default function App() {
   return (
     <Routes>
-      {/* Public routes: marketing, sign-in, one-time setup, suspension notice. */}
+      {/* Public routes: marketing, sign-in, suspension notice. */}
       <Route path="/login" element={<Login />} />
-      <Route path="/setup" element={<Setup />} />
       <Route path="/suspended" element={<Suspended />} />
 
       <Route path="/" element={<Home />} />
@@ -61,10 +61,17 @@ export default function App() {
             <Route path="gym/coaches" element={<GymCoaches />} />
           </Route>
 
+          {/* Shared account page. Pending coaches/clients are pinned here by
+              ProtectedRoute until they replace their setup PIN. */}
+          <Route element={<ProtectedRoute allowedRoles={["coach", "client"]} />}>
+            <Route path="account" element={<Account />} />
+          </Route>
+
           {/* Coach: clients, exercise library, and routine authoring. The same
               builder handles both create and edit via the optional param. */}
           <Route element={<ProtectedRoute allowedRoles={["coach"]} />}>
             <Route path="coach" element={<CoachDashboard />} />
+            <Route path="coach/all-clients" element={<AllClients />} />
             <Route path="coach/exercises" element={<ExerciseLibrary />} />
             <Route path="coach/routines" element={<CoachRoutines />} />
             <Route path="coach/routines/new" element={<RoutineBuilder />} />

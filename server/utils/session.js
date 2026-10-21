@@ -59,6 +59,11 @@ export function serializeUser(user, gymIdOverride) {
   delete raw.clients;
   delete raw.sessionVersion;
 
+  // A pending embedded member still has a setup PIN; expose only the derived
+  // flag (never the PIN) so the client can route them to the account page.
+  const setupRequired = Boolean(raw.claimPin);
+  delete raw.claimPin;
+
   const gymId = gymIdOverride ?? raw.gymId;
 
   return {
@@ -66,6 +71,7 @@ export function serializeUser(user, gymIdOverride) {
     id: String(raw._id),
     gymId: gymId ? String(gymId) : null,
     coachId: raw.coachId ? String(raw.coachId) : null,
+    setupRequired,
   };
 }
 

@@ -14,7 +14,7 @@ function AlertDialogOverlay({ className, ...props }) {
     <AlertDialogPrimitive.Backdrop
       data-slot="alert-dialog-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px] data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 z-50 bg-canvas/60 backdrop-blur-[2px] data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className
       )}
       {...props}
@@ -30,7 +30,7 @@ function AlertDialogContent({ className, children, ...props }) {
         <AlertDialogPrimitive.Popup
           data-slot="alert-dialog-content"
           className={cn(
-            "relative grid w-full max-w-lg gap-4 rounded-none border border-[#262626] bg-[#0A0A0A] p-6 shadow-none outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            "relative grid w-full max-w-lg gap-4 rounded-none border border-hairline-strong bg-surface-2 p-6 shadow-none outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
             className
           )}
           {...props}
@@ -69,7 +69,7 @@ function AlertDialogTitle({ className, ...props }) {
   return (
     <AlertDialogPrimitive.Title
       data-slot="alert-dialog-title"
-      className={cn("text-lg leading-none font-semibold", className)}
+      className={cn("text-lg leading-none font-bold", className)}
       {...props}
     />
   )

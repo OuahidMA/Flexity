@@ -13,18 +13,18 @@
  */
 export function PageHeader({ eyebrow, title, description, actions }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-6 border-b border-[#202020] pb-6">
+    <div className="flex flex-wrap items-end justify-between gap-6 border-b border-hairline pb-6">
       <div className="min-w-0">
         {eyebrow && (
-          <p className="text-[10px] font-normal tracking-[0.28em] text-[#7D7D7D] uppercase">
+          <p className="text-[10px] font-normal tracking-[0.28em] text-ink-subtle uppercase">
             {eyebrow}
           </p>
         )}
-        <h2 className="mt-3 text-3xl leading-[1.02] font-normal tracking-[-0.02em] text-white uppercase sm:text-4xl">
+        <h2 className="mt-3 text-3xl leading-[0.95] font-bold text-ink uppercase sm:text-4xl">
           {title}
         </h2>
         {description && (
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#7D7D7D]">
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-subtle">
             {description}
           </p>
         )}

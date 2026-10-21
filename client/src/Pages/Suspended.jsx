@@ -38,13 +38,13 @@ export default function Suspended() {
         <AlertTriangle className="size-7" />
       </span>
 
-      <h1 className="mt-6 text-2xl font-semibold tracking-tight uppercase">
+      <h1 className="mt-6 text-2xl leading-[0.95] uppercase">
         Account suspended
       </h1>
       <p className="mt-2 max-w-md text-sm opacity-80">
         Access for {user?.profile?.name || user?.email || "this account"} is
         currently unavailable. Your subscription status is{" "}
-        <span className="font-semibold">{status.replace("_", " ")}</span>.
+        <span className="font-bold">{status.replace("_", " ")}</span>.
       </p>
       <p className="mt-1 max-w-md text-sm opacity-60">
         Please contact your gym administrator to restore access.
@@ -53,7 +53,7 @@ export default function Suspended() {
       <div className="mt-8 flex items-center gap-3">
         <Button
           onClick={logout}
-          className="h-10 rounded-none px-5 text-xs font-semibold tracking-[0.15em] uppercase"
+          className="h-10 rounded-xs px-5 text-xs font-bold tracking-[0.15em] uppercase"
           style={{
             backgroundColor: gymBranding.accentColor,
             color: gymBranding.primaryColor,
@@ -66,7 +66,7 @@ export default function Suspended() {
           render={<Link to="/" />}
           nativeButton={false}
           variant="outline"
-          className="h-10 rounded-none border-white/30 bg-transparent px-5 text-xs font-semibold tracking-[0.15em] uppercase"
+          className="h-10 rounded-xs border-white/30 bg-transparent px-5 text-xs font-bold tracking-[0.15em] uppercase"
           style={{ color: gymBranding.secondaryColor }}
         >
           Back to site

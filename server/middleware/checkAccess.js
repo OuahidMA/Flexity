@@ -23,6 +23,18 @@ import Gym from "../models/Gym.js";
 import User from "../models/User.js";
 import { findEmbeddedMemberById } from "../utils/members.js";
 
+// Pending members may only call the endpoint that completes their account.
+const SETUP_ALLOWED_PATHS = new Set(["/api/auth/setup-account"]);
+
+/** 403 when a member has not finished replacing their setup PIN with credentials. */
+function sendSetupRequired(res) {
+  return res.status(403).json({
+    success: false,
+    code: "SETUP_REQUIRED",
+    message: "Finish setting up your account before using the workspace.",
+  });
+}
+
 /** 401 when the token points at an account that no longer exists or is mismatched. */
 function sendAccountMissing(res) {
   return res.status(401).json({
@@ -102,6 +114,19 @@ export async function checkAccess(req, res, next) {
 
       if (account.user.profile?.isActive === false) {
         return sendAccountInactive(res);
+      }
+
+      // A pending member still has a setup PIN. Block every workspace API until
+      // they choose an email/password; the setup endpoint itself is exempt.
+      req.setupRequired = Boolean(account.user.claimPin);
+
+      const requestPath = req.originalUrl.split("?")[0].replace(/\/+$/, "");
+
+      if (
+        req.setupRequired &&
+        !SETUP_ALLOWED_PATHS.has(requestPath || "/")
+      ) {
+        return sendSetupRequired(res);
       }
     } else {
       const account = await User.findById(req.user.userId).select(

@@ -1,10 +1,15 @@
 /**
- * Authentication routes: login, logout, and session refresh.
+ * Authentication routes: login, PIN login, account setup, logout, and session
+ * refresh.
  *
  * Login resolves an email to either a top-level User (super_admin/gym_admin) or
  * an embedded coach/client subdocument, verifies the password, and issues a JWT
  * plus the httpOnly `flexity_session` cookie. The token payload contains
  * userId/gymId/role/sessionVersion.
+ *
+ * New coaches/clients are created with a one-time setup PIN instead of
+ * credentials. `pin-login` exchanges that PIN for a restricted session, and
+ * `setup-account` replaces the PIN with a real email/password.
  *
  * `/me` intentionally re-validates sessionVersion and active status so a token
  * revoked by a password/email change or deactivation stops working even though
@@ -15,6 +20,8 @@ import { Router } from "express";
 import mongoose from "mongoose";
 import User from "../models/User.js";
 import auth from "../middleware/auth.js";
+import checkAccess from "../middleware/checkAccess.js";
+import requireRole from "../middleware/requireRole.js";
 import {
   clearSessionCookie,
   setSessionCookie,
@@ -27,7 +34,9 @@ import {
 import {
   findAccountByEmail,
   findEmbeddedMemberById,
+  findEmbeddedMemberByPin,
 } from "../utils/members.js";
+import { isValidPin, normalizePin } from "../utils/pins.js";
 import {
   clientIp,
   createRateLimiter,
@@ -36,6 +45,7 @@ import {
 const router = Router();
 
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Two independent limits: one per network to blunt distributed guessing, and a
 // tighter one per IP+email pair to protect a single account from brute force.
@@ -57,6 +67,19 @@ const loginAccountLimiter = createRateLimiter({
     return email ? `${clientIp(req)}:${email}` : null;
   },
   message: "Too many sign-in attempts for this account. Please try again later.",
+});
+
+// PINs are short-lived secrets; limit guess attempts per IP+PIN in addition to
+// the broader per-network login limit.
+const pinLoginLimiter = createRateLimiter({
+  windowMs: LOGIN_WINDOW_MS,
+  max: 10,
+  keyGenerator(req) {
+    const pin = normalizePin(req.body?.pin);
+
+    return pin ? `${clientIp(req)}:${pin}` : null;
+  },
+  message: "Too many PIN attempts. Please try again later.",
 });
 
 /** 401 for a validly signed token whose stored sessionVersion has moved on. */
@@ -171,6 +194,149 @@ router.post(
 
       // The raw token is never returned in the body; it lives in the httpOnly
       // cookie. toClientSession strips it from the response payload.
+      return res.json(toClientSession(session));
+    } catch (error) {
+      return next(error);
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// POST /api/auth/pin-login - exchange a one-time setup PIN for a session
+// ---------------------------------------------------------------------------
+router.post(
+  "/pin-login",
+  loginIpLimiter,
+  pinLoginLimiter,
+  async (req, res, next) => {
+    try {
+      if (!isValidPin(req.body?.pin)) {
+        return res.status(400).json({
+          success: false,
+          code: "VALIDATION_ERROR",
+          message: "Enter the 8-character setup PIN from your gym.",
+        });
+      }
+
+      const account = await findEmbeddedMemberByPin(req.body.pin);
+
+      // Same generic message for an unknown and an already-redeemed PIN.
+      if (!account) {
+        return res.status(401).json({
+          success: false,
+          code: "INVALID_PIN",
+          message: "This PIN is invalid or has already been used.",
+        });
+      }
+
+      if (account.user.profile?.isActive === false) {
+        return sendAccountInactive(res);
+      }
+
+      const session = await buildSession(
+        { ...account.user.toObject(), gymId: account.gymId },
+        account.gymId
+      );
+
+      setSessionCookie(res, session.token);
+
+      return res.json(toClientSession(session));
+    } catch (error) {
+      return next(error);
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// POST /api/auth/setup-account - replace the PIN with real credentials
+// ---------------------------------------------------------------------------
+router.post(
+  "/setup-account",
+  auth,
+  checkAccess,
+  requireRole("coach", "client"),
+  async (req, res, next) => {
+    try {
+      const account = await findEmbeddedMemberById(req.user.userId);
+
+      if (!account) {
+        return res.status(401).json({
+          success: false,
+          code: "USER_NOT_FOUND",
+          message: "Your account could not be found. Please sign in again.",
+        });
+      }
+
+      // A cleared PIN means setup already finished; never allow overwriting
+      // credentials through this endpoint.
+      if (!account.user.claimPin) {
+        return res.status(409).json({
+          success: false,
+          code: "ALREADY_SET_UP",
+          message: "Your account is already set up. Please sign in normally.",
+        });
+      }
+
+      const name =
+        String(req.body?.name ?? "").trim() ||
+        String(account.user.profile?.name ?? "").trim();
+      const email = normalizeEmail(req.body?.email);
+      const password = String(req.body?.password ?? "");
+
+      if (!name) {
+        return res.status(400).json({
+          success: false,
+          code: "VALIDATION_ERROR",
+          message: "Name is required.",
+        });
+      }
+
+      if (!EMAIL_PATTERN.test(email)) {
+        return res.status(400).json({
+          success: false,
+          code: "VALIDATION_ERROR",
+          message: "Enter a valid email address.",
+        });
+      }
+
+      if (password.length < 8) {
+        return res.status(400).json({
+          success: false,
+          code: "VALIDATION_ERROR",
+          message: "Password must be at least 8 characters.",
+        });
+      }
+
+      const existing = await findAccountByEmail(email);
+
+      if (existing && String(existing.user._id) !== String(account.user._id)) {
+        return res.status(409).json({
+          success: false,
+          code: "EMAIL_IN_USE",
+          message: "An account with that email already exists.",
+        });
+      }
+
+      account.user.profile.name = name;
+      account.user.email = email;
+      // The subdocument pre-save hook hashes this plain-text value.
+      account.user.password = password;
+      account.user.claimPin = "";
+      // Invalidate every session issued from the PIN before credentials existed.
+      // The response below mints a fresh token with this new version.
+      account.user.sessionVersion =
+        Number(account.user.sessionVersion ?? 0) + 1;
+
+      await account.owner.save();
+
+      // Issue a fresh session so setupRequired flips to false immediately.
+      const session = await buildSession(
+        { ...account.user.toObject(), gymId: account.gymId },
+        account.gymId
+      );
+
+      setSessionCookie(res, session.token);
+
       return res.json(toClientSession(session));
     } catch (error) {
       return next(error);

@@ -1,17 +1,19 @@
 /**
  * Gym administrator member roster.
  *
- * Loads all clients plus the coach list so members can be created with an
- * optional coach assignment. Supports removing one or many members and exporting
- * the normalized rows to CSV. Display status and join dates are derived for the
- * table only; the API's `active` flag remains the source of truth.
+ * Loads all clients for the gym. Members are created unassigned; coaches claim
+ * their own clients from the coach dashboard. Supports removing one or many
+ * members and exporting the normalized rows to CSV. Display status and join
+ * dates are derived for the table only; the API's `active` flag remains the
+ * source of truth.
  */
 import { useCallback, useMemo, useState } from "react"
-import { Copy, Download, Trash, UserPlus } from "lucide-react"
+import { Copy, Download, KeyRound, Trash, UserPlus } from "lucide-react"
 
 import { useAuth } from "@/hooks/useAuth"
 import { useApiData } from "@/hooks/useApiData"
 import { exportToCsv } from "@/lib/csv"
+import { formatPin } from "@/lib/pins"
 import { DataTable, RowActions } from "@/components/data-table"
 import { ErrorState, LoadingState } from "@/components/dashboard/data-state"
 import { PageHeader } from "@/components/dashboard/page-header"
@@ -45,18 +47,22 @@ export default function GymMembers() {
     refresh,
     setData,
   } = useApiData("/gym/clients")
-  const { data: coaches } = useApiData("/gym/coaches")
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState("")
 
-  // Add the display status expected by StatusBadge and the faceted filter.
+  // Pending accounts (PIN not redeemed yet) show as Pending rather than Active
+  // so the admin can see who still needs onboarding.
   const rows = useMemo(
     () =>
       (members ?? []).map((member) => ({
         ...member,
-        status: member.active ? "Active" : "Inactive",
+        status: member.setupRequired
+          ? "Pending"
+          : member.active
+            ? "Active"
+            : "Inactive",
       })),
     [members]
   )
@@ -86,8 +92,8 @@ export default function GymMembers() {
     [request, setData]
   )
 
-  // Create the client through the gym endpoint; include `coachId` only when the
-  // admin selected one, otherwise the API leaves the member unassigned.
+  // Create the client through the gym endpoint. The API intentionally ignores
+  // coach assignment here; only a coach can claim a client.
   const handleCreate = async (values) => {
     setSaving(true)
     setFormError("")
@@ -106,8 +112,15 @@ export default function GymMembers() {
     }
   }
 
-  // Columns: selection, member identity + text filter, assigned coach, status
-  // facet, joined date, and row actions.
+  // The dialog calls this before creating the account; the PIN is shown to the
+  // admin and then sent back with the create request.
+  const handleGeneratePin = useCallback(async () => {
+    const data = await request("/gym/access-pin", { method: "POST" })
+    return data.pin
+  }, [request])
+
+  // Columns: selection, member identity + text filter, setup PIN, assigned
+  // coach, status facet, joined date, and row actions.
   const columns = useMemo(
     () => [
       {
@@ -140,12 +153,12 @@ export default function GymMembers() {
         header: "Member",
         accessorKey: "name",
         cell: ({ row }) => (
-          <div className="min-w-0">
-            <p className="truncate font-medium text-foreground">
+          <div className="min-w-0 space-y-1">
+            <p className="truncate font-bold text-foreground">
               {row.getValue("name") || "—"}
             </p>
             <p className="truncate text-xs text-muted-foreground">
-              {row.original.email}
+              {row.original.email || "Awaiting setup"}
             </p>
           </div>
         ),
@@ -160,9 +173,33 @@ export default function GymMembers() {
         enableHiding: false,
       },
       {
+        header: "Setup PIN",
+        accessorKey: "pin",
+        cell: ({ row }) =>
+          row.original.setupRequired ? (
+            <span className="font-mono text-xs font-bold tracking-[0.16em] text-foreground">
+              {formatPin(row.original.pin)}
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">Activated</span>
+          ),
+        size: 130,
+      },
+      {
         header: "Coach",
         accessorKey: "coachName",
-        cell: ({ row }) => row.getValue("coachName") || "Unassigned",
+        cell: ({ row }) => (
+          <div className="min-w-0 space-y-1 py-1.5">
+            <p className="truncate text-muted-foreground">
+              {row.getValue("coachName") || "Unassigned"}
+            </p>
+            {row.original.coach && (
+              <p className="truncate text-xs text-muted-foreground">
+                {row.original.coach}
+              </p>
+            )}
+          </div>
+        ),
         size: 180,
       },
       {
@@ -192,12 +229,26 @@ export default function GymMembers() {
           <RowActions
             label={`Actions for ${row.original.name}`}
             items={[
-              {
-                label: "Copy email",
-                icon: Copy,
-                onClick: () =>
-                  navigator.clipboard?.writeText(row.original.email),
-              },
+              ...(row.original.email
+                ? [
+                    {
+                      label: "Copy email",
+                      icon: Copy,
+                      onClick: () =>
+                        navigator.clipboard?.writeText(row.original.email),
+                    },
+                  ]
+                : []),
+              ...(row.original.setupRequired
+                ? [
+                    {
+                      label: "Copy setup PIN",
+                      icon: KeyRound,
+                      onClick: () =>
+                        navigator.clipboard?.writeText(row.original.pin),
+                    },
+                  ]
+                : []),
               { separator: true },
               {
                 label: "Remove member",
@@ -220,6 +271,7 @@ export default function GymMembers() {
     exportToCsv("gym-members.csv", rows, [
       { header: "Name", value: (row) => row.name },
       { header: "Email", value: (row) => row.email },
+      { header: "Setup PIN", value: (row) => formatPin(row.pin) },
       { header: "Coach", value: (row) => row.coachName },
       { header: "Status", value: (row) => row.status },
       { header: "Joined", value: (row) => formatDate(row.joinedAt) },
@@ -265,14 +317,14 @@ export default function GymMembers() {
         />
       )}
 
-      {/* Client mode: the coach select is populated from `/gym/coaches`. */}
+      {/* Client mode: coach assignment is intentionally not offered here. */}
       <UserFormDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         mode="client"
-        coaches={coaches ?? []}
         saving={saving}
         error={formError}
+        onGeneratePin={handleGeneratePin}
         onSubmit={handleCreate}
       />
     </div>

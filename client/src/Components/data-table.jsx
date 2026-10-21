@@ -293,7 +293,7 @@ export function DataTable({
             {Boolean(table.getColumn(searchColumnId)?.getFilterValue()) && (
               <button
                 type="button"
-                className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-lg text-muted-foreground/80 transition-colors outline-offset-2 hover:text-foreground focus:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70"
+                className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-xs text-muted-foreground/80 transition-colors outline-offset-2 hover:text-foreground focus:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70"
                 aria-label="Clear filter"
                 onClick={() => {
                   table.getColumn(searchColumnId)?.setFilterValue("")
@@ -318,14 +318,14 @@ export function DataTable({
                 />
                 Status
                 {selectedStatuses.length > 0 && (
-                  <span className="inline-flex h-5 items-center rounded border border-border bg-background px-1 text-[0.625rem] font-medium text-muted-foreground/70">
+                  <span className="inline-flex h-5 items-center rounded-xs border border-border bg-background px-1 text-[0.625rem] font-bold text-muted-foreground/70">
                     {selectedStatuses.length}
                   </span>
                 )}
               </PopoverTrigger>
               <PopoverContent className="min-w-40 p-3" align="start">
                 <div className="space-y-3">
-                  <div className="text-xs font-medium text-muted-foreground">
+                  <div className="text-xs font-bold text-muted-foreground">
                     Filters
                   </div>
                   <div className="space-y-3">
@@ -405,7 +405,7 @@ export function DataTable({
                   aria-hidden="true"
                 />
                 Delete
-                <span className="inline-flex h-5 items-center rounded border border-border bg-background px-1 text-[0.625rem] font-medium text-muted-foreground/70">
+                <span className="inline-flex h-5 items-center rounded-xs border border-border bg-background px-1 text-[0.625rem] font-bold text-muted-foreground/70">
                   {selectedRows.length}
                 </span>
               </AlertDialogTrigger>
@@ -441,7 +441,7 @@ export function DataTable({
 
       {/* Table body. Headers are keyboard-sortable; an empty result falls back
           to a single full-width message row. */}
-      <div className="overflow-hidden rounded-lg border border-border bg-background">
+      <div className="overflow-hidden rounded-sm border border-border bg-background">
         <Table className="table-fixed">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -509,7 +509,7 @@ export function DataTable({
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="last:py-0">
+                    <TableCell key={cell.id} className="py-3.5">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

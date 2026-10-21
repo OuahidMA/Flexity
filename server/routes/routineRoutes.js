@@ -28,6 +28,14 @@ const router = Router();
 // All routine endpoints require an active coach account.
 router.use(auth, checkAccess, requireRole("coach"));
 
+const SPLIT_TYPES = [
+  "push_pull_legs",
+  "full_body",
+  "upper_lower",
+  "upper_lower_push_pull_legs",
+];
+const SCHEDULE_MODES = ["week", "day"];
+
 /**
  * Creates an Error carrying an HTTP status for the central error handler.
  *
@@ -56,6 +64,28 @@ function serializeRoutine(routine, names = {}) {
   const clientNames = names.clientNames ?? new Map();
   const coachId = raw.coachId ? String(raw.coachId) : null;
   const clientId = raw.clientId ? String(raw.clientId) : null;
+  const days = (raw.days ?? []).map((day) => ({
+    dayOfWeek: day.dayOfWeek,
+    isRest: Boolean(day.isRest),
+    label: day.label ?? "",
+    exercises: (day.exercises ?? []).map((item) => ({
+      exerciseId: String(item.exerciseId),
+      name: item.name,
+      primaryMuscle: item.primaryMuscle ?? "",
+      sets: item.sets,
+      trackingType: item.trackingType ?? "reps",
+      reps: item.reps,
+      timeSec: item.timeSec ?? 30,
+      restSec: item.restSec,
+      notes: item.notes ?? "",
+      order: item.order,
+    })),
+  }));
+  // New routines carry exercises inside `days`; older routines only have the
+  // flat list. Both shapes remain readable through this single collection.
+  const allExercises = days.length
+    ? days.flatMap((day) => day.exercises)
+    : raw.exercises ?? [];
 
   return {
     id: String(raw._id),
@@ -63,23 +93,28 @@ function serializeRoutine(routine, names = {}) {
     name: raw.name,
     description: raw.description ?? "",
     goal: raw.goal ?? "",
+    splitType: raw.splitType ?? "push_pull_legs",
+    scheduleMode: raw.scheduleMode ?? "week",
+    days,
     status: raw.status,
     coachId,
     coachName: coachId ? coachNames.get(coachId) ?? "" : "",
     clientId,
     clientName: clientId ? clientNames.get(clientId) ?? "" : "",
-    exercises: (raw.exercises ?? []).map((item) => ({
+    exercises: allExercises.map((item) => ({
       exerciseId: String(item.exerciseId),
       name: item.name,
       primaryMuscle: item.primaryMuscle ?? "",
       sets: item.sets,
+      trackingType: item.trackingType ?? "reps",
       reps: item.reps,
+      timeSec: item.timeSec ?? 30,
       restSec: item.restSec,
       notes: item.notes ?? "",
       order: item.order,
     })),
-    exerciseCount: raw.exercises?.length ?? 0,
-    totalSets: (raw.exercises ?? []).reduce(
+    exerciseCount: allExercises.length,
+    totalSets: allExercises.reduce(
       (total, item) => total + (Number(item.sets) || 0),
       0
     ),
@@ -157,13 +192,15 @@ function removeClientRoutine(admin, clientId, routineId) {
 
 /**
  * Validates an optional client assignment and returns the embedded client.
- * Null/empty means "unassigned"; invalid ids and ids from another gym throw 400.
+ * Null/empty means "unassigned"; invalid ids, ids from another gym, and clients
+ * the coach has not selected all throw an HTTP error.
  *
  * @param {object} admin Gym admin document.
  * @param {unknown} clientId
+ * @param {unknown} coachId Coach subdocument id performing the assignment.
  * @returns {object|null}
  */
-function resolveClient(admin, clientId) {
+function resolveClient(admin, clientId, coachId) {
   if (!clientId) return null;
 
   if (!mongoose.isValidObjectId(clientId)) {
@@ -174,6 +211,14 @@ function resolveClient(admin, clientId) {
 
   if (!client) {
     throw httpError(400, "The selected client could not be found.");
+  }
+
+  // Routines may only be assigned to clients the coach has selected.
+  if (String(client.coachId ?? "") !== String(coachId)) {
+    throw httpError(
+      403,
+      "You can only assign routines to clients on your roster."
+    );
   }
 
   return client;
@@ -189,13 +234,16 @@ function resolveClient(admin, clientId) {
  *
  * @param {unknown} gymId
  * @param {Array<object>} input Raw `exercises` array from the request body.
+ * @param {{ allowEmpty?: boolean }} [options] - Rest days have no exercises.
  * @returns {Promise<Array<object>>} Validated embedded exercise lines.
  * @throws {Error} 400 when input is empty or references an unavailable exercise.
  */
-async function buildExerciseLines(gymId, input) {
-  if (!Array.isArray(input) || input.length === 0) {
+async function buildExerciseLines(gymId, input, { allowEmpty = false } = {}) {
+  if (!allowEmpty && (!Array.isArray(input) || input.length === 0)) {
     throw httpError(400, "Add at least one exercise to the routine.");
   }
+
+  if (!Array.isArray(input) || input.length === 0) return [];
 
   const ids = input
     .map((item) => item?.exerciseId)
@@ -203,7 +251,9 @@ async function buildExerciseLines(gymId, input) {
 
   const exercises = await Exercise.find({
     _id: { $in: ids },
-    $or: [{ isCustom: false }, { createdByGymId: gymId ?? null }],
+    // Library exercises do not store `isCustom`; only hide custom rows that
+    // belong to another gym.
+    $or: [{ isCustom: { $ne: true } }, { createdByGymId: gymId ?? null }],
   }).lean();
 
   const byId = new Map(
@@ -222,15 +272,77 @@ async function buildExerciseLines(gymId, input) {
 
     return {
       exerciseId: exercise._id,
-      name: exercise.name,
-      primaryMuscle: exercise.primaryMuscle,
+      name: exercise.title || exercise.name,
+      primaryMuscle:
+        exercise.body_part ||
+        exercise.primaryMuscle ||
+        exercise.targetMuscles?.primary?.[0] ||
+        "",
       sets: Math.max(1, Number(item.sets) || 1),
-      reps: Math.max(1, Number(item.reps) || 1),
+      trackingType: item.trackingType === "time" ? "time" : "reps",
+      reps: Math.max(1, Number(item.reps) || 10),
+      timeSec: Math.max(1, Number(item.timeSec) || 30),
       restSec: Math.max(0, Number(item.restSec) || 0),
       notes: String(item.notes ?? "").slice(0, 500),
       order: index,
     };
   });
+}
+
+/**
+ * Builds the per-weekday schedule from client input.
+ *
+ * Duplicate weekdays are ignored (the first entry wins), rest days always have
+ * an empty exercise list, and "day" mode keeps exactly one scheduled weekday.
+ * Labels are trimmed and capped because the coach UI offers split-day presets
+ * but the label itself is free text.
+ *
+ * @param {unknown} gymId
+ * @param {Array<object>} input Raw `days` array from the request body.
+ * @param {"week"|"day"} scheduleMode
+ * @returns {Promise<Array<object>>} Validated day entries.
+ */
+async function buildRoutineDays(gymId, input, scheduleMode) {
+  if (!Array.isArray(input) || input.length === 0) return [];
+
+  const seen = new Set();
+  const days = [];
+
+  for (const value of input) {
+    const rawDay = value ?? {};
+    const dayOfWeek = Number(rawDay.dayOfWeek);
+
+    if (
+      !Number.isInteger(dayOfWeek) ||
+      dayOfWeek < 0 ||
+      dayOfWeek > 6 ||
+      seen.has(dayOfWeek)
+    ) {
+      continue;
+    }
+
+    seen.add(dayOfWeek);
+
+    const isRest = Boolean(rawDay.isRest);
+    const exercises = isRest
+      ? []
+      : await buildExerciseLines(gymId, rawDay.exercises, {
+          allowEmpty: true,
+        });
+    const fallbackLabel = isRest ? "Rest" : "";
+    const label =
+      String(rawDay.label ?? "").trim().slice(0, 60) || fallbackLabel;
+
+    days.push({ dayOfWeek, isRest, label, exercises });
+  }
+
+  if (scheduleMode === "day") return days.slice(0, 1);
+
+  // Monday-first ordering keeps saved routines predictable for the UI.
+  return days.sort(
+    (first, second) =>
+      ((first.dayOfWeek + 6) % 7) - ((second.dayOfWeek + 6) % 7)
+  );
 }
 
 /**
@@ -265,8 +377,37 @@ function validateName(name) {
 async function routinePayload(req, existing, admin) {
   const gymId = req.user.gymId;
   const name = validateName(req.body.name);
-  const client = resolveClient(admin, req.body.clientId);
-  const exercises = await buildExerciseLines(gymId, req.body.exercises);
+  const client = resolveClient(admin, req.body.clientId, req.user.userId);
+  const splitType = SPLIT_TYPES.includes(req.body.splitType)
+    ? req.body.splitType
+    : existing?.splitType ?? "push_pull_legs";
+  const scheduleMode = SCHEDULE_MODES.includes(req.body.scheduleMode)
+    ? req.body.scheduleMode
+    : existing?.scheduleMode ?? "week";
+  const days = await buildRoutineDays(gymId, req.body.days, scheduleMode);
+
+  // New schedules keep exercises per day; the flat list is a compatibility copy
+  // for older readers (and for the coach's existing routine list summary).
+  let exercises;
+
+  if (days.length > 0) {
+    const dayExercises = days.flatMap((day) => day.exercises);
+
+    if (dayExercises.length === 0) {
+      throw httpError(
+        400,
+        "Add at least one exercise to a workout day before saving."
+      );
+    }
+
+    exercises = dayExercises.map((exercise, index) => ({
+      ...exercise,
+      order: index,
+    }));
+  } else {
+    exercises = await buildExerciseLines(gymId, req.body.exercises);
+  }
+
   const status = ["draft", "active", "archived"].includes(req.body.status)
     ? req.body.status
     : existing?.status ?? "active";
@@ -278,8 +419,11 @@ async function routinePayload(req, existing, admin) {
     name,
     description: String(req.body.description ?? "").trim(),
     goal: String(req.body.goal ?? "").trim(),
+    splitType,
+    scheduleMode,
     status,
     exercises,
+    days,
   };
 }
 

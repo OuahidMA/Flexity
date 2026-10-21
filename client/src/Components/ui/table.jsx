@@ -18,7 +18,7 @@ const TableHeader = React.forwardRef(({ className, ...props }, ref) => (
   <thead
     ref={ref}
     data-slot="table-header"
-    className={cn("bg-[#181818] [&_tr]:border-b", className)}
+    className={cn("bg-surface-2 [&_tr]:border-b", className)}
     {...props}
   />
 ))
@@ -39,7 +39,7 @@ const TableFooter = React.forwardRef(({ className, ...props }, ref) => (
     ref={ref}
     data-slot="table-footer"
     className={cn(
-      "border-t bg-muted/50 font-medium [&>tr]:last:border-b-0",
+      "border-t bg-muted/50 font-bold [&>tr]:last:border-b-0",
       className
     )}
     {...props}
@@ -65,7 +65,7 @@ const TableHead = React.forwardRef(({ className, ...props }, ref) => (
     ref={ref}
     data-slot="table-head"
     className={cn(
-      "h-11 px-3 text-left align-middle text-xs font-medium tracking-wide whitespace-nowrap text-muted-foreground uppercase [&:has([role=checkbox])]:w-px [&:has([role=checkbox])]:pr-0",
+      "h-11 px-4 text-left align-middle text-xs font-bold tracking-wide whitespace-nowrap text-muted-foreground uppercase [&:has([role=checkbox])]:w-px [&:has([role=checkbox])]:pr-0",
       className
     )}
     {...props}
@@ -78,7 +78,7 @@ const TableCell = React.forwardRef(({ className, ...props }, ref) => (
     ref={ref}
     data-slot="table-cell"
     className={cn(
-      "p-3 align-middle [&:has([role=checkbox])]:pr-0",
+      "px-4 py-3.5 align-middle [&:has([role=checkbox])]:pr-0",
       className
     )}
     {...props}

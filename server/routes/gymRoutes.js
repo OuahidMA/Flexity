@@ -13,6 +13,8 @@
  *   sessionVersion so existing tokens fail checkAccess.
  * - Deleting a coach also detaches their clients, removes routine mirrors from
  *   those clients, and deletes the coach's routines.
+ * - Coach assignment is a coach-side action: admins create unassigned clients
+ *   and this router never writes `coachId`/`coach` on a client.
  */
 
 import { Router } from "express";
@@ -27,6 +29,13 @@ import {
   findMember,
   getGymAdmin,
 } from "../utils/members.js";
+import {
+  formatPin,
+  generateAccessPin,
+  isValidPin,
+  normalizePin,
+  pinInUse,
+} from "../utils/pins.js";
 
 const router = Router();
 
@@ -46,12 +55,17 @@ function serializeMember(user, coachNames) {
   return {
     id: String(user._id),
     name: user.profile?.name || "",
-    email: user.email,
+    email: user.email || "",
     active: user.profile?.isActive !== false,
+    // PIN is exposed to the admin so it can be shared; setupRequired flips to
+    // false after the member redeems it.
+    pin: user.claimPin || "",
+    setupRequired: Boolean(user.claimPin),
     coachId: user.coachId ? String(user.coachId) : null,
     coachName: user.coachId
       ? coachNames.get(String(user.coachId)) ?? ""
       : "",
+    coach: user.coach || "",
     workoutRoutines: (user.workoutRoutines ?? []).map((routine) => ({
       routineId: routine.routineId,
       name: routine.name,
@@ -72,9 +86,11 @@ function serializeCoach(user, clientCounts) {
   return {
     id: String(user._id),
     name: user.profile?.name || "",
-    email: user.email,
+    email: user.email || "",
     speciality: user.profile?.speciality || "",
     active: user.profile?.isActive !== false,
+    pin: user.claimPin || "",
+    setupRequired: Boolean(user.claimPin),
     clients: clientCounts.get(String(user._id)) ?? 0,
     joinedAt: user.createdAt,
   };
@@ -116,61 +132,31 @@ function coachNameMap(admin) {
 }
 
 /**
- * Validates a client-supplied coach id and returns the embedded coach.
+ * Resolves the setup PIN for a new member. Admins normally generate a PIN in the
+ * dialog; when the body omits one, a unique PIN is generated server-side.
  *
- * Throws an error tagged with status 400 (caught by the central handler) when
- * the id is malformed or not one of this gym's coaches. A null/empty id means
- * "no coach" and returns null.
- *
- * @param {object} admin Gym admin document.
- * @param {unknown} coachId
- * @returns {object|null} Embedded coach subdocument.
+ * @param {unknown} rawPin
+ * @returns {Promise<{pin?: string, error?: string, status?: number}>}
  */
-function resolveCoach(admin, coachId) {
-  if (!coachId) return null;
-
-  if (!mongoose.isValidObjectId(coachId)) {
-    const error = new Error("Select a valid coach.");
-    error.status = 400;
-    throw error;
+async function resolveSetupPin(rawPin) {
+  if (rawPin === undefined || String(rawPin).trim() === "") {
+    return { pin: await generateAccessPin() };
   }
 
-  const coach = admin.coaches.find(
-    (candidate) => String(candidate._id) === String(coachId)
-  );
+  const pin = normalizePin(rawPin);
 
-  if (!coach) {
-    const error = new Error("The selected coach could not be found.");
-    error.status = 400;
-    throw error;
+  if (!isValidPin(pin)) {
+    return { error: "Enter a valid 8-character PIN.", status: 400 };
   }
 
-  return coach;
-}
-
-/**
- * Validates shared account fields for member creation/updates.
- *
- * @param {object} body Request body.
- * @param {{ requirePassword: boolean }} options Whether a password is mandatory
- *   (creation) or optional but still length-checked (updates).
- * @returns {string|null} First validation message, or null when valid.
- */
-function validateAccount(body, { requirePassword }) {
-  const name = String(body.name ?? "").trim();
-  const email = normalizeEmail(body.email);
-  const password = String(body.password ?? "");
-
-  if (!name) return "Name is required.";
-  if (!EMAIL_PATTERN.test(email)) return "Enter a valid email address.";
-  if (requirePassword && password.length < 8) {
-    return "Password must be at least 8 characters.";
-  }
-  if (!requirePassword && password && password.length < 8) {
-    return "Password must be at least 8 characters.";
+  if (await pinInUse(pin)) {
+    return {
+      error: "That PIN is already in use. Generate a new one.",
+      status: 409,
+    };
   }
 
-  return null;
+  return { pin };
 }
 
 /**
@@ -247,6 +233,19 @@ router.get("/overview", async (req, res, next) => {
 });
 
 // ---------------------------------------------------------------------------
+// POST /api/gym/access-pin - generate a one-time setup PIN for a new member
+// ---------------------------------------------------------------------------
+router.post("/access-pin", async (_req, res, next) => {
+  try {
+    const pin = await generateAccessPin();
+
+    return res.json({ pin, formatted: formatPin(pin) });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Coach management
 // ---------------------------------------------------------------------------
 router.get("/coaches", async (req, res, next) => {
@@ -266,30 +265,29 @@ router.get("/coaches", async (req, res, next) => {
 
 router.post("/coaches", async (req, res, next) => {
   try {
-    const problem = validateAccount(req.body, { requirePassword: true });
+    const name = String(req.body.name ?? "").trim();
 
-    if (problem) {
-      return res.status(400).json({ message: problem });
+    if (!name) {
+      return res.status(400).json({ message: "Name is required." });
     }
 
-    const email = normalizeEmail(req.body.email);
+    const pinResult = await resolveSetupPin(req.body.pin);
 
-    if (await emailAlreadyExists(email)) {
-      return res.status(409).json({
-        message: "An account with that email already exists.",
-      });
+    if (pinResult.error) {
+      return res.status(pinResult.status).json({ message: pinResult.error });
     }
 
     const admin = await getGymAdmin(req.user.gymId);
 
-    // Push the subdocument and save the admin; the coach schema's pre-save hook
-    // hashes the plain-text password.
+    // Pending coaches have no credentials: the setup PIN is their only way in
+    // until they choose an email/password on the account page.
     admin.coaches.push({
-      email,
-      password: String(req.body.password),
+      email: "",
+      password: "",
+      claimPin: pinResult.pin,
       role: "coach",
       profile: {
-        name: String(req.body.name).trim(),
+        name,
         speciality: String(req.body.speciality ?? "").trim(),
         phone: String(req.body.phone ?? "").trim(),
       },
@@ -327,31 +325,31 @@ router.get("/clients", async (req, res, next) => {
 
 router.post("/clients", async (req, res, next) => {
   try {
-    const problem = validateAccount(req.body, { requirePassword: true });
+    const name = String(req.body.name ?? "").trim();
 
-    if (problem) {
-      return res.status(400).json({ message: problem });
+    if (!name) {
+      return res.status(400).json({ message: "Name is required." });
     }
 
-    const email = normalizeEmail(req.body.email);
+    const pinResult = await resolveSetupPin(req.body.pin);
 
-    if (await emailAlreadyExists(email)) {
-      return res.status(409).json({
-        message: "An account with that email already exists.",
-      });
+    if (pinResult.error) {
+      return res.status(pinResult.status).json({ message: pinResult.error });
     }
 
     const admin = await getGymAdmin(req.user.gymId);
-    // coachId is optional; resolveCoach rejects ids from another gym.
-    const coach = resolveCoach(admin, req.body.coachId);
 
+    // Clients are always created unassigned and without credentials. The setup
+    // PIN is redeemed on the account page.
     admin.clients.push({
-      email,
-      password: String(req.body.password),
+      email: "",
+      password: "",
+      claimPin: pinResult.pin,
       role: "client",
-      coachId: coach?._id ?? null,
+      coachId: null,
+      coach: "",
       profile: {
-        name: String(req.body.name).trim(),
+        name,
         phone: String(req.body.phone ?? "").trim(),
       },
     });
@@ -359,13 +357,10 @@ router.post("/clients", async (req, res, next) => {
     await admin.save();
 
     const client = admin.clients[admin.clients.length - 1];
-    const coachNames = coach
-      ? new Map([[String(coach._id), coach.profile?.name || coach.email]])
-      : new Map();
 
     return res
       .status(201)
-      .json(serializeMember(client, coachNames));
+      .json(serializeMember(client, new Map()));
   } catch (error) {
     return next(error);
   }
@@ -447,10 +442,8 @@ router.patch("/users/:id", async (req, res, next) => {
       user.sessionVersion = Number(user.sessionVersion ?? 0) + 1;
     }
 
-    if (body.coachId !== undefined && user.role === "client") {
-      const coach = resolveCoach(admin, body.coachId);
-      user.coachId = coach?._id ?? null;
-    }
+    // Coach assignment is deliberately not editable here; coaches claim their
+    // own clients through /api/coach/*.
 
     await admin.save();
 
@@ -500,6 +493,7 @@ router.delete("/users/:id", async (req, res, next) => {
       for (const client of admin.clients) {
         if (String(client.coachId ?? "") === String(user._id)) {
           client.coachId = null;
+          client.coach = "";
         }
 
         if (routineIds.size > 0) {

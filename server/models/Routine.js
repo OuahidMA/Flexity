@@ -6,6 +6,12 @@
  * (name and primary muscle) so the routine stays readable if the catalog entry
  * is later renamed or removed.
  *
+ * A routine also describes a weekly schedule: a split type (push/pull/legs,
+ * full body, upper/lower, or upper/lower/push/pull/legs) and one entry per
+ * scheduled day. Each day is either a rest day or a workout day carrying its
+ * own ordered exercise lines. `scheduleMode` is "week" for a full weekly plan
+ * and "day" when the coach is prescribing a single weekday.
+ *
  * routineCode is a short, human-shareable public identifier. It is optional
  * (older routines may lack one), unique when present, and is mirrored into the
  * assigned client's embedded `workoutRoutines` list as `routineId`.
@@ -39,9 +45,21 @@ const routineExerciseSchema = new Schema(
       default: 3,
       min: 1,
     },
+    // Prescription mode chosen by the coach. "reps" uses `reps`; "time" uses
+    // `timeSec` for intervals such as a 30-second plank.
+    trackingType: {
+      type: String,
+      enum: ["reps", "time"],
+      default: "reps",
+    },
     reps: {
       type: Number,
       default: 10,
+      min: 1,
+    },
+    timeSec: {
+      type: Number,
+      default: 30,
       min: 1,
     },
     restSec: {
@@ -58,6 +76,33 @@ const routineExerciseSchema = new Schema(
       type: Number,
       required: true,
       min: 0,
+    },
+  },
+  { _id: false }
+);
+
+// One scheduled weekday. Rest days intentionally keep an empty exercise list so
+// the client calendar can still render "Rest" for that day.
+const routineDaySchema = new Schema(
+  {
+    dayOfWeek: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 6,
+    },
+    isRest: {
+      type: Boolean,
+      default: false,
+    },
+    label: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    exercises: {
+      type: [routineExerciseSchema],
+      default: [],
     },
   },
   { _id: false }
@@ -112,6 +157,24 @@ const routineSchema = new Schema(
       default: "",
       trim: true,
     },
+    // Split type drives the labels a coach can assign to each workout day and
+    // how the client dashboard describes today's session.
+    splitType: {
+      type: String,
+      enum: [
+        "push_pull_legs",
+        "full_body",
+        "upper_lower",
+        "upper_lower_push_pull_legs",
+      ],
+      default: "push_pull_legs",
+      index: true,
+    },
+    scheduleMode: {
+      type: String,
+      enum: ["week", "day"],
+      default: "week",
+    },
     status: {
       type: String,
       enum: ["draft", "active", "archived"],
@@ -123,6 +186,12 @@ const routineSchema = new Schema(
     // ---------------------------------------------------------------------
     exercises: {
       type: [routineExerciseSchema],
+      default: [],
+    },
+    // Per-weekday schedule. Older routines may have an empty array; their flat
+    // `exercises` list above remains readable for backwards compatibility.
+    days: {
+      type: [routineDaySchema],
       default: [],
     },
   },

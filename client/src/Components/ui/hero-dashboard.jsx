@@ -11,9 +11,9 @@ import {
   Zap,
 } from "lucide-react";
 
-const BORDER = "#202020";
-const CARD_BG = "#121212";
-const ACCENT = "#FFC000";
+const BORDER = "#1f1f1f";
+const CARD_BG = "#0a0a0a";
+const ACCENT = "#ffed00";
 
 const RAIL_ICONS = [Search, Zap, BarChart3, Settings];
 
@@ -73,7 +73,7 @@ function MiniChart({ data }) {
           className="w-1.5"
           style={{
             height: `${(value / max) * 100}%`,
-            backgroundColor: "#969696",
+            backgroundColor: "#888888",
             opacity: 0.35 + (index / data.length) * 0.55,
           }}
         />
@@ -123,7 +123,7 @@ export default function HeroDashboard() {
                       <div
                         key={child.label}
                         className={`px-2 py-1 text-xs ${
-                          child.active ? "text-black" : "text-white/50"
+                          child.active ? "text-canvas" : "text-white/50"
                         }`}
                         style={
                           child.active
@@ -165,8 +165,8 @@ export default function HeroDashboard() {
                 <Calendar className="size-3" />
                 <span>Nov 20 - Feb 11</span>
               </div>
-              <div className="flex items-center gap-2 border border-[#FFC000] px-3 py-1.5 text-xs text-[#FFC000]">
-                <span className="size-2 bg-[#FFC000]" />
+              <div className="flex items-center gap-2 border border-[#ffed00] px-3 py-1.5 text-xs text-[#ffed00]">
+                <span className="size-2 bg-[#ffed00]" />
                 Adherence score
                 <ChevronDown className="size-3" />
               </div>
@@ -188,13 +188,13 @@ export default function HeroDashboard() {
               <div className="min-w-0 flex-1">
                 <div className="grid grid-cols-3 gap-2">
                   <div className="col-span-1 row-span-2 p-3" style={TONES.featured}>
-                    <div className="text-xs font-medium text-black">
+                    <div className="text-xs font-medium text-canvas">
                       {CLIENT_CARDS[0].title}
                     </div>
-                    <div className="mt-1 text-[10px] text-black/70">
+                    <div className="mt-1 text-[10px] text-canvas/70">
                       {CLIENT_CARDS[0].sessions}
                     </div>
-                    <div className="text-[10px] text-black/70">
+                    <div className="text-[10px] text-canvas/70">
                       {CLIENT_CARDS[0].score}
                     </div>
                   </div>

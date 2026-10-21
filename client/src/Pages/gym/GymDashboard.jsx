@@ -10,6 +10,7 @@ import { CalendarDays, ClipboardList, Dumbbell, Users } from "lucide-react"
 
 import { useAuth } from "@/hooks/useAuth"
 import { useApiData } from "@/hooks/useApiData"
+import { formatPin } from "@/lib/pins"
 import { ErrorState, LoadingState } from "@/components/dashboard/data-state"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { StatCard } from "@/components/dashboard/stat-card"
@@ -74,7 +75,11 @@ export default function GymDashboard() {
         title="Gym overview"
         description={`Managing ${stats.members} clients and ${stats.coaches} coaches.`}
         actions={
-          <Button className="gap-2" render={<Link to="/dashboard/gym/members" />}>
+          <Button
+            className="gap-2"
+            nativeButton={false}
+            render={<Link to="/dashboard/gym/members" />}
+          >
             <Users className="size-4" />
             Manage members
           </Button>
@@ -111,17 +116,18 @@ export default function GymDashboard() {
 
       {/* Recent activity and tenant context. */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border bg-card lg:col-span-2">
-          <div className="flex items-center justify-between border-b px-5 py-4">
+        <div className="border bg-card lg:col-span-2">
+          <div className="flex items-center justify-between border-b px-6 py-5">
             <div>
-              <h3 className="text-sm font-semibold">Newest members</h3>
-              <p className="text-xs text-muted-foreground">
+              <h3 className="text-sm font-bold">Newest members</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
                 Latest client accounts across your gym
               </p>
             </div>
             <Button
               variant="outline"
               size="sm"
+              nativeButton={false}
               render={<Link to="/dashboard/gym/members" />}
             >
               View all
@@ -129,11 +135,11 @@ export default function GymDashboard() {
           </div>
 
           {recentMembers.length === 0 ? (
-            <div className="px-5 py-10 text-center text-sm text-muted-foreground">
+            <div className="px-6 py-12 text-center text-sm text-muted-foreground">
               No clients yet.{" "}
               <Link
                 to="/dashboard/gym/members"
-                className="font-medium text-foreground underline"
+                className="font-bold text-primary hover:text-primary-hover"
               >
                 Add your first member
               </Link>
@@ -143,28 +149,50 @@ export default function GymDashboard() {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead>Member</TableHead>
-                  <TableHead>Coach</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Joined</TableHead>
+                  <TableHead className="h-12 px-5">Member</TableHead>
+                  <TableHead className="h-12 px-5">Setup PIN</TableHead>
+                  <TableHead className="h-12 px-5">Coach</TableHead>
+                  <TableHead className="h-12 px-5">Status</TableHead>
+                  <TableHead className="h-12 px-5 text-right">
+                    Joined
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {recentMembers.map((member) => (
                   <TableRow key={member.id}>
-                    <TableCell>
-                      <p className="font-medium">{member.name || "—"}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {member.email}
+                    <TableCell className="px-5 py-4">
+                      <p className="font-bold">{member.name || "—"}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {member.email || "Awaiting setup"}
                       </p>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="px-5 py-4">
+                      {member.setupRequired ? (
+                        <span className="font-mono text-xs font-bold tracking-[0.16em]">
+                          {formatPin(member.pin)}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          Activated
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-muted-foreground">
                       {member.coachName || "Unassigned"}
                     </TableCell>
-                    <TableCell>
-                      <StatusBadge status={member.active ? "Active" : "Inactive"} />
+                    <TableCell className="px-5 py-4">
+                      <StatusBadge
+                        status={
+                          member.setupRequired
+                            ? "Pending"
+                            : member.active
+                              ? "Active"
+                              : "Inactive"
+                        }
+                      />
                     </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
+                    <TableCell className="px-5 py-4 text-right text-muted-foreground">
                       {formatDate(member.joinedAt)}
                     </TableCell>
                   </TableRow>
@@ -176,9 +204,9 @@ export default function GymDashboard() {
 
         <div className="space-y-4">
           {/* Compact roster preview; the full list lives on the coaches page. */}
-          <div className="rounded-xl border bg-card p-5">
+          <div className="border bg-card p-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Coach roster</h3>
+              <h3 className="text-sm font-bold">Coach roster</h3>
               <CalendarDays className="size-4 text-muted-foreground" />
             </div>
 
@@ -194,7 +222,7 @@ export default function GymDashboard() {
                     className="flex items-center justify-between gap-3"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
+                      <p className="truncate text-sm font-bold">
                         {coach.name || coach.email}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">
@@ -210,6 +238,7 @@ export default function GymDashboard() {
             <Button
               variant="outline"
               className="mt-4 w-full"
+              nativeButton={false}
               render={<Link to="/dashboard/gym/coaches" />}
             >
               Manage coaches
@@ -217,8 +246,8 @@ export default function GymDashboard() {
           </div>
 
           {/* Active tenant theme tokens hydrated by AuthContext. */}
-          <div className="rounded-xl border bg-card p-5">
-            <h3 className="text-sm font-semibold">Gym branding</h3>
+          <div className="border bg-card p-5">
+            <h3 className="text-sm font-bold">Gym branding</h3>
             <div className="mt-4 flex gap-2">
               {[
                 gymBranding.primaryColor,
@@ -227,7 +256,7 @@ export default function GymDashboard() {
               ].map((color) => (
                 <div key={color} className="flex-1">
                   <div
-                    className="h-10 rounded-md border"
+                    className="h-10 border"
                     style={{ backgroundColor: color }}
                   />
                   <p className="mt-1.5 font-mono text-[10px] text-muted-foreground">

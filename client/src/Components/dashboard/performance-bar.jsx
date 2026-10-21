@@ -11,13 +11,13 @@ export function PerformanceBar({ value }) {
 
   return (
     <div className="flex items-center gap-2">
-      <div className="h-1.5 w-16 overflow-hidden bg-[#202020]">
+      <div className="h-1.5 w-16 overflow-hidden bg-surface-3">
         <div
-          className="h-full bg-white"
+          className="h-full bg-primary"
           style={{ width: `${clamped}%` }}
         />
       </div>
-      <span className="text-xs text-[#7D7D7D] tabular-nums">
+      <span className="text-xs text-ink-subtle tabular-nums">
         {clamped}%
       </span>
     </div>

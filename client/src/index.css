@@ -1,13 +1,13 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/inter-tight";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
     --font-heading: var(--font-sans);
-    --font-sans: 'Geist Variable', sans-serif;
+    --font-sans: 'Inter Tight Variable', 'Inter Tight', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,83 +39,156 @@
     --color-card: var(--card);
     --color-foreground: var(--foreground);
     --color-background: var(--background);
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
+    --color-canvas: var(--canvas);
+    --color-surface-1: var(--surface-1);
+    --color-surface-2: var(--surface-2);
+    --color-surface-3: var(--surface-3);
+    --color-surface-4: var(--surface-4);
+    --color-hairline: var(--hairline);
+    --color-hairline-strong: var(--hairline-strong);
+    --color-hairline-tertiary: var(--hairline-tertiary);
+    --color-ink: var(--ink);
+    --color-ink-muted: var(--ink-muted);
+    --color-ink-subtle: var(--ink-subtle);
+    --color-ink-tertiary: var(--ink-tertiary);
+    --color-primary-hover: var(--primary-hover);
+    --color-brand-secure: var(--brand-secure);
+    --color-semantic-success: var(--semantic-success);
+    --radius-xs: 2px;
+    --radius-sm: 3px;
+    --radius-md: 4px;
+    --radius-lg: 6px;
+    --radius-xl: 8px;
+    --radius-2xl: 12px;
+    --radius-3xl: 16px;
+    --radius-4xl: 24px;
+    --radius-pill: 46px;
 }
 
 :root {
-    --background: #000000;
-    --foreground: #ffffff;
-    --card: #202020;
-    --card-foreground: #ffffff;
-    --popover: #181818;
-    --popover-foreground: #ffffff;
-    --primary: #ffc000;
+    --background: var(--canvas);
+    --foreground: var(--ink);
+    --card: var(--surface-1);
+    --card-foreground: var(--ink);
+    --popover: var(--surface-2);
+    --popover-foreground: var(--ink);
+    --primary: #ffed00;
     --primary-foreground: #000000;
-    --secondary: #181818;
-    --secondary-foreground: #ffffff;
-    --muted: #181818;
-    --muted-foreground: #7d7d7d;
-    --accent: #202020;
-    --accent-foreground: #ffffff;
-    --destructive: #f04438;
-    --border: #262626;
-    --input: rgba(255, 255, 255, 0.22);
-    --ring: #ffffff;
-    --chart-1: #ffc000;
-    --chart-2: #ffce3e;
-    --chart-3: #917300;
-    --chart-4: #7d7d7d;
-    --chart-5: #202020;
-    --radius: 0rem;
+    --secondary: var(--surface-2);
+    --secondary-foreground: var(--ink);
+    --muted: var(--surface-2);
+    --muted-foreground: var(--ink-muted);
+    --accent: var(--surface-3);
+    --accent-foreground: var(--ink);
+    --border: var(--hairline);
+    --input: var(--surface-1);
+    --ring: var(--primary-focus);
+    --chart-1: #ffed00;
+    --chart-2: #e6d200;
+    --chart-3: #b8a800;
+    --chart-4: #8a8a8a;
+    --chart-5: #333333;
+    --canvas: #000000;
+    --surface-1: #0a0a0a;
+    --surface-2: #111111;
+    --surface-3: #1a1a1a;
+    --surface-4: #262626;
+    --hairline: #1f1f1f;
+    --hairline-strong: #3a3a3a;
+    --hairline-tertiary: #4a4a4a;
+    --divider-dark: rgba(255, 255, 255, 0.16);
+    --brand-secure: #78694F;
+    --ink: #ffffff;
+    --ink-muted: rgba(255, 255, 255, 0.72);
+    --ink-subtle: #8a8a8a;
+    --ink-tertiary: #666666;
+    --primary-hover: #e6d200;
+    --primary-focus: #ffed0080;
+    --semantic-success: #8dc572;
+    --semantic-warning: #f0ad4e;
+    --semantic-info: #337ab7;
+    --destructive: #be6464;
+    --destructive-foreground: #ffffff;
+    --semantic-overlay: #000000;
+    --inverse-canvas: #ffffff;
+    --inverse-surface-1: #f7f7f7;
+    --inverse-surface-2: #ffffff;
+    --radius: 4px;
+    --radius-md: 4px;
+    --radius-lg: 6px;
+    --radius-xl: 8px;
+    --radius-pill: 46px;
     --sidebar: #000000;
     --sidebar-foreground: #ffffff;
-    --sidebar-primary: #ffffff;
+    --sidebar-primary: #ffed00;
     --sidebar-primary-foreground: #000000;
-    --sidebar-accent: #181818;
+    --sidebar-accent: #111111;
     --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: #202020;
-    --sidebar-ring: #ffffff;
+    --sidebar-border: #1f1f1f;
+    --sidebar-ring: #ffed00;
 }
 
 .dark {
-    --background: #000000;
-    --foreground: #ffffff;
-    --card: #202020;
-    --card-foreground: #ffffff;
-    --popover: #181818;
-    --popover-foreground: #ffffff;
-    --primary: #ffc000;
+    --background: var(--canvas);
+    --foreground: var(--ink);
+    --card: var(--surface-1);
+    --card-foreground: var(--ink);
+    --popover: var(--surface-2);
+    --popover-foreground: var(--ink);
+    --primary: #ffed00;
     --primary-foreground: #000000;
-    --secondary: #181818;
-    --secondary-foreground: #ffffff;
-    --muted: #181818;
-    --muted-foreground: #7d7d7d;
-    --accent: #202020;
-    --accent-foreground: #ffffff;
-    --destructive: #f04438;
-    --border: #262626;
-    --input: rgba(255, 255, 255, 0.22);
-    --ring: #ffffff;
-    --chart-1: #ffc000;
-    --chart-2: #ffce3e;
-    --chart-3: #917300;
-    --chart-4: #7d7d7d;
-    --chart-5: #202020;
-    --radius: 0rem;
+    --secondary: var(--surface-2);
+    --secondary-foreground: var(--ink);
+    --muted: var(--surface-2);
+    --muted-foreground: var(--ink-muted);
+    --accent: var(--surface-3);
+    --accent-foreground: var(--ink);
+    --border: var(--hairline);
+    --input: var(--surface-1);
+    --ring: var(--primary-focus);
+    --chart-1: #ffed00;
+    --chart-2: #e6d200;
+    --chart-3: #b8a800;
+    --chart-4: #8a8a8a;
+    --chart-5: #333333;
+    --canvas: #000000;
+    --surface-1: #0a0a0a;
+    --surface-2: #111111;
+    --surface-3: #1a1a1a;
+    --surface-4: #262626;
+    --hairline: #1f1f1f;
+    --hairline-strong: #3a3a3a;
+    --hairline-tertiary: #4a4a4a;
+    --divider-dark: rgba(255, 255, 255, 0.16);
+    --brand-secure: #78694F;
+    --ink: #ffffff;
+    --ink-muted: rgba(255, 255, 255, 0.72);
+    --ink-subtle: #8a8a8a;
+    --ink-tertiary: #666666;
+    --primary-hover: #e6d200;
+    --primary-focus: #ffed0080;
+    --semantic-success: #8dc572;
+    --semantic-warning: #f0ad4e;
+    --semantic-info: #337ab7;
+    --destructive: #be6464;
+    --destructive-foreground: #ffffff;
+    --semantic-overlay: #000000;
+    --inverse-canvas: #ffffff;
+    --inverse-surface-1: #f7f7f7;
+    --inverse-surface-2: #ffffff;
+    --radius: 4px;
+    --radius-md: 4px;
+    --radius-lg: 6px;
+    --radius-xl: 8px;
+    --radius-pill: 46px;
     --sidebar: #000000;
     --sidebar-foreground: #ffffff;
-    --sidebar-primary: #ffffff;
+    --sidebar-primary: #ffed00;
     --sidebar-primary-foreground: #000000;
-    --sidebar-accent: #181818;
+    --sidebar-accent: #111111;
     --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: #202020;
-    --sidebar-ring: #ffffff;
+    --sidebar-border: #1f1f1f;
+    --sidebar-ring: #ffed00;
 }
 
 @layer base {
@@ -124,64 +197,94 @@
     }
   body {
     @apply bg-background text-foreground;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
     }
   html {
     @apply font-sans;
     }
   h1,
   h2,
-  h3 {
-    font-weight: 400;
-    letter-spacing: -0.01em;
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 0.95;
     text-transform: uppercase;
   }
+  /* Links inherit body ink and never carry a default underline — the system
+     expresses links through weight/colour, not decoration. */
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  a:hover,
+  a:focus,
+  a:active,
+  a:visited {
+    text-decoration: none;
+  }
   ::selection {
-    background: #ffc000;
+    background: #ffed00;
     color: #000000;
   }
 }
 
-/* RSuite is only used by the routine builder: align it with the dark canvas. */
+/* Belt-and-braces: keep anchors decoration-free even when utilities or UA
+   styles would add an underline (buttons rendered as links, nav, etc.). */
+a {
+  text-decoration: none;
+}
+a:hover,
+a:focus,
+a:active,
+a:visited {
+  text-decoration: none;
+}
+
+/* RSuite is only used by the routine builder: align it with the black canvas. */
 .routine-table {
   --rs-gray-0: #000000;
-  --rs-gray-50: #181818;
-  --rs-gray-100: #202020;
-  --rs-gray-200: #262626;
+  --rs-gray-50: #0a0a0a;
+  --rs-gray-100: #111111;
+  --rs-gray-200: #1f1f1f;
   --rs-gray-300: #3a3a3a;
-  --rs-gray-400: #494949;
-  --rs-gray-500: #7d7d7d;
-  --rs-gray-600: #969696;
+  --rs-gray-400: #4a4a4a;
+  --rs-gray-500: #8a8a8a;
+  --rs-gray-600: #9a9a9a;
   --rs-gray-700: #bdbdbd;
   --rs-gray-800: #f5f5f5;
   --rs-gray-900: #ffffff;
-  --rs-primary-50: #2a2100;
-  --rs-primary-100: #3d3000;
-  --rs-primary-200: #5c4900;
-  --rs-primary-300: #7a6100;
-  --rs-primary-400: #917300;
-  --rs-primary-500: #ffffff;
-  --rs-primary-600: #e6e6e6;
+  --rs-primary-50: #332f00;
+  --rs-primary-100: #4d4600;
+  --rs-primary-200: #7a6f00;
+  --rs-primary-300: #b8a800;
+  --rs-primary-400: #e6d200;
+  --rs-primary-500: #ffed00;
+  --rs-primary-600: #e6d200;
   --rs-primary-700: #ffffff;
   --rs-primary-800: #e6e6e6;
   --rs-primary-900: #ffffff;
   --rs-bg-card: #000000;
-  --rs-bg-overlay: #181818;
+  --rs-bg-overlay: #0a0a0a;
   --rs-bg-well: #111111;
   --rs-text-primary: #ffffff;
-  --rs-text-secondary: #7d7d7d;
+  --rs-text-secondary: #8a8a8a;
   --rs-text-heading: #ffffff;
-  --rs-text-active: #ffffff;
-  --rs-border-primary: #262626;
-  --rs-border-secondary: #202020;
-  --rs-input-bg: #0a0a0a;
+  --rs-text-active: #ffed00;
+  --rs-border-primary: #1f1f1f;
+  --rs-border-secondary: #111111;
+  --rs-input-bg: #000000;
   --rs-btn-subtle-text: #ffffff;
-  --rs-btn-subtle-hover-bg: #202020;
+  --rs-btn-subtle-hover-bg: #1a1a1a;
   --rs-btn-subtle-hover-text: #ffffff;
-  --rs-state-hover-bg: #181818;
-  --rs-listbox-option-hover-bg: #202020;
-  --rs-table-border-color: #262626;
-  --rs-table-scrollbar-track: #181818;
-  --rs-table-scrollbar-thumb: #494949;
+  --rs-state-hover-bg: #0a0a0a;
+  --rs-listbox-option-hover-bg: #1a1a1a;
+  --rs-table-border-color: #1f1f1f;
+  --rs-table-scrollbar-track: #0a0a0a;
+  --rs-table-scrollbar-thumb: #4a4a4a;
 }
 
 .routine-table .rs-table-cell {
@@ -190,20 +293,20 @@
 }
 
 .routine-table .rs-table-row-header .rs-table-cell {
-  background-color: #181818;
-  color: #7d7d7d;
+  background-color: #0a0a0a;
+  color: #8a8a8a;
   font-size: 11px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
 }
 
 .routine-table .rs-table-row:hover .rs-table-cell {
-  background-color: #181818;
+  background-color: #0a0a0a;
 }
 
 .routine-table .rs-input {
-  background-color: #0a0a0a;
-  border-color: #262626;
+  background-color: #000000;
+  border-color: #1f1f1f;
   border-radius: 0;
   color: #ffffff;
 }
@@ -214,11 +317,11 @@
 }
 
 .routine-table .rs-btn-icon {
-  color: #7d7d7d;
+  color: #8a8a8a;
 }
 
 .routine-table .rs-btn-icon:hover {
-  background-color: #202020;
+  background-color: #1a1a1a;
   color: #ffffff;
 }
 

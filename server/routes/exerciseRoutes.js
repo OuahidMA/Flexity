@@ -2,10 +2,10 @@
  * Exercise catalog routes.
  *
  * Read access is available to any authenticated user in an active gym; writes
- * are limited to gym_admin/coach. Visibility is tenant-aware: everyone sees
- * shared exercises (`isCustom: false`) plus their own gym's custom exercises.
- * Deletion is restricted to custom exercises owned by the caller's gym, so a
- * gym cannot remove shared or another tenant's catalog entries.
+ * are limited to gym_admin/coach. Visibility is tenant-aware: everyone sees the
+ * seeded library (rows where `isCustom` is missing or false) plus their own
+ * gym's custom exercises. Deletion is restricted to custom exercises owned by
+ * the caller's gym, so a gym cannot remove library or another tenant's entries.
  */
 
 import { Router } from "express";
@@ -21,19 +21,52 @@ const router = Router();
 router.use(auth, checkAccess);
 
 /**
- * Converts a Mongoose exercise document into the public API shape.
+ * Converts a catalog document into the public API shape.
+ *
+ * Library rows identify themselves with `title` / `body_part` while custom rows
+ * use `name` / `primaryMuscle`. The response exposes one normalized shape so the
+ * front end does not need to know which storage variant it received.
  *
  * @param {object} exercise Exercise document or lean object.
  * @returns {object} Serialized exercise.
  */
 function serializeExercise(exercise) {
+  const primaryMuscles = exercise.targetMuscles?.primary ?? [];
+  const secondaryMuscles = exercise.targetMuscles?.secondary?.length
+    ? exercise.targetMuscles.secondary
+    : exercise.secondaryMuscles ?? [];
+  const name = exercise.title || exercise.name || "";
+  const primaryMuscle =
+    exercise.body_part || exercise.primaryMuscle || primaryMuscles[0] || "";
+
   return {
     id: String(exercise._id),
-    name: exercise.name,
-    primaryMuscle: exercise.primaryMuscle,
-    secondaryMuscles: exercise.secondaryMuscles ?? [],
+    name,
+    title: name,
+    description: exercise.description ?? "",
+    primaryMuscle,
+    bodyPart: exercise.body_part ?? "",
+    secondaryMuscles,
+    targetMuscles: {
+      primary: primaryMuscles,
+      secondary: secondaryMuscles,
+    },
+    equipment: exercise.equipment ?? "",
+    equipmentCategory: exercise.equipmentCategory ?? "",
+    category: exercise.category ?? "",
+    difficulty: exercise.difficulty ?? "",
+    mechanic: exercise.mechanic ?? "",
+    forceType: exercise.force_type ?? "",
+    goals: exercise.goals ?? [],
+    tags: exercise.tags ?? [],
+    instructions: exercise.instructions ?? [],
+    tips: exercise.tips ?? [],
+    isBodyweight: Boolean(exercise.is_bodyweight),
+    isUnilateral: Boolean(exercise.is_unilateral),
+    met: exercise.met ?? null,
+    slug: exercise.slug ?? "",
     isCustom: Boolean(exercise.isCustom),
-    createdAt: exercise.createdAt,
+    createdAt: exercise.createdAt ?? null,
   };
 }
 
@@ -72,10 +105,12 @@ function escapeRegex(value) {
 router.get("/", async (req, res, next) => {
   try {
     const filters = [
-      // Tenant visibility boundary: shared rows or rows owned by this gym.
+      // Tenant visibility boundary: library rows or rows owned by this gym.
+      // Seeded exercises do not store `isCustom` at all, so compare against true
+      // instead of false; otherwise the whole catalog is hidden.
       {
         $or: [
-          { isCustom: false },
+          { isCustom: { $ne: true } },
           { createdByGymId: req.user.gymId ?? null },
         ],
       },
@@ -86,17 +121,25 @@ router.get("/", async (req, res, next) => {
     // A separate $or is required because combining visibility and search in one
     // $or would let search terms bypass the tenant boundary.
     if (search) {
+      const pattern = new RegExp(escapeRegex(search), "i");
+
       filters.push({
         $or: [
-          { name: new RegExp(escapeRegex(search), "i") },
-          { primaryMuscle: new RegExp(escapeRegex(search), "i") },
-          { secondaryMuscles: new RegExp(escapeRegex(search), "i") },
+          { title: pattern },
+          { name: pattern },
+          { primaryMuscle: pattern },
+          { body_part: pattern },
+          { secondaryMuscles: pattern },
+          { "targetMuscles.primary": pattern },
+          { "targetMuscles.secondary": pattern },
+          { equipment: pattern },
+          { category: pattern },
         ],
       });
     }
 
     const exercises = await Exercise.find({ $and: filters })
-      .sort({ name: 1 })
+      .sort({ title: 1, name: 1 })
       .lean();
 
     return res.json(exercises.map(serializeExercise));
@@ -124,10 +167,11 @@ router.post("/", requireRole("gym_admin", "coach"), async (req, res, next) => {
         .json({ message: "A primary muscle group is required." });
     }
 
-    // Case-insensitive exact-name check gives a friendlier 409 than the unique
-    // index, which is case-sensitive by default.
+    // Case-insensitive exact-name check across both storage shapes gives a
+    // friendlier 409 than relying on a unique index.
+    const duplicateName = new RegExp(`^${escapeRegex(name)}$`, "i");
     const existing = await Exercise.findOne({
-      name: new RegExp(`^${escapeRegex(name)}$`, "i"),
+      $or: [{ title: duplicateName }, { name: duplicateName }],
     }).lean();
 
     if (existing) {
@@ -136,10 +180,19 @@ router.post("/", requireRole("gym_admin", "coach"), async (req, res, next) => {
         .json({ message: "An exercise with this name already exists." });
     }
 
+    // Populate both shapes so custom rows behave like library rows while older
+    // routine/progress code can still read name/primaryMuscle.
     const exercise = await Exercise.create({
+      title: name,
       name,
       primaryMuscle,
+      body_part: primaryMuscle,
       secondaryMuscles,
+      targetMuscles: {
+        primary: [primaryMuscle],
+        secondary: secondaryMuscles,
+      },
+      description: String(req.body.description ?? "").trim(),
       isCustom: true,
       createdByGymId: req.user.gymId ?? null,
     });

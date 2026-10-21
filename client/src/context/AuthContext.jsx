@@ -130,6 +130,53 @@ export function AuthProvider({ children }) {
   );
 
   /**
+   * Redeem a gym-issued setup PIN. The resulting session belongs to a pending
+   * coach/client (setupRequired) and the guards keep them on the account page
+   * until they choose credentials.
+   *
+   * @param {string} pin - PIN shown to the member by their gym admin.
+   * @returns {Promise<object>} The pending user record.
+   */
+  const pinLogin = useCallback(
+    async (pin) => {
+      const data = await apiRequest("/auth/pin-login", {
+        method: "POST",
+        body: { pin },
+      });
+
+      skipHydrate.current = true;
+      setLoading(false);
+      applySession(data);
+
+      return data.user;
+    },
+    [applySession]
+  );
+
+  /**
+   * Finish onboarding by replacing the setup PIN with an email/password.
+   * The server clears the PIN and returns a fresh, fully active session.
+   *
+   * @param {{ name: string, email: string, password: string }} payload
+   * @returns {Promise<object>} The updated user record.
+   */
+  const completeSetup = useCallback(
+    async (payload) => {
+      const data = await apiRequest("/auth/setup-account", {
+        method: "POST",
+        body: payload,
+      });
+
+      skipHydrate.current = true;
+      setLoading(false);
+      applySession(data);
+
+      return data.user;
+    },
+    [applySession]
+  );
+
+  /**
    * Authenticated API helper used by feature pages and `useApiData`.
    * Clears the session on 401 so the route guards redirect to `/login`, then
    * rethrows so callers can still show their own error state.
@@ -186,8 +233,11 @@ export function AuthProvider({ children }) {
       subscription,
       isAuthenticated,
       isSuspended,
+      setupRequired: Boolean(user?.setupRequired),
       loading,
       login,
+      pinLogin,
+      completeSetup,
       setup,
       request,
       logout,
@@ -198,6 +248,8 @@ export function AuthProvider({ children }) {
     subscription,
     loading,
     login,
+    pinLogin,
+    completeSetup,
     setup,
     request,
     logout,

@@ -1,15 +1,15 @@
 /**
  * Coach home: clients currently assigned to the signed-in coach.
  *
- * Loads the client roster and a small overview payload in parallel, then:
- * - derives an Active/Inactive display status from `active`,
- * - creates clients (and assigns them to this coach via the API),
- * - unassigns single clients or bulk-removes selected ones.
+ * Clients are created only by the gym administrator; coaches add them to this
+ * roster from the All Clients page. This page loads the roster and a small
+ * overview payload in parallel, derives an Active/Inactive display status from
+ * `active`, and unassigns single clients or bulk-removes selected ones.
  * Mutations update the local list directly and refresh the overview counts.
  */
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useMemo } from "react"
 import { Link } from "react-router-dom"
-import { ClipboardCheck, Copy, UserPlus, UserX, Users } from "lucide-react"
+import { ClipboardCheck, Copy, UserX, Users } from "lucide-react"
 
 import { useAuth } from "@/hooks/useAuth"
 import { useApiData } from "@/hooks/useApiData"
@@ -18,7 +18,6 @@ import { ErrorState, LoadingState } from "@/components/dashboard/data-state"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { StatCard } from "@/components/dashboard/stat-card"
 import { StatusBadge } from "@/components/dashboard/status-badge"
-import { UserFormDialog } from "@/components/dashboard/user-form-dialog"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 
@@ -38,7 +37,7 @@ function formatDate(value) {
 }
 
 /**
- * @returns {JSX.Element} Client roster with stats, table, and create dialog.
+ * @returns {JSX.Element} Client roster with stats, table, and unassign actions.
  */
 export default function CoachDashboard() {
   const { request } = useAuth()
@@ -54,10 +53,6 @@ export default function CoachDashboard() {
   const { data: overview, refresh: refreshOverview } = useApiData(
     "/coach/overview"
   )
-
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [formError, setFormError] = useState("")
 
   // Normalize the boolean `active` flag into the strings the StatusBadge and
   // faceted filter expect.
@@ -99,27 +94,6 @@ export default function CoachDashboard() {
     [request, setData, refreshOverview]
   )
 
-  // Create through the coach endpoint so the new account is automatically
-  // assigned to this coach; prepend it to match the newest-first table order.
-  const handleCreate = async (values) => {
-    setSaving(true)
-    setFormError("")
-
-    try {
-      const created = await request("/coach/clients", {
-        method: "POST",
-        body: values,
-      })
-      setData((current) => [created, ...(current ?? [])])
-      setDialogOpen(false)
-      refreshOverview()
-    } catch (createError) {
-      setFormError(createError.message ?? "Unable to create the client.")
-    } finally {
-      setSaving(false)
-    }
-  }
-
   // Column definitions live in one memo so handlers stay stable for the table.
   // Sections below: selection, identity/filter, status facet, joined date, actions.
   const columns = useMemo(
@@ -155,7 +129,7 @@ export default function CoachDashboard() {
         accessorKey: "name",
         cell: ({ row }) => (
           <div className="min-w-0">
-            <p className="truncate font-medium text-foreground">
+            <p className="truncate font-bold text-foreground">
               {row.getValue("name") || "—"}
             </p>
             <p className="truncate text-xs text-muted-foreground">
@@ -232,14 +206,26 @@ export default function CoachDashboard() {
         title="My clients"
         description="Track the clients assigned to you and keep their routines up to date."
         actions={
-          <Button
-            variant="outline"
-            className="gap-2"
-            render={<Link to="/dashboard/coach/routines" />}
-          >
-            <ClipboardCheck className="size-4" />
-            My routines
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              className="gap-2"
+              nativeButton={false}
+              render={<Link to="/dashboard/coach/all-clients" />}
+            >
+              <Users className="size-4" />
+              All clients
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2"
+              nativeButton={false}
+              render={<Link to="/dashboard/coach/routines" />}
+            >
+              <ClipboardCheck className="size-4" />
+              My routines
+            </Button>
+          </div>
         }
       />
 
@@ -278,25 +264,9 @@ export default function CoachDashboard() {
           searchColumnId="name"
           statusColumnId="status"
           searchPlaceholder="Filter clients by name or email..."
-          emptyMessage="No clients assigned yet. Add a client to get started."
-          actions={
-            <Button className="gap-2" onClick={() => setDialogOpen(true)}>
-              <UserPlus className="size-4" />
-              Add client
-            </Button>
-          }
+          emptyMessage="No clients assigned yet. Add clients from the All Clients page."
         />
       )}
-
-      {/* Client mode: no coach picker because the API assigns to this coach. */}
-      <UserFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        mode="client"
-        saving={saving}
-        error={formError}
-        onSubmit={handleCreate}
-      />
     </div>
   )
 }

@@ -2,8 +2,9 @@
  * Route guard for authenticated dashboard pages.
  *
  * Guards run in priority order: wait for session hydration, require a user,
- * block suspended tenants, then enforce role membership. Nested guards allow
- * each role subtree to be protected independently (see App.jsx).
+ * block suspended tenants, keep members with a pending setup PIN on the account
+ * page, then enforce role membership. Nested guards allow each role subtree to
+ * be protected independently (see App.jsx).
  */
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,7 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
  */
 function RouteFallback() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black text-white">
+    <div className="flex min-h-screen items-center justify-center bg-canvas text-ink">
       <span className="animate-pulse text-sm tracking-[0.2em] uppercase">
         Loading
       </span>
@@ -31,7 +32,13 @@ function RouteFallback() {
  * @returns {JSX.Element} The nested route outlet, or a redirect/fallback.
  */
 export default function ProtectedRoute({ allowedRoles, requireSubscription = true }) {
-  const { isAuthenticated, role, isSuspended, loading } = useAuth();
+  const {
+    isAuthenticated,
+    role,
+    isSuspended,
+    setupRequired,
+    loading,
+  } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -45,6 +52,12 @@ export default function ProtectedRoute({ allowedRoles, requireSubscription = tru
 
   if (requireSubscription && isSuspended) {
     return <Navigate to="/suspended" replace />;
+  }
+
+  // Coaches/clients created with a PIN must complete account setup before they
+  // can reach any other dashboard page.
+  if (setupRequired && location.pathname !== "/dashboard/account") {
+    return <Navigate to="/dashboard/account" replace />;
   }
 
   if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
