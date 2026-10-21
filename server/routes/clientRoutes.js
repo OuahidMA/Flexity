@@ -12,12 +12,19 @@
  */
 
 import { Router } from "express";
+import mongoose from "mongoose";
 import Routine from "../models/Routine.js";
 import ProgressLog from "../models/ProgressLog.js";
 import auth from "../middleware/auth.js";
 import checkAccess from "../middleware/checkAccess.js";
 import requireRole from "../middleware/requireRole.js";
 import { getGymAdmin } from "../utils/members.js";
+import {
+  normalizeProgressDate,
+  normalizeProgressSets,
+  progressError,
+  serializeProgressLog,
+} from "../utils/progress.js";
 
 const router = Router();
 
@@ -103,7 +110,7 @@ router.get("/workouts", async (req, res, next) => {
 });
 
 // ---------------------------------------------------------------------------
-// GET /api/client/progress - flattened progress feed with computed volume
+// GET /api/client/progress - progress feed with per-set tracking data
 // ---------------------------------------------------------------------------
 router.get("/progress", async (req, res, next) => {
   try {
@@ -111,42 +118,177 @@ router.get("/progress", async (req, res, next) => {
       gymId: req.user.gymId,
       clientId: req.user.userId,
     })
+      // The populated catalog entry is only a fallback: logs snapshot the
+      // exercise name and muscle at save time.
       .populate(
         "exerciseId",
         "name title body_part primaryMuscle targetMuscles"
       )
-      .sort({ date: -1 })
+      .sort({ date: -1, createdAt: -1 })
       .lean();
 
-    return res.json(
-      logs.map((log) => {
-        const sets = log.trackingData ?? [];
-        // Volume is intentionally derived here rather than stored, so changing
-        // the formula does not require a migration.
-        const volume = sets.reduce(
-          (total, set) =>
-            total + (Number(set.weight) || 0) * (Number(set.reps) || 0),
-          0
+    return res.json(logs.map(serializeProgressLog));
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/client/progress - save one exercise's set-by-set performance
+// ---------------------------------------------------------------------------
+router.post("/progress", async (req, res, next) => {
+  try {
+    const body = req.body ?? {};
+    const date = normalizeProgressDate(body.date);
+    const rawExerciseId = body.exerciseId ? String(body.exerciseId) : "";
+
+    if (!mongoose.isValidObjectId(rawExerciseId)) {
+      throw progressError(400, "Select a valid exercise to log.");
+    }
+
+    const requestedOrder = Number(body.exerciseOrder);
+    const hasRequestedDay =
+      body.dayOfWeek !== undefined &&
+      body.dayOfWeek !== null &&
+      body.dayOfWeek !== "";
+    const requestedDay = hasRequestedDay ? Number(body.dayOfWeek) : null;
+
+    if (
+      requestedDay !== null &&
+      (!Number.isInteger(requestedDay) || requestedDay < 0 || requestedDay > 6)
+    ) {
+      throw progressError(400, "Select a valid workout day.");
+    }
+
+    let routine = null;
+    let routineLine = null;
+    let routineDay = null;
+
+    // When the log belongs to a routine, the routine is authoritative: the
+    // exercise line supplies the prescription snapshot and the coach-selected
+    // tracking mode. This also prevents logging arbitrary catalog exercises.
+    if (body.routineId) {
+      if (!mongoose.isValidObjectId(String(body.routineId))) {
+        throw progressError(400, "Select a valid routine.");
+      }
+
+      routine = await Routine.findOne({
+        _id: body.routineId,
+        gymId: req.user.gymId,
+        clientId: req.user.userId,
+        status: { $ne: "archived" },
+      });
+
+      if (!routine) {
+        throw progressError(400, "This routine is not assigned to you.");
+      }
+
+      // Flatten the routine's scheduled days (or its legacy flat list) so the
+      // exercise line and its day label can be resolved in one lookup.
+      const candidates = [];
+
+      for (const day of routine.days ?? []) {
+        for (const line of day.exercises ?? []) {
+          candidates.push({ line, day });
+        }
+      }
+
+      if (candidates.length === 0) {
+        for (const line of routine.exercises ?? []) {
+          candidates.push({ line, day: null });
+        }
+      }
+
+      // Restrict to the client-selected weekday first so the same exercise/order
+      // appearing on several days resolves to the correct line.
+      const dayCandidates =
+        requestedDay === null
+          ? candidates
+          : candidates.filter(
+              (candidate) =>
+                candidate.day &&
+                Number(candidate.day.dayOfWeek) === requestedDay
+            );
+
+      const byOrder = Number.isFinite(requestedOrder)
+        ? dayCandidates.find(
+            (candidate) =>
+              String(candidate.line.exerciseId) === rawExerciseId &&
+              Number(candidate.line.order) === requestedOrder
+          )
+        : null;
+
+      const match =
+        byOrder ??
+        dayCandidates.find(
+          (candidate) => String(candidate.line.exerciseId) === rawExerciseId
         );
 
-        return {
-          id: String(log._id),
-          date: log.date,
-          exerciseId: log.exerciseId?._id
-            ? String(log.exerciseId._id)
-            : String(log.exerciseId ?? ""),
-          exerciseName:
-            log.exerciseId?.title || log.exerciseId?.name || "Exercise",
-          primaryMuscle:
-            log.exerciseId?.body_part ||
-            log.exerciseId?.primaryMuscle ||
-            log.exerciseId?.targetMuscles?.primary?.[0] ||
-            "",
-          sets: sets.length,
-          volume,
-        };
-      })
+      if (!match) {
+        throw progressError(
+          400,
+          "This exercise is not part of the selected routine."
+        );
+      }
+
+      routineLine = match.line;
+      routineDay = match.day;
+    }
+
+    const trackingType =
+      (routineLine?.trackingType ?? body.trackingType) === "time"
+        ? "time"
+        : "reps";
+
+    const exerciseName = String(
+      routineLine?.name ?? body.exerciseName ?? ""
+    ).trim();
+
+    if (!exerciseName) {
+      throw progressError(400, "Enter or select an exercise to log.");
+    }
+
+    const trackingData = normalizeProgressSets(body.sets, trackingType);
+
+    // One log per routine line per day. Re-saving the same exercise updates the
+    // existing entry instead of creating duplicates in the history/volume charts.
+    const log = await ProgressLog.findOneAndUpdate(
+      {
+        gymId: req.user.gymId,
+        clientId: req.user.userId,
+        date,
+        exerciseId: rawExerciseId,
+        exerciseOrder: routineLine?.order ?? (Number.isFinite(requestedOrder)
+          ? requestedOrder
+          : 0),
+        dayOfWeek: routineDay?.dayOfWeek ?? requestedDay,
+        routineId: routine?._id ?? null,
+      },
+      {
+        $set: {
+          clientId: req.user.userId,
+          gymId: req.user.gymId,
+          date,
+          exerciseId: rawExerciseId,
+          routineId: routine?._id ?? null,
+          routineName: routine?.name ?? String(body.routineName ?? "").trim(),
+          dayOfWeek: routineDay?.dayOfWeek ?? requestedDay,
+          dayLabel: routineDay?.label ?? String(body.dayLabel ?? "").trim(),
+          exerciseName,
+          primaryMuscle: String(
+            routineLine?.primaryMuscle ?? body.primaryMuscle ?? ""
+          ).trim(),
+          exerciseOrder: routineLine?.order ?? (Number.isFinite(requestedOrder)
+            ? requestedOrder
+            : 0),
+          trackingType,
+          trackingData,
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true, runValidators: true }
     );
+
+    return res.status(201).json(serializeProgressLog(log));
   } catch (error) {
     return next(error);
   }

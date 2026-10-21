@@ -7,9 +7,15 @@
  * `active`, and unassigns single clients or bulk-removes selected ones.
  * Mutations update the local list directly and refresh the overview counts.
  */
-import { useCallback, useMemo } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
-import { ClipboardCheck, Copy, UserX, Users } from "lucide-react"
+import {
+  BarChart3,
+  ClipboardCheck,
+  Copy,
+  UserX,
+  Users,
+} from "lucide-react"
 
 import { useAuth } from "@/hooks/useAuth"
 import { useApiData } from "@/hooks/useApiData"
@@ -18,6 +24,7 @@ import { ErrorState, LoadingState } from "@/components/dashboard/data-state"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { StatCard } from "@/components/dashboard/stat-card"
 import { StatusBadge } from "@/components/dashboard/status-badge"
+import { ClientProgressDialog } from "@/components/workout/client-progress-dialog"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 
@@ -53,6 +60,8 @@ export default function CoachDashboard() {
   const { data: overview, refresh: refreshOverview } = useApiData(
     "/coach/overview"
   )
+  // The selected client whose saved progress is open in the dialog.
+  const [progressClient, setProgressClient] = useState(null)
 
   // Normalize the boolean `active` flag into the strings the StatusBadge and
   // faceted filter expect.
@@ -175,6 +184,11 @@ export default function CoachDashboard() {
             label={`Actions for ${row.original.name}`}
             items={[
               {
+                label: "View progress",
+                icon: BarChart3,
+                onClick: () => setProgressClient(row.original),
+              },
+              {
                 label: "Copy email",
                 icon: Copy,
                 onClick: () =>
@@ -267,6 +281,14 @@ export default function CoachDashboard() {
           emptyMessage="No clients assigned yet. Add clients from the All Clients page."
         />
       )}
+
+      <ClientProgressDialog
+        client={progressClient}
+        open={Boolean(progressClient)}
+        onOpenChange={(open) => {
+          if (!open) setProgressClient(null)
+        }}
+      />
     </div>
   )
 }

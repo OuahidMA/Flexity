@@ -1,10 +1,13 @@
 /**
- * Browser-local persistence for coach-defined exercises and client progress.
+ * Browser-local persistence for coach-defined custom exercises.
  *
  * These records intentionally never reach the API. Each value is namespaced by
  * the signed-in user id so multiple accounts sharing a browser stay isolated.
  * localStorage can throw (private mode, quota); reads fall back to an empty
  * collection and writes fail silently so the UI keeps working.
+ *
+ * Client progress is not stored here: it is persisted through the progress API
+ * so coaches can read the same logs.
  */
 
 const STORAGE_PREFIX = "flexity"
@@ -135,27 +138,3 @@ export function removeLocalExercise(userId, id) {
   return next
 }
 
-/**
- * @param {string|null|undefined} userId
- * @returns {Array<object>} Progress entries, newest first.
- */
-export function getProgressLogs(userId) {
-  const stored = readJson(storageKey("progress", userId), [])
-  return Array.isArray(stored) ? stored : []
-}
-
-/**
- * Stores one logged session and returns the refreshed, newest-first list.
- *
- * @param {string|null|undefined} userId
- * @param {object} log - `{ date, exerciseName, primaryMuscle, sets, volume }`.
- * @returns {Array<object>} Updated collection.
- */
-export function addProgressLog(userId, log) {
-  const next = [log, ...getProgressLogs(userId)].sort(
-    (first, second) => new Date(second.date) - new Date(first.date)
-  )
-
-  writeJson(storageKey("progress", userId), next)
-  return next
-}

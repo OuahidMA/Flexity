@@ -14,10 +14,12 @@
 import { Router } from "express";
 import mongoose from "mongoose";
 import Routine from "../models/Routine.js";
+import ProgressLog from "../models/ProgressLog.js";
 import auth from "../middleware/auth.js";
 import checkAccess from "../middleware/checkAccess.js";
 import requireRole from "../middleware/requireRole.js";
 import { coachInitials, getGymAdmin } from "../utils/members.js";
+import { serializeProgressLog } from "../utils/progress.js";
 
 const router = Router();
 
@@ -220,6 +222,53 @@ router.delete("/clients/:id", async (req, res, next) => {
     await admin.save();
 
     return res.json({ success: true });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/coach/clients/:id/progress - one roster client's logged progress
+// ---------------------------------------------------------------------------
+router.get("/clients/:id/progress", async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({ message: "Invalid client id." });
+    }
+
+    const admin = await getGymAdmin(req.user.gymId);
+    // Roster ownership is part of the lookup, so a coach can never read another
+    // coach's client progress by guessing a valid id.
+    const client = admin.clients.find(
+      (candidate) =>
+        String(candidate._id) === String(req.params.id) &&
+        String(candidate.coachId ?? "") === String(req.user.userId)
+    );
+
+    if (!client) {
+      return res.status(404).json({ message: "Client not found." });
+    }
+
+    const logs = await ProgressLog.find({
+      gymId: req.user.gymId,
+      clientId: client._id,
+    })
+      .populate(
+        "exerciseId",
+        "name title body_part primaryMuscle targetMuscles"
+      )
+      .sort({ date: -1, createdAt: -1 })
+      .limit(500)
+      .lean();
+
+    return res.json({
+      client: {
+        id: String(client._id),
+        name: client.profile?.name || "",
+        email: client.email,
+      },
+      logs: logs.map(serializeProgressLog),
+    });
   } catch (error) {
     return next(error);
   }

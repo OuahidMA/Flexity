@@ -1,783 +1,516 @@
 /**
- * Client progress history.
+ * Client progress page.
  *
- * Progress entries are entered and stored in this browser's localStorage; no
- * API call reads or writes the database. The page lists every exercise the
- * coach prescribed so the client can log sets, reps or time, and weight
- * without leaving the page. Bars are scaled against the largest single-session
- * volume so small values stay visible.
+ * The page reads the routines assigned by the coach and renders the selected
+ * workout as a table: one row group per exercise and one input row per set.
+ * The logging field mirrors the coach's prescription:
+ * - trackingType "reps" -> numeric reps per set
+ * - trackingType "time" -> seconds per set (planks, intervals, ...)
+ *
+ * Every set can also record a weight, or "None" for bodyweight work which greys
+ * out the weight input. Saving writes one ProgressLog per exercise to the API,
+ * so coaches can read the same data from their dashboard.
  */
 import { useMemo, useState } from "react"
-import { Activity, CalendarDays, Dumbbell, Plus, TrendingUp } from "lucide-react"
+import {
+  Activity,
+  CalendarDays,
+  Dumbbell,
+  TrendingUp,
+} from "lucide-react"
 
-import { useAuth } from "@/hooks/useAuth"
 import { useApiData } from "@/hooks/useApiData"
-import { addProgressLog, createLocalId, getProgressLogs } from "@/lib/local-store"
+import {
+  buildDailyVolume,
+  formatMetricSummary,
+  formatProgressDate,
+  formatWeightSummary,
+  progressDateKey,
+  todayInputValue,
+} from "@/lib/progress"
+import { getWeekdayLabel } from "@/lib/workout-splits"
 import { DataTable } from "@/components/data-table"
-import { EmptyState } from "@/components/dashboard/data-state"
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+} from "@/components/dashboard/data-state"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { StatCard } from "@/components/dashboard/stat-card"
+import { ProgressLogger } from "@/components/workout/progress-logger"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+
+const SELECT_CLASS =
+  "h-10 w-full rounded-xs border border-hairline bg-surface-1 px-3 text-sm text-ink outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50"
 
 /**
- * @returns {string} Today's date as a local `yyyy-mm-dd` input value.
- */
-function todayInputValue() {
-  const now = new Date()
-  const month = String(now.getMonth() + 1).padStart(2, "0")
-  const day = String(now.getDate()).padStart(2, "0")
-  return `${now.getFullYear()}-${month}-${day}`
-}
-
-/**
- * @returns {object} A blank log-session form.
- */
-function emptyForm() {
-  return {
-    exerciseName: "",
-    date: todayInputValue(),
-    sets: "3",
-    trackingType: "reps",
-    reps: "10",
-    timeSec: "30",
-    weight: "0",
-    noWeight: false,
-  }
-}
-
-/**
- * Flattens a routine's schedule into exercise rows, keeping the day label for
- * context when the routine uses weekly days.
+ * Defaults to the routine scheduled today, then the first active routine.
  *
- * @param {object} routine - Routine returned by the API.
- * @returns {object[]} Exercises with their day label.
+ * @param {Array<object>} routines - Assigned routines.
+ * @returns {object|null} Preferred routine.
  */
-function getRoutineExercises(routine) {
-  const days = (routine.days ?? []).filter((day) => !day.isRest)
+function pickPreferredRoutine(routines) {
+  if (routines.length === 0) return null
 
-  if (days.length === 0) {
-    return (routine.exercises ?? []).map((exercise) => ({
-      ...exercise,
-      dayLabel: "",
-    }))
-  }
-
-  return days.flatMap((day) =>
-    (day.exercises ?? []).map((exercise) => ({
-      ...exercise,
-      dayLabel: day.label ?? "",
-    }))
-  )
-}
-
-/**
- * @param {object} exercise - API exercise line.
- * @returns {string} Human-readable prescription.
- */
-function prescriptionLabel(exercise) {
-  const target =
-    exercise.trackingType === "time"
-      ? `${exercise.timeSec ?? 30}s`
-      : `${exercise.reps ?? 10} reps`
-  return `${exercise.sets ?? 3} × ${target}`
-}
-
-/**
- * One coach-prescribed exercise with inline local logging. The target input is
- * driven by the coach's tracking mode: reps for strength, seconds for timed
- * work. Checking "None" greys out the weight field and logs no external load.
- *
- * @param {object} props
- * @param {object} props.exercise - Prescribed exercise.
- * @param {(entry: { sets: number, target: number, weight: number|null }) => void} props.onLog
- * @returns {JSX.Element} Table row.
- */
-function PrescriptionRow({ exercise, onLog }) {
-  const isTime = exercise.trackingType === "time"
-  const [sets, setSets] = useState(String(exercise.sets ?? 3))
-  const [target, setTarget] = useState(
-    String(isTime ? (exercise.timeSec ?? 30) : (exercise.reps ?? 10))
-  )
-  const [weight, setWeight] = useState("0")
-  const [noWeight, setNoWeight] = useState(false)
-  const [error, setError] = useState("")
-
-  const handleLog = () => {
-    const setsValue = Number(sets)
-    const targetValue = Number(target)
-    const weightValue = noWeight ? null : Number(weight)
-
-    if (setsValue < 1 || targetValue < 1) {
-      setError("Enter valid sets and target.")
-      return
-    }
-
-    if (!noWeight && (weight === "" || !Number.isFinite(weightValue))) {
-      setError("Enter a weight or choose None.")
-      return
-    }
-
-    setError("")
-    onLog({ sets: setsValue, target: targetValue, weight: weightValue })
-  }
-
+  const today = new Date().getDay()
   return (
-    <TableRow>
-      <TableCell>
-        <div className="min-w-36">
-          <p className="font-bold">{exercise.name}</p>
-          <p className="text-xs text-muted-foreground">
-            {exercise.primaryMuscle || "Exercise"}
-            {exercise.dayLabel ? ` · ${exercise.dayLabel}` : ""}
-          </p>
-        </div>
-      </TableCell>
-
-      <TableCell className="whitespace-nowrap">
-        <span className="text-xs font-medium text-muted-foreground">
-          {prescriptionLabel(exercise)}
-        </span>
-      </TableCell>
-
-      <TableCell>
-        <Input
-          type="number"
-          min="1"
-          value={sets}
-          onChange={(event) => setSets(event.target.value)}
-          className="h-9 w-20"
-          aria-label={`Sets for ${exercise.name}`}
-        />
-      </TableCell>
-
-      <TableCell>
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            min="1"
-            value={target}
-            onChange={(event) => setTarget(event.target.value)}
-            className="h-9 w-20"
-            aria-label={`${isTime ? "Seconds" : "Reps"} for ${exercise.name}`}
-          />
-          <span className="text-xs text-muted-foreground">
-            {isTime ? "sec" : "reps"}
-          </span>
-        </div>
-      </TableCell>
-
-      <TableCell>
-        <div className="flex items-center gap-2">
-          <Input
-            type="number"
-            min="0"
-            step="0.5"
-            value={noWeight ? "" : weight}
-            onChange={(event) => setWeight(event.target.value)}
-            disabled={noWeight}
-            className={
-              noWeight
-                ? "h-9 w-24 bg-muted/50 text-muted-foreground"
-                : "h-9 w-24"
-            }
-            aria-label={`Weight for ${exercise.name}`}
-          />
-          <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
-            <Checkbox
-              checked={noWeight}
-              onCheckedChange={(checked) => {
-                setNoWeight(Boolean(checked))
-                setError("")
-              }}
-            />
-            None
-          </label>
-        </div>
-      </TableCell>
-
-      <TableCell>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={handleLog}
-        >
-          Log
-        </Button>
-        {error && (
-          <p className="mt-1 text-[10px] text-destructive">{error}</p>
-        )}
-      </TableCell>
-    </TableRow>
+    routines.find(
+      (routine) =>
+        routine.status === "active" &&
+        (routine.days ?? []).some(
+          (day) => Number(day.dayOfWeek) === today && !day.isRest
+        )
+    ) ??
+    routines.find((routine) => routine.status === "active") ??
+    routines[0]
   )
 }
 
 /**
- * @returns {JSX.Element} Progress KPIs, prescribed exercises, volume chart, and check-in table.
+ * @param {Array<object>} days - Routine schedule.
+ * @param {number|null} requested - User-selected weekday.
+ * @returns {number|null} A weekday present in the schedule.
+ */
+function pickPreferredDay(days, requested) {
+  if (days.length === 0) return null
+
+  if (requested !== null && requested !== "") {
+    const current = Number(requested)
+    if (days.some((day) => Number(day.dayOfWeek) === current)) return current
+  }
+
+  const today = new Date().getDay()
+  const preferred =
+    days.find((day) => Number(day.dayOfWeek) === today && !day.isRest) ??
+    days.find((day) => !day.isRest) ??
+    days[0]
+
+  return preferred ? Number(preferred.dayOfWeek) : null
+}
+
+/**
+ * @returns {JSX.Element} Client progress logging table, KPIs, and history.
  */
 export default function ClientProgress() {
-  const { user } = useAuth()
-  const [entries, setEntries] = useState(() => getProgressLogs(user?.id))
+  const {
+    data: workouts,
+    loading: workoutsLoading,
+    error: workoutsError,
+    refresh: refreshWorkouts,
+  } = useApiData("/client/workouts")
+  const {
+    data: progress,
+    loading: progressLoading,
+    error: progressError,
+    refresh: refreshProgress,
+  } = useApiData("/client/progress")
 
-  // Assigned workouts supply the coach's prescription. Progress itself never
-  // touches the API.
-  const { data: workouts } = useApiData("/client/workouts")
+  const routines = useMemo(() => workouts ?? [], [workouts])
+  const logs = useMemo(() => progress ?? [], [progress])
 
-  const prescribedExercises = useMemo(() => {
-    const seen = new Set()
-    const rows = []
+  const [routineId, setRoutineId] = useState(null)
+  const [dayOfWeek, setDayOfWeek] = useState(null)
+  const [date, setDate] = useState(todayInputValue)
 
-    for (const routine of workouts ?? []) {
-      for (const exercise of getRoutineExercises(routine)) {
-        const name = exercise.name?.trim()
-        if (!name) continue
-        const key = (exercise.exerciseId || name).toLowerCase()
-        if (seen.has(key)) continue
-        seen.add(key)
+  // Selection is derived, not synced in an effect: a missing/invalid state
+  // falls back to the coach-scheduled routine and day for today.
+  const preferredRoutine = useMemo(() => pickPreferredRoutine(routines), [routines])
 
-        const trackingType =
-          exercise.trackingType === "time" ? "time" : "reps"
-        const reps = exercise.reps ?? 10
-        const timeSec = exercise.timeSec ?? 30
+  const selectedRoutine = useMemo(
+    () =>
+      routines.find((routine) => routine.id === routineId) ??
+      preferredRoutine,
+    [routines, routineId, preferredRoutine]
+  )
 
-        rows.push({
-          key: `${routine.id}-${key}-${trackingType}-${reps}-${timeSec}`,
-          name,
-          primaryMuscle: exercise.primaryMuscle ?? "",
-          sets: exercise.sets ?? 3,
-          trackingType,
-          reps,
-          timeSec,
-          dayLabel: exercise.dayLabel,
-        })
-      }
-    }
+  const scheduledDays = useMemo(
+    () => selectedRoutine?.days ?? [],
+    [selectedRoutine]
+  )
 
-    return rows
-  }, [workouts])
+  const effectiveDayOfWeek = useMemo(
+    () => pickPreferredDay(scheduledDays, dayOfWeek),
+    [scheduledDays, dayOfWeek]
+  )
 
-  const exerciseOptions = prescribedExercises
+  const selectedDay = useMemo(() => {
+    if (scheduledDays.length === 0) return null
+    return (
+      scheduledDays.find(
+        (day) => Number(day.dayOfWeek) === Number(effectiveDayOfWeek)
+      ) ?? null
+    )
+  }, [scheduledDays, effectiveDayOfWeek])
 
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [form, setForm] = useState(emptyForm)
-  const [formError, setFormError] = useState("")
+  // Schedule-aware exercise list: a specific weekday for weekly routines, or
+  // the legacy flat list when a routine has no days.
+  const exercises = useMemo(() => {
+    if (!selectedRoutine) return []
 
-  const latest = entries[0]
-  const totalVolume = entries.reduce(
-    (total, log) => total + (log.volume || 0),
+    const source =
+      scheduledDays.length === 0
+        ? selectedRoutine.exercises ?? []
+        : selectedDay?.isRest
+          ? []
+          : selectedDay?.exercises ?? []
+
+    return [...source].sort(
+      (first, second) => Number(first.order ?? 0) - Number(second.order ?? 0)
+    )
+  }, [selectedRoutine, scheduledDays, selectedDay])
+
+  const dayLabel =
+    selectedRoutine && scheduledDays.length === 0
+      ? "Full routine"
+      : selectedDay?.label || "Workout"
+
+  const sessionCount = useMemo(
+    () =>
+      new Set(
+        logs.map((log) => progressDateKey(log.date)).filter(Boolean)
+      ).size,
+    [logs]
+  )
+  const totalVolume = logs.reduce((total, log) => total + (log.volume || 0), 0)
+  const totalLoggedSets = logs.reduce(
+    (total, log) => total + (log.sets || 0),
     0
   )
-  const averageVolume = entries.length
-    ? Math.round(totalVolume / entries.length)
-    : 0
-  const volumePeak = Math.max(...entries.map((log) => log.volume || 0), 1)
-  const chartData = useMemo(() => [...entries].reverse(), [entries])
+  const latest = logs[0]
+  const volumePeak = Math.max(...logs.map((log) => log.volume || 0), 1)
+  const dailyVolume = useMemo(() => buildDailyVolume(logs), [logs])
+  const dailyPeak = Math.max(
+    ...dailyVolume.map((day) => day.volume),
+    1
+  )
 
-  const openDialog = () => {
-    setForm(emptyForm())
-    setFormError("")
-    setDialogOpen(true)
-  }
-
-  const handlePrescriptionLog = (exercise, { sets, target, weight }) => {
-    const isTime = exercise.trackingType === "time"
-    const log = {
-      id: createLocalId(),
-      date: new Date().toISOString(),
-      exerciseName: exercise.name,
-      primaryMuscle: exercise.primaryMuscle,
-      sets,
-      trackingType: exercise.trackingType,
-      reps: isTime ? 0 : target,
-      timeSec: isTime ? target : 0,
-      weight,
-      weightMode: weight == null ? "none" : "kg",
-      volume: isTime || weight == null ? 0 : sets * weight * target,
-    }
-
-    setEntries(addProgressLog(user?.id, log))
-  }
-
-  const handleExerciseNameChange = (event) => {
-    const exerciseName = event.target.value
-    const match = exerciseOptions.find(
-      (option) => option.name.toLowerCase() === exerciseName.trim().toLowerCase()
-    )
-
-    setForm((current) => ({
-      ...current,
-      exerciseName,
-      ...(match
-        ? {
-            trackingType: match.trackingType,
-            reps: String(match.reps),
-            timeSec: String(match.timeSec),
-          }
-        : {}),
-    }))
-  }
-
-  const handleLog = (event) => {
-    event.preventDefault()
-
-    const exerciseName = form.exerciseName.trim()
-    const sets = Number(form.sets)
-    const isTime = form.trackingType === "time"
-    const target = Number(isTime ? form.timeSec : form.reps)
-    const weight = form.noWeight ? null : Number(form.weight)
-
-    if (!exerciseName) {
-      setFormError("Enter or pick an exercise.")
-      return
-    }
-
-    if (
-      !form.date ||
-      sets < 1 ||
-      target < 1 ||
-      (!form.noWeight &&
-        (form.weight === "" || !Number.isFinite(weight) || weight < 0))
-    ) {
-      setFormError("Enter a valid date, sets, target, and weight.")
-      return
-    }
-
-    // Noon avoids timezone shifts when formatting the stored date back out.
-    const match = exerciseOptions.find(
-      (option) => option.name.toLowerCase() === exerciseName.toLowerCase()
-    )
-
-    const log = {
-      id: createLocalId(),
-      date: new Date(`${form.date}T12:00:00`).toISOString(),
-      exerciseName,
-      primaryMuscle: match?.primaryMuscle ?? "",
-      sets,
-      trackingType: isTime ? "time" : "reps",
-      reps: isTime ? 0 : target,
-      timeSec: isTime ? target : 0,
-      weight,
-      weightMode: weight == null ? "none" : "kg",
-      volume: isTime || weight == null ? 0 : sets * weight * target,
-    }
-
-    setEntries(addProgressLog(user?.id, log))
-    setDialogOpen(false)
-  }
+  // Remounting the logger when the workout/date changes rebuilds its draft.
+  // The extra `ready` token re-mounts once, after the initial progress fetch,
+  // so previously saved values pre-fill. Later refreshes do not remount, which
+  // keeps the save confirmation visible.
+  const progressReady = progress !== null
+  const loggerKey = selectedRoutine
+    ? [
+        selectedRoutine.id,
+        effectiveDayOfWeek ?? "flat",
+        date,
+        progressReady ? "ready" : "pending",
+      ].join(":")
+    : "none"
 
   const columns = useMemo(
     () => [
       {
         header: "Date",
         accessorKey: "date",
-        cell: ({ row }) =>
-          new Date(row.getValue("date")).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          }),
-        size: 140,
+        cell: ({ row }) => (
+          <span className="whitespace-nowrap text-muted-foreground">
+            {formatProgressDate(row.getValue("date"), { year: true })}
+          </span>
+        ),
+        size: 130,
         enableHiding: false,
       },
       {
         header: "Exercise",
         accessorKey: "exerciseName",
         cell: ({ row }) => (
-          <span className="font-bold">{row.getValue("exerciseName")}</span>
+          <div className="min-w-0 space-y-1">
+            <p className="truncate font-bold">{row.getValue("exerciseName")}</p>
+            <p className="truncate text-xs text-muted-foreground">
+              {row.original.routineName || row.original.primaryMuscle || "—"}
+              {row.original.dayLabel ? ` · ${row.original.dayLabel}` : ""}
+            </p>
+          </div>
         ),
         size: 220,
       },
       {
-        header: "Muscle",
-        accessorKey: "primaryMuscle",
-        size: 140,
-      },
-      {
-        header: "Sets logged",
+        header: "Sets",
         accessorKey: "sets",
-        size: 110,
+        size: 70,
       },
       {
         header: "Reps / Time",
-        id: "target",
-        cell: ({ row }) => {
-          const log = row.original
-          if (log.trackingType === "time") return `${log.timeSec ?? 0}s`
-          if (log.reps == null) return "—"
-          return `${log.reps} reps`
-        },
-        size: 120,
+        id: "metric",
+        cell: ({ row }) => (
+          <span className="text-muted-foreground tabular-nums">
+            {formatMetricSummary(row.original)}
+          </span>
+        ),
+        size: 150,
       },
       {
         header: "Weight",
         id: "weight",
-        cell: ({ row }) => {
-          const log = row.original
-          if (log.weightMode === "none" || log.weight == null) {
-            return log.weightMode === "none" ? "None" : "—"
-          }
-          return `${log.weight} kg`
-        },
-        size: 110,
+        cell: ({ row }) => (
+          <span className="text-muted-foreground tabular-nums">
+            {formatWeightSummary(row.original)}
+          </span>
+        ),
+        size: 170,
       },
       {
         header: "Volume",
         accessorKey: "volume",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 w-20 overflow-hidden bg-muted">
-              <div
-                className="h-full bg-primary"
-                style={{
-                  width: `${((row.getValue("volume") || 0) / volumePeak) * 100}%`,
-                }}
-              />
+        cell: ({ row }) => {
+          const volume = row.getValue("volume") || 0
+
+          return (
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-16 overflow-hidden bg-muted">
+                <div
+                  className="h-full bg-primary"
+                  style={{ width: `${(volume / volumePeak) * 100}%` }}
+                />
+              </div>
+              <span className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+                {volume.toLocaleString()} kg
+              </span>
             </div>
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {(row.getValue("volume") || 0).toLocaleString()} kg
-            </span>
-          </div>
-        ),
-        size: 200,
+          )
+        },
+        size: 160,
       },
     ],
     [volumePeak]
   )
 
-  const isTime = form.trackingType === "time"
+  if (workoutsLoading) {
+    return <LoadingState label="Loading your workouts..." />
+  }
+
+  if (workoutsError && !selectedRoutine) {
+    return (
+      <ErrorState message={workoutsError.message} onRetry={refreshWorkouts} />
+    )
+  }
 
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Client workspace"
         title="Progress"
-        description="Log sets, reps or time, and weight for the exercises your coach prescribed. Entries stay in this browser."
-        actions={
-          <Button className="gap-2" onClick={openDialog}>
-            <Plus className="size-4" />
-            Log session
-          </Button>
-        }
+        description="Log every set from the workout your coach prescribed. Reps switch to time automatically for interval exercises, and None covers bodyweight sets."
       />
 
-      {/* Headline progress metrics. */}
+      {/* Progress KPIs from the shared server history. */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Sessions logged"
-          value={entries.length}
-          hint="total check-ins"
+          value={sessionCount}
+          hint="days with a saved workout"
+          icon={CalendarDays}
+        />
+        <StatCard
+          label="Sets logged"
+          value={totalLoggedSets}
+          hint="across every session"
           icon={Activity}
         />
         <StatCard
           label="Total volume"
           value={`${totalVolume.toLocaleString()} kg`}
-          hint="all-time load moved"
+          hint="weight x reps"
           icon={TrendingUp}
         />
         <StatCard
-          label="Average volume"
-          value={`${averageVolume.toLocaleString()} kg`}
-          hint="per session"
-          icon={Dumbbell}
-        />
-        <StatCard
           label="Latest check-in"
-          value={
-            latest
-              ? new Date(latest.date).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })
-              : "—"
-          }
+          value={latest ? formatProgressDate(latest.date) : "—"}
           hint={latest?.exerciseName ?? "no sessions yet"}
-          icon={CalendarDays}
+          icon={Dumbbell}
         />
       </div>
 
-      {prescribedExercises.length > 0 && (
-        <div className="border bg-card">
-          <div className="border-b px-5 py-4">
-            <h3 className="text-sm font-bold">Coach plan</h3>
-            <p className="text-xs text-muted-foreground">
-              Every prescribed exercise. The input follows your coach's reps or
-              time setting; choose None when no weight applies.
-            </p>
-          </div>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Exercise</TableHead>
-                  <TableHead>Prescription</TableHead>
-                  <TableHead>Sets</TableHead>
-                  <TableHead>Reps / Time</TableHead>
-                  <TableHead>Weight (kg)</TableHead>
-                  <TableHead>Log</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {prescribedExercises.map((exercise) => (
-                  <PrescriptionRow
-                    key={exercise.key}
-                    exercise={exercise}
-                    onLog={(payload) =>
-                      handlePrescriptionLog(exercise, payload)
-                    }
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+      {/* Coach-prescribed logging table. */}
+      <div className="border bg-card">
+        <div className="border-b px-4 py-4 sm:px-5">
+          <h3 className="text-sm font-bold">Log this workout</h3>
+          <p className="text-xs text-muted-foreground">
+            Inputs follow your coach's setup: reps for strength work, seconds
+            for timed sets.
+          </p>
         </div>
-      )}
 
-      {entries.length === 0 ? (
-        <EmptyState
-          title="No progress logged yet"
-          description="Log a prescribed exercise above or add a custom session. Everything you log stays in this browser."
-          action={
-            <Button className="gap-2" onClick={openDialog}>
-              <Plus className="size-4" />
-              Log session
-            </Button>
-          }
-        />
-      ) : (
-        <>
-          {/* Chronological bar chart (entries are stored newest first). */}
-          <div className="border bg-card">
-            <div className="border-b px-5 py-4">
-              <h3 className="text-sm font-bold">Volume trend</h3>
-              <p className="text-xs text-muted-foreground">
-                Total load moved per logged session (kg)
-              </p>
-            </div>
-            <div className="px-5 py-6">
-              <div className="flex h-40 items-end gap-3">
-                {chartData.map((log) => (
-                  <div
-                    key={log.id}
-                    className="flex flex-1 flex-col items-center gap-2"
-                  >
-                    <div className="flex w-full flex-1 items-end">
-                      <div
-                        className="w-full bg-primary/70 transition-colors hover:bg-primary"
-                        style={{
-                          height: `${((log.volume || 0) / volumePeak) * 100}%`,
-                        }}
-                        title={`${(log.volume || 0).toLocaleString()} kg`}
-                      />
-                    </div>
-                    <span className="text-[10px] whitespace-nowrap text-muted-foreground">
-                      {new Date(log.date).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
-                ))}
+        {routines.length === 0 ? (
+          <div className="p-5">
+            <EmptyState
+              title="No routines assigned"
+              description="Once your coach assigns a routine, its exercises and set targets will appear here."
+            />
+          </div>
+        ) : (
+          <>
+            {/* Workout selection. Day options include rest days so the client
+                sees the full schedule without leaving the page. */}
+            <div className="grid gap-4 border-b px-4 py-4 sm:grid-cols-2 sm:px-5 lg:grid-cols-[1.6fr_1.3fr_0.9fr]">
+              <div className="space-y-2">
+                <Label htmlFor="progress-routine">Routine</Label>
+                <select
+                  id="progress-routine"
+                  value={selectedRoutine?.id ?? ""}
+                  onChange={(event) => setRoutineId(event.target.value)}
+                  className={SELECT_CLASS}
+                >
+                  {routines.map((routine) => (
+                    <option key={routine.id} value={routine.id}>
+                      {routine.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="progress-day">Day</Label>
+                <select
+                  id="progress-day"
+                  value={effectiveDayOfWeek ?? ""}
+                  onChange={(event) => setDayOfWeek(event.target.value)}
+                  disabled={scheduledDays.length === 0}
+                  className={SELECT_CLASS}
+                >
+                  {scheduledDays.length === 0 ? (
+                    <option value="">Full routine</option>
+                  ) : (
+                    scheduledDays.map((day) => (
+                      <option key={day.dayOfWeek} value={day.dayOfWeek}>
+                        {getWeekdayLabel(day.dayOfWeek, { short: true })} ·{" "}
+                        {day.isRest ? "Rest" : day.label || "Workout"}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="progress-date">Date</Label>
+                <Input
+                  id="progress-date"
+                  type="date"
+                  value={date}
+                  onChange={(event) => setDate(event.target.value)}
+                  required
+                />
               </div>
             </div>
-          </div>
 
-          {/* Full log with client-side search/sort. */}
-          <div className="border bg-card">
-            <div className="border-b px-5 py-4">
-              <h3 className="text-sm font-bold">Check-in history</h3>
-              <p className="text-xs text-muted-foreground">
-                Every logged exercise, newest first
-              </p>
-            </div>
-            <div className="p-5">
+            {selectedDay?.isRest ? (
+              <div className="p-5">
+                <EmptyState
+                  title="Rest day"
+                  description={`${getWeekdayLabel(
+                    selectedDay.dayOfWeek
+                  )} is a recovery day in ${
+                    selectedRoutine.name
+                  }. Pick another day to log a session.`}
+                />
+              </div>
+            ) : exercises.length === 0 ? (
+              <div className="p-5">
+                <EmptyState
+                  title="No exercises on this day"
+                  description="Your coach has not added exercises to this workout day yet."
+                />
+              </div>
+            ) : (
+              <ProgressLogger
+                key={loggerKey}
+                routineId={selectedRoutine.id}
+                dayOfWeek={
+                  scheduledDays.length === 0 ? null : effectiveDayOfWeek
+                }
+                dayLabel={dayLabel}
+                exercises={exercises}
+                date={date}
+                logs={logs}
+                onSaved={refreshProgress}
+              />
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Check-in history from the API. */}
+      <div className="border bg-card">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-4 sm:px-5">
+          <div>
+            <h3 className="text-sm font-bold">Check-in history</h3>
+            <p className="text-xs text-muted-foreground">
+              Every saved exercise, newest first
+            </p>
+          </div>
+          {progressError && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={refreshProgress}
+            >
+              Retry
+            </Button>
+          )}
+        </div>
+
+        <div className="p-4 sm:p-5">
+          {progressLoading && logs.length === 0 ? (
+            <LoadingState label="Loading progress..." />
+          ) : progressError ? (
+            <ErrorState
+              message={progressError.message}
+              onRetry={refreshProgress}
+            />
+          ) : logs.length === 0 ? (
+            <EmptyState
+              title="No progress logged yet"
+              description="Save your first workout above and it will appear here for you and your coach."
+            />
+          ) : (
+            <div className="space-y-6">
+              {/* Volume per logged day (not per exercise). */}
+              <div>
+                <h4 className="text-xs font-bold tracking-[0.15em] text-muted-foreground uppercase">
+                  Volume trend
+                </h4>
+                <div className="mt-3 flex h-32 items-end gap-2">
+                  {dailyVolume.map((day) => (
+                    <div
+                      key={day.date}
+                      className="flex flex-1 flex-col items-center gap-2"
+                    >
+                      <div className="flex w-full flex-1 items-end">
+                        <div
+                          className="w-full bg-primary/70 transition-colors hover:bg-primary"
+                          style={{
+                            height: `${Math.max(
+                              (day.volume / dailyPeak) * 100,
+                              2
+                            )}%`,
+                          }}
+                          title={`${day.volume.toLocaleString()} kg`}
+                        />
+                      </div>
+                      <span className="text-[10px] whitespace-nowrap text-muted-foreground">
+                        {formatProgressDate(day.date)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <DataTable
                 columns={columns}
-                data={entries}
+                data={logs}
                 searchColumnId="exerciseName"
                 searchPlaceholder="Search by exercise..."
                 initialSorting={[{ id: "date", desc: true }]}
                 emptyMessage="No check-ins logged yet."
               />
             </div>
-          </div>
-        </>
-      )}
-
-      {/* Local-only custom session logger. */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Log session</DialogTitle>
-            <DialogDescription>
-              Record one exercise from your session. Saved in this browser only.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleLog} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="progress-exercise">Exercise</Label>
-              <Input
-                id="progress-exercise"
-                list="progress-exercise-options"
-                value={form.exerciseName}
-                onChange={handleExerciseNameChange}
-                placeholder="Bench press"
-                required
-              />
-              <datalist id="progress-exercise-options">
-                {exerciseOptions.map((option) => (
-                  <option key={option.key} value={option.name} />
-                ))}
-              </datalist>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="progress-date">Date</Label>
-                <Input
-                  id="progress-date"
-                  type="date"
-                  value={form.date}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      date: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="progress-tracking">Tracking</Label>
-                <select
-                  id="progress-tracking"
-                  value={form.trackingType}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      trackingType: event.target.value,
-                    }))
-                  }
-                  className="h-10 w-full rounded-xs border border-hairline bg-surface-1 px-3 text-sm text-ink outline-none focus-visible:border-primary"
-                >
-                  <option value="reps">Reps</option>
-                  <option value="time">Time</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="progress-sets">Sets</Label>
-                <Input
-                  id="progress-sets"
-                  type="number"
-                  min="1"
-                  value={form.sets}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      sets: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <Label htmlFor="progress-weight">Weight (kg)</Label>
-                  <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
-                    <Checkbox
-                      checked={form.noWeight}
-                      onCheckedChange={(checked) =>
-                        setForm((current) => ({
-                          ...current,
-                          noWeight: Boolean(checked),
-                        }))
-                      }
-                    />
-                    None
-                  </label>
-                </div>
-                <Input
-                  id="progress-weight"
-                  type="number"
-                  min="0"
-                  step="0.5"
-                  value={form.noWeight ? "" : form.weight}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      weight: event.target.value,
-                    }))
-                  }
-                  disabled={form.noWeight}
-                  className={
-                    form.noWeight
-                      ? "bg-muted/50 text-muted-foreground"
-                      : undefined
-                  }
-                  required={!form.noWeight}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="progress-target">
-                  {isTime ? "Time (sec)" : "Reps"}
-                </Label>
-                <Input
-                  id="progress-target"
-                  type="number"
-                  min="1"
-                  value={isTime ? form.timeSec : form.reps}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      [isTime ? "timeSec" : "reps"]: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-            </div>
-
-            {formError && (
-              <p className="rounded-xs border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {formError}
-              </p>
-            )}
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit">Save session</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
