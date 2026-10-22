@@ -4,6 +4,10 @@
  * Navigation is rendered with the animated sidebar primitives. Every role sees
  * only the destinations its route guards allow, and the footer exposes the
  * signed-in identity plus sign-out.
+ *
+ * The rail follows the DESIGN.md brand theme: charcoal canvas, hairline rules,
+ * soft-white labels and one emerald accent reserved for the brand mark and the
+ * active indicator.
  */
 import {
   BarChart3,
@@ -20,6 +24,7 @@ import {
 } from "lucide-react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth"
+import { getRoleLabel } from "@/lib/roles"
 import {
   AnimatedSidebar,
   AnimatedSidebarClose,
@@ -93,7 +98,8 @@ export function AppSidebar(props) {
     <AnimatedSidebar
       ariaLabel="Dashboard navigation"
       collapsible="icon"
-      panelClassName="border-hairline bg-canvas"
+      className=""
+      panelClassName="border-hairline bg-surface-1"
       {...props}
     >
       <AnimatedSidebarHeader className="border-hairline border-b p-3 pb-2">
@@ -105,19 +111,19 @@ export function AppSidebar(props) {
               className="size-8 shrink-0 object-contain"
             />
           ) : (
-            <span className="grid size-8 shrink-0 place-items-center bg-primary text-canvas">
+            <span className="grid size-8 shrink-0 place-items-center rounded-sm bg-primary text-primary-foreground">
               <Dumbbell className="size-4" />
             </span>
           )}
           <div className="min-w-0 flex-1 group-data-[state=collapsed]/sidebar:hidden">
-            <p className="truncate text-sm font-bold tracking-[0.16em] text-ink uppercase">
+            <p className="truncate cap-label leading-none text-ink">
               {brandName}
             </p>
-            <p className="truncate text-[9px] tracking-[0.24em] text-ink-tertiary uppercase">
+            <p className="truncate eyebrow text-ink-subtle">
               {isSuperAdmin ? "Platform console" : "Gym workspace"}
             </p>
           </div>
-          <AnimatedSidebarClose className="ml-auto text-ink-subtle hover:bg-surface-2 md:hidden">
+          <AnimatedSidebarClose className="ml-auto text-ink-muted hover:bg-surface-2 md:hidden">
             <X aria-hidden="true" className="size-4" />
           </AnimatedSidebarClose>
         </div>
@@ -125,7 +131,7 @@ export function AppSidebar(props) {
 
       <AnimatedSidebarContent className="px-2 pt-2">
         <AnimatedSidebarGroup>
-          <AnimatedSidebarGroupLabel className="text-ink-tertiary">
+          <AnimatedSidebarGroupLabel className="text-ink-subtle">
             Navigation
           </AnimatedSidebarGroupLabel>
           <AnimatedSidebarGroupContent>
@@ -148,7 +154,7 @@ export function AppSidebar(props) {
                         ) : undefined
                       }
                       onSelect={() => navigate(item.to)}
-                      className="text-ink-subtle hover:text-ink"
+                      className="hover:bg-surface-2 hover:text-ink"
                     >
                       {item.label}
                     </AnimatedSidebarMenuButton>
@@ -161,23 +167,23 @@ export function AppSidebar(props) {
       </AnimatedSidebarContent>
 
       <AnimatedSidebarFooter className="gap-3 border-hairline p-3">
-        <div className="flex min-h-11 items-center gap-3 overflow-hidden rounded-xs px-1">
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-canvas">
+        <div className="flex min-h-11 items-center gap-3 overflow-hidden rounded-sm px-1">
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-3 cap-label text-ink">
             {displayName.slice(0, 2).toUpperCase()}
           </span>
           <span className="min-w-0 flex-1 group-data-[state=collapsed]/sidebar:hidden">
-            <span className="block truncate text-sm font-bold text-ink">
+            <span className="block truncate cap-label text-ink">
               {displayName}
             </span>
-            <span className="block truncate text-[10px] tracking-[0.18em] text-ink-tertiary uppercase">
-              {role?.replace("_", " ") ?? "Workspace"}
+            <span className="block truncate eyebrow text-ink-subtle">
+              {getRoleLabel(role)}
             </span>
           </span>
           <button
             type="button"
             onClick={logout}
             title="Sign out"
-            className="grid size-8 shrink-0 place-items-center rounded-xs text-ink-subtle outline-none transition-colors hover:bg-surface-2 hover:text-ink focus-visible:ring-2 focus-visible:ring-ring group-data-[state=collapsed]/sidebar:hidden"
+            className="grid size-9 shrink-0 place-items-center rounded-sm text-ink-muted outline-none transition-colors hover:bg-surface-2 hover:text-ink focus-visible:ring-2 focus-visible:ring-ring group-data-[state=collapsed]/sidebar:hidden"
           >
             <LogOut aria-hidden="true" className="size-4" />
             <span className="sr-only">Sign out</span>

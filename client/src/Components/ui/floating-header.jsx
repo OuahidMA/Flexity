@@ -1,96 +1,137 @@
-// ============================================================================
-// CUSTOMIZATION - edit these values to fit your brand
-// ============================================================================
+/**
+ * Fixed marketing header.
+ *
+ * Structure follows the Deepcon header pattern: a fixed translucent bar with a
+ * blurred backdrop, the emerald wordmark tile on the left, navigation centred in
+ * the bar and a single emerald CTA on the right. Below the `md` breakpoint the
+ * navigation collapses into an animated sheet.
+ *
+ * Every colour comes from the semantic token layer, so the header follows the
+ * active light/dark theme automatically.
+ */
+import { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
+import { AnimatePresence, motion } from "motion/react"
+import { Dumbbell, Menu, X } from "lucide-react"
+
+import { ThemeToggle } from "@/components/theme-toggle"
+
+const DEFAULT_NAV_ITEMS = [
+  { label: "Features", href: "#features" },
+  { label: "Product", href: "#product" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "FAQ", href: "#faq" },
+]
 
 /**
- * Custom brand colors.
- * - Grayscale text uses Tailwind semantic colors (text-ink, text-ink-subtle...)
- * - Only brand-unique colors are defined here
+ * Renders an internal route through the router and everything else as a plain
+ * anchor, so hash links keep native browser behaviour.
+ *
+ * @param {object} props
+ * @param {string} props.href - Route path, hash or absolute URL.
+ * @param {string} [props.className] - Classes for the anchor.
+ * @param {React.ReactNode} props.children - Anchor contents.
+ * @returns {JSX.Element} The anchor.
  */
-const COLORS = {
-  light: {
-    background: "rgba(255, 255, 255, 0.8)",
-    border: "rgba(0, 0, 0, 0.1)",
-    text: "#000000",
-    navText: "#374151", // gray-700
-    navTextHover: "#000000",
-    buttonBg: "#000000",
-    buttonText: "#FFFFFF",
-    buttonHover: "#1f2937", // gray-800
-  },
-  dark: {
-    background: "rgba(0, 0, 0, 0.8)",
-    border: "rgba(255, 255, 255, 0.12)",
-    text: "#FFFFFF",
-    navText: "rgba(255, 255, 255, 0.72)",
-    navTextHover: "#FFFFFF",
-    buttonBg: "#ffed00",
-    buttonText: "#000000",
-    buttonHover: "#e6d200",
-  },
+function HeaderLink({ href, className, children, ...props }) {
+  if (href.startsWith("/")) {
+    return (
+      <Link to={href} className={className} {...props}>
+        {children}
+      </Link>
+    )
+  }
+
+  return (
+    <a href={href} className={className} {...props}>
+      {children}
+    </a>
+  )
 }
 
-// ============================================================================
-// END CUSTOMIZATION
-// ============================================================================
-
-import { motion, AnimatePresence } from "motion/react"
-import { useState } from "react"
-import { Menu, X, Dumbbell } from "lucide-react"
-
 /**
- * Fixed glass-like marketing header with centered nav links,
- * a primary CTA button and an animated mobile menu.
- *
- * @param {{mode?: "light" | "dark", navItems?: {label: string, href: string, external?: boolean}[], signInLabel?: string, signInHref?: string}} props
- * @returns {JSX.Element}
+ * @param {object} props
+ * @param {string} [props.logoSrc] - Optional logo image. Falls back to the
+ *   Flexity wordmark when omitted.
+ * @param {string} [props.logoAlt="Flexity"] - Alt text for the logo image.
+ * @param {{label: string, href: string, external?: boolean}[]} [props.navItems]
+ *   Anchors rendered in the centre of the bar.
+ * @param {string} [props.signInLabel="Get started"] - CTA label.
+ * @param {string} [props.signInHref="/login"] - CTA target.
+ * @returns {JSX.Element} The marketing header.
  */
 export default function FloatingHeader({
-  mode = "dark",
-  navItems = [
-    { label: "Home", href: "#top" },
-    { label: "Product", href: "#product" },
-    { label: "Roles", href: "#roles" },
-  ],
+  logoSrc,
+  logoAlt = "Flexity",
+  navItems = DEFAULT_NAV_ITEMS,
   signInLabel = "Get started",
   signInHref = "/login",
 }) {
-  const colors = COLORS[mode]
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  // Lock body scroll while the mobile sheet is open.
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mobileMenuOpen])
+
+  // Escape closes the sheet.
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setMobileMenuOpen(false)
+    }
+
+    window.addEventListener("keydown", onKeyDown)
+
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [mobileMenuOpen])
+
+  const navItemClass =
+    "rounded-sm px-3 py-2 cap-label no-underline text-ink-muted transition-colors duration-200 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+
+  const ctaClass =
+    "inline-flex items-center justify-center rounded-sm bg-primary px-4 py-2 cap-label text-primary-foreground no-underline transition-colors duration-200 hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+
   return (
-    <header
-      className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md"
-      style={{
-        backgroundColor: colors.background,
-        borderBottom: `1px solid ${colors.border}`,
-      }}
-    >
-      <div className="mx-auto flex max-w-[976px] items-center justify-between px-6 py-3">
-        {/* Logo */}
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-hairline bg-canvas/80 backdrop-blur-md">
+      <div className="mx-auto flex max-w-[80rem] items-center justify-between px-6 py-3 lg:px-12">
+        {/* Wordmark — the emerald tile is the brand's signature accent. */}
         <motion.a
           href="#top"
-          className="flex items-center gap-2 py-1 no-underline transition-opacity duration-200 hover:opacity-80"
+          aria-label="Flexity home"
+          className="flex items-center gap-2.5 no-underline transition-opacity duration-200 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <Dumbbell
-            className="h-6 w-6"
-            style={{ color: colors.text }}
-            aria-hidden="true"
-          />
-          <span
-            className="text-base font-bold tracking-tight"
-            style={{ color: colors.text }}
-          >
-            Flexity
-          </span>
+          {logoSrc ? (
+            <img
+              alt={logoAlt}
+              width={24}
+              height={24}
+              className="h-6 w-auto"
+              src={logoSrc}
+            />
+          ) : (
+            <span className="grid size-8 place-items-center rounded-sm bg-primary text-primary-foreground">
+              <Dumbbell className="size-4" aria-hidden="true" />
+            </span>
+          )}
+          <span className="cap-label leading-none text-ink">Flexity</span>
         </motion.a>
 
-        {/* Navigation - center positioned */}
+        {/* Navigation — centred in the bar */}
         <motion.nav
-          className="hidden md:flex items-center gap-1 absolute left-1/2 transform -translate-x-1/2"
+          aria-label="Primary"
+          className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 md:flex"
           initial={{ opacity: 0, y: -5 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
@@ -101,106 +142,86 @@ export default function FloatingHeader({
               href={item.href}
               target={item.external ? "_blank" : undefined}
               rel={item.external ? "noopener noreferrer" : undefined}
-              className="px-3 py-1.5 text-sm no-underline transition-colors duration-200"
-              style={{ color: colors.navText }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.color = colors.navTextHover)
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.color = colors.navText)
-              }
+              className={navItemClass}
             >
               {item.label}
             </a>
           ))}
         </motion.nav>
 
-        {/* Sign In Button - Desktop */}
+        {/* Theme + CTA */}
         <motion.div
-          className="hidden md:flex items-center gap-2"
+          className="hidden items-center gap-2 md:flex"
           initial={{ opacity: 0, x: 10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <a
-            href={signInHref}
-            className="rounded-xs px-4 py-1.5 text-sm font-bold no-underline transition-colors duration-200"
-            style={{
-              backgroundColor: colors.buttonBg,
-              color: colors.buttonText,
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = colors.buttonHover)
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = colors.buttonBg)
-            }
-          >
+          <ThemeToggle />
+          <HeaderLink href={signInHref} className={ctaClass}>
             {signInLabel}
-          </a>
+          </HeaderLink>
         </motion.div>
 
-        {/* Mobile Menu Button */}
-        <motion.button
-          className="md:hidden p-2 transition-colors"
-          style={{ color: colors.navText }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.color = colors.navTextHover)
-          }
-          onMouseLeave={(e) => (e.currentTarget.style.color = colors.navText)}
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
+        {/* Mobile theme + menu */}
+        <motion.div
+          className="flex items-center gap-1 md:hidden"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          {mobileMenuOpen ? (
-            <X className="h-6 w-6" aria-hidden="true" />
-          ) : (
-            <Menu className="h-6 w-6" aria-hidden="true" />
-          )}
-        </motion.button>
+          <ThemeToggle />
+          <motion.button
+            type="button"
+            className="-mr-2 grid size-11 place-items-center text-ink-muted transition-colors hover:text-ink"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-nav"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            {mobileMenuOpen ? (
+              <X className="size-6" aria-hidden="true" />
+            ) : (
+              <Menu className="size-6" aria-hidden="true" />
+            )}
+          </motion.button>
+        </motion.div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile sheet */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
+            id="mobile-nav"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden overflow-hidden"
-            style={{
-              backgroundColor: mode === "light" ? "#FFFFFF" : "#000000",
-              borderTop: `1px solid ${colors.border}`,
-            }}
+            className="overflow-hidden border-t border-hairline bg-canvas md:hidden"
           >
-            <nav className="flex flex-col px-6 py-4 gap-2">
+            <nav className="flex flex-col gap-2 px-6 py-4">
               {navItems.map((item) => (
                 <a
                   key={item.label}
                   href={item.href}
                   target={item.external ? "_blank" : undefined}
                   rel={item.external ? "noopener noreferrer" : undefined}
-                  className="px-3 py-2 text-sm no-underline transition-colors duration-200"
-                  style={{ color: colors.navText }}
+                  className={navItemClass}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {item.label}
                 </a>
               ))}
-              <a
+
+              <HeaderLink
                 href={signInHref}
-                className="mt-2 rounded-xs px-4 py-2 text-sm font-bold text-center no-underline transition-colors duration-200"
-                style={{
-                  backgroundColor: colors.buttonBg,
-                  color: colors.buttonText,
-                }}
+                className={`${ctaClass} mt-2 h-12 w-full`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {signInLabel}
-              </a>
+              </HeaderLink>
             </nav>
           </motion.div>
         )}

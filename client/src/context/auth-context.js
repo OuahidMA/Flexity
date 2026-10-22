@@ -9,12 +9,15 @@ import { createContext } from "react";
 /**
  * Fallback tenant branding used for super admins or before branding hydrates.
  * The provider merges any API-provided branding over these values.
+ *
+ * The brand palette is monochrome: black canvas, white ink, and a cool-grey
+ * accent for supporting surfaces.
  */
 export const DEFAULT_BRANDING = {
   logoUrl: "",
   primaryColor: "#000000",
   secondaryColor: "#FFFFFF",
-  accentColor: "#ffed00",
+  accentColor: "#f0f0fa",
 };
 
 /**

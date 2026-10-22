@@ -16,7 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 function RouteFallback() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-canvas text-ink">
-      <span className="animate-pulse text-sm tracking-[0.2em] uppercase">
+      <span className="animate-pulse eyebrow text-ink-subtle">
         Loading
       </span>
     </div>

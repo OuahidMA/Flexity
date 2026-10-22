@@ -1,16 +1,12 @@
+/**
+ * Site-wide footer.
+ *
+ * DESIGN.md's footer spec: a canvas-soft band separated by a single hairline,
+ * caption type for the legal row, sentence-case link columns and one outlined
+ * CTA. The oversized wordmark closes the page in both light and dark mode.
+ */
 import { Link } from "react-router-dom"
 import { motion } from "motion/react"
-
-const COLORS = {
-  background: "#000000",
-  text: "#ffffff",
-  textMuted: "rgba(255, 255, 255, 0.72)",
-  accent: "#ffed00",
-  buttonBg: "#ffed00",
-  buttonText: "#000000",
-  buttonAccent: "#ffed00",
-  border: "#1f1f1f",
-}
 
 const defaultCompanyInfo = {
   name: "Flexity",
@@ -53,27 +49,53 @@ const defaultSocialLinks = [
   { label: "YouTube", href: "#" },
 ]
 
-function FooterAnchor({ href, className, style, children }) {
+/**
+ * Renders an internal route as a `Link` and everything else as an anchor.
+ *
+ * @param {object} props
+ * @param {string} props.href - Route or hash target.
+ * @param {string} props.className - Anchor classes.
+ * @param {React.ReactNode} props.children - Link content.
+ * @returns {JSX.Element} The anchor.
+ */
+function FooterAnchor({ href, className, children }) {
   if (href.startsWith("/")) {
     return (
-      <Link to={href} className={className} style={style}>
+      <Link to={href} className={className}>
         {children}
       </Link>
     )
   }
 
   return (
-    <a href={href} className={className} style={style}>
+    <a href={href} className={className}>
       {children}
     </a>
   )
 }
 
+/**
+ * @param {object} props
+ * @param {object} [props.companyInfo]
+ * @param {object} [props.servicesColumn]
+ * @param {object} [props.pagesColumn]
+ * @param {string} [props.ctaHeading]
+ * @param {string} [props.ctaHighlight]
+ * @param {string} [props.ctaHeadingEnd]
+ * @param {string} [props.ctaButtonText]
+ * @param {string} [props.ctaButtonHref]
+ * @param {string} [props.copyrightYear]
+ * @param {string} [props.copyrightText]
+ * @param {Array<{label: string, href: string}>} [props.legalLinks]
+ * @param {Array<{label: string, href: string}>} [props.socialLinks]
+ * @param {string} [props.largeLogo]
+ * @returns {JSX.Element} The site footer.
+ */
 export default function Footer({
   companyInfo = defaultCompanyInfo,
   servicesColumn = defaultServicesColumn,
   pagesColumn = defaultPagesColumn,
-  ctaHeading = "Run your gym ",
+  ctaHeading = "Run your gym",
   ctaHighlight = "without the friction",
   ctaHeadingEnd = ".",
   ctaButtonText = "Get started",
@@ -85,11 +107,8 @@ export default function Footer({
   largeLogo = "Flexity",
 }) {
   return (
-    <footer
-      className="relative w-full overflow-hidden border-t border-hairline"
-      style={{ backgroundColor: COLORS.background, color: COLORS.text }}
-    >
-      <div className="mx-auto max-w-7xl px-6 pt-16 pb-8 lg:px-12">
+    <footer className="relative w-full overflow-hidden border-t border-hairline bg-canvas-soft text-ink">
+      <div className="mx-auto max-w-[80rem] px-6 pt-16 pb-8 lg:px-12">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -97,17 +116,15 @@ export default function Footer({
             transition={{ duration: 0.5 }}
             viewport={{ once: true }}
           >
-            <p className="text-sm font-bold" style={{ color: COLORS.text }}>
+            <p className="cap-label leading-none text-ink">
               {companyInfo.name}
             </p>
             {companyInfo.address.map((line, index) => (
-              <p key={index} className="text-sm" style={{ color: COLORS.textMuted }}>
+              <p key={index} className="caption mt-1 text-ink-muted">
                 {line}
               </p>
             ))}
-            <p className="mt-4 text-sm" style={{ color: COLORS.textMuted }}>
-              {companyInfo.vatNumber}
-            </p>
+            <p className="caption mt-4 text-ink-subtle">{companyInfo.vatNumber}</p>
           </motion.div>
 
           <motion.div
@@ -116,13 +133,15 @@ export default function Footer({
             transition={{ duration: 0.5, delay: 0.1 }}
             viewport={{ once: true }}
           >
-            <ul className="space-y-1">
+            <p className="eyebrow leading-none text-ink-subtle">
+              Platform
+            </p>
+            <ul className="mt-4 space-y-2">
               {servicesColumn.links.map((link, index) => (
                 <li key={index}>
                   <FooterAnchor
                     href={link.href}
-                    className="text-sm transition-opacity hover:opacity-60"
-                    style={{ color: COLORS.text }}
+                    className="caption leading-none text-ink-muted no-underline transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                   >
                     {link.label}
                   </FooterAnchor>
@@ -137,13 +156,15 @@ export default function Footer({
             transition={{ duration: 0.5, delay: 0.2 }}
             viewport={{ once: true }}
           >
-            <ul className="space-y-1">
+            <p className="eyebrow leading-none text-ink-subtle">
+              Navigate
+            </p>
+            <ul className="mt-4 space-y-2">
               {pagesColumn.links.map((link, index) => (
                 <li key={index}>
                   <FooterAnchor
                     href={link.href}
-                    className="text-sm transition-opacity hover:opacity-60"
-                    style={{ color: COLORS.text }}
+                    className="caption leading-none text-ink-muted no-underline transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                   >
                     {link.label}
                   </FooterAnchor>
@@ -159,50 +180,38 @@ export default function Footer({
             viewport={{ once: true }}
             className="lg:max-w-xs"
           >
-            <p className="text-lg font-bold leading-tight" style={{ color: COLORS.text }}>
+            <p className="display-sm text-ink">
               {ctaHeading}
-              <span className="relative inline">
-                <span className="relative z-10">{ctaHighlight}</span>
-                <span
-                  className="absolute bottom-0 left-0 h-[3px] w-full"
-                  style={{ backgroundColor: COLORS.accent }}
-                />
-              </span>
+              <br />
+              {ctaHighlight}
               {ctaHeadingEnd}
             </p>
             <FooterAnchor
               href={ctaButtonHref}
-              className="mt-6 inline-flex items-center gap-2 rounded-xs border px-5 py-2.5 text-sm font-bold no-underline transition-colors hover:bg-primary hover:text-primary-foreground"
-              style={{
-                borderColor: COLORS.text,
-                color: COLORS.text,
-              }}
+              className="mt-6 inline-flex h-12 items-center gap-2 rounded-sm border border-hairline-strong bg-surface-1 px-6 cap-label text-ink no-underline transition-colors hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
             >
-              <span
-                className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: COLORS.buttonAccent }}
-              />
               {ctaButtonText}
             </FooterAnchor>
           </motion.div>
         </div>
 
         <motion.div
-          className="mt-16 flex flex-col items-start justify-between gap-4 border-t pt-6 md:flex-row md:items-center"
-          style={{ borderColor: COLORS.border }}
+          className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-hairline pt-6 md:flex-row md:items-center"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.4 }}
           viewport={{ once: true }}
         >
-          <div className="flex flex-wrap items-center gap-1 text-sm" style={{ color: COLORS.textMuted }}>
-            <span>&copy; {copyrightText} {copyrightYear}. All rights reserved</span>
+          <div className="flex flex-wrap items-center gap-2 caption text-ink-subtle">
+            <span>
+              &copy; {copyrightText} {copyrightYear}. All rights reserved
+            </span>
             {legalLinks.map((link, index) => (
-              <span key={index} className="flex items-center">
-                <span className="mx-2">&bull;</span>
+              <span key={index} className="flex items-center gap-2">
+                <span aria-hidden="true">&bull;</span>
                 <FooterAnchor
                   href={link.href}
-                  className="transition-opacity hover:opacity-60"
+                  className="transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                 >
                   {link.label}
                 </FooterAnchor>
@@ -210,13 +219,13 @@ export default function Footer({
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-1 text-sm" style={{ color: COLORS.textMuted }}>
+          <div className="flex flex-wrap items-center gap-2 caption text-ink-subtle">
             {socialLinks.map((link, index) => (
-              <span key={index} className="flex items-center">
-                {index > 0 && <span className="mx-2">&bull;</span>}
+              <span key={index} className="flex items-center gap-2">
+                {index > 0 && <span aria-hidden="true">&bull;</span>}
                 <FooterAnchor
                   href={link.href}
-                  className="transition-opacity hover:opacity-60"
+                  className="transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                 >
                   {link.label}
                 </FooterAnchor>
@@ -226,6 +235,7 @@ export default function Footer({
         </motion.div>
       </div>
 
+      {/* Oversized wordmark — the closing frame of the page. */}
       <motion.div
         className="relative w-full overflow-hidden"
         initial={{ opacity: 0, y: 40 }}
@@ -235,13 +245,8 @@ export default function Footer({
         aria-hidden="true"
       >
         <div
-          className="select-none whitespace-nowrap text-center font-bold uppercase leading-none tracking-tighter"
-          style={{
-            color: COLORS.text,
-            fontSize: "clamp(80px, 18vw, 280px)",
-            lineHeight: 0.85,
-            marginBottom: "-0.1em",
-          }}
+          className="display-xxl select-none text-center whitespace-nowrap text-ink-tertiary/70"
+          style={{ marginBottom: "-0.12em" }}
         >
           {largeLogo}
         </div>

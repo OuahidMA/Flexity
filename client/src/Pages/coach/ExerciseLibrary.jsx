@@ -1,12 +1,12 @@
 /**
  * Gym exercise catalog for coaches.
  *
- * Renders the full exercise collection as a paginated card grid. Each card uses
- * the Magic UI orb treatment and summarizes muscle, equipment, and difficulty
- * metadata; the details dialog exposes the complete record (instructions, tips,
- * target muscles, goals, tags, and MET). Coaches can create custom exercises and
- * delete only those custom entries; library exercises are read-only. Custom
- * exercises live in this browser's localStorage and never reach the API.
+ * Renders the full exercise collection as a paginated card grid. Each card
+ * summarizes muscle, equipment, and difficulty metadata; the details dialog
+ * exposes the complete record (instructions, tips, target muscles, goals, tags,
+ * and MET). Coaches can create custom exercises and delete only those custom
+ * entries; library exercises are read-only. Custom exercises live in this
+ * browser's localStorage and never reach the API.
  */
 import { useCallback, useMemo, useState } from "react"
 import {
@@ -32,7 +32,6 @@ import { ErrorState, LoadingState } from "@/components/dashboard/data-state"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MagicCard } from "@/components/ui/magic-card"
 import {
   Dialog,
   DialogContent,
@@ -67,7 +66,7 @@ function formatLabel(value) {
 }
 
 /**
- * Single catalog card with the Magic UI orb glow.
+ * Single catalog card.
  *
  * @param {object} props
  * @param {object} props.exercise - Serialized exercise from the API.
@@ -82,108 +81,87 @@ function ExerciseCard({ exercise, onView, onCopy, onRemove }) {
   const remainingSecondary = secondaryMuscles.length - visibleSecondary.length
 
   return (
-    <MagicCard
-      mode="orb"
-      glowFrom="#ffed00"
-      glowTo="#e6d200"
-      glowSize={300}
-      glowBlur={55}
-      glowOpacity={0.5}
-      gradientFrom="#ffed00"
-      gradientTo="#1f1f1f"
-      gradientSize={280}
-      className="h-full rounded-none"
-    >
-      <div className="flex h-full flex-col">
-        <div className="flex items-start justify-between gap-3 border-b border-border p-4">
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
-              {formatLabel(exercise.category || exercise.bodyPart)}
-            </p>
-            <h3 className="mt-1 line-clamp-2 text-base font-bold tracking-wide text-ink uppercase">
-              {exercise.name || "Untitled exercise"}
-            </h3>
-          </div>
-          <Badge
-            variant={exercise.isCustom ? "secondary" : "outline"}
-            className="shrink-0"
-          >
-            {exercise.isCustom ? "Custom" : "Library"}
-          </Badge>
-        </div>
-
-        <div className="flex flex-1 flex-col gap-3 p-4">
-          <p className="line-clamp-2 min-h-10 text-sm leading-relaxed text-muted-foreground">
-            {exercise.description || "No description available."}
+    <article className="flex h-full flex-col overflow-hidden rounded-lg border border-hairline bg-surface-1">
+      <div className="flex items-start justify-between gap-3 border-b border-hairline p-4">
+        <div className="min-w-0">
+          <p className="eyebrow text-ink-subtle">
+            {formatLabel(exercise.category || exercise.bodyPart)}
           </p>
+          <h3 className="mt-2 line-clamp-2 text-[15px] font-medium text-ink">
+            {exercise.name || "Untitled exercise"}
+          </h3>
+        </div>
+        <Badge
+          variant={exercise.isCustom ? "secondary" : "outline"}
+          className="shrink-0"
+        >
+          {exercise.isCustom ? "Custom" : "Library"}
+        </Badge>
+      </div>
 
-          <div className="flex flex-wrap gap-1.5">
-            <Badge variant="outline">
-              {formatLabel(exercise.primaryMuscle)}
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <p className="line-clamp-2 min-h-10 caption text-ink-subtle">
+          {exercise.description || "No description available."}
+        </p>
+
+        <div className="flex flex-wrap gap-1.5">
+          <Badge variant="outline">{formatLabel(exercise.primaryMuscle)}</Badge>
+          {visibleSecondary.map((muscle) => (
+            <Badge key={muscle} variant="secondary">
+              {formatLabel(muscle)}
             </Badge>
-            {visibleSecondary.map((muscle) => (
-              <Badge key={muscle} variant="secondary">
-                {formatLabel(muscle)}
-              </Badge>
-            ))}
-            {remainingSecondary > 0 && (
-              <Badge variant="secondary">+{remainingSecondary}</Badge>
-            )}
-          </div>
-
-          <dl className="mt-auto grid grid-cols-2 gap-3 border-t border-border pt-3">
-            <div className="min-w-0">
-              <dt className="text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-                Equipment
-              </dt>
-              <dd className="mt-0.5 truncate text-sm text-ink">
-                {exercise.equipment
-                  ? formatLabel(exercise.equipment)
-                  : "Bodyweight"}
-              </dd>
-            </div>
-            <div className="min-w-0">
-              <dt className="text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
-                Difficulty
-              </dt>
-              <dd className="mt-0.5 truncate text-sm text-ink">
-                {formatLabel(exercise.difficulty)}
-              </dd>
-            </div>
-          </dl>
+          ))}
+          {remainingSecondary > 0 && (
+            <Badge variant="secondary">+{remainingSecondary}</Badge>
+          )}
         </div>
 
-        <div className="flex items-center gap-2 border-t border-border p-4">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 gap-2"
-            onClick={onView}
-          >
-            <Eye className="size-4" />
-            Details
-          </Button>
+        <dl className="mt-auto grid grid-cols-2 gap-3 border-t border-hairline pt-3">
+          <div className="min-w-0">
+            <dt className="eyebrow text-ink-subtle">Equipment</dt>
+            <dd className="mt-1 truncate caption text-ink">
+              {exercise.equipment ? formatLabel(exercise.equipment) : "Bodyweight"}
+            </dd>
+          </div>
+          <div className="min-w-0">
+            <dt className="eyebrow text-ink-subtle">Difficulty</dt>
+            <dd className="mt-1 truncate caption text-ink">
+              {formatLabel(exercise.difficulty)}
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <div className="flex items-center gap-2 border-t border-hairline p-4">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1 gap-2"
+          onClick={onView}
+        >
+          <Eye className="size-4" />
+          Details
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Copy ${exercise.name}`}
+          onClick={onCopy}
+        >
+          <Copy className="size-4" />
+        </Button>
+        {exercise.isCustom && (
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label={`Copy ${exercise.name}`}
-            onClick={onCopy}
+            aria-label={`Delete ${exercise.name}`}
+            onClick={onRemove}
           >
-            <Copy className="size-4" />
+            <Trash className="size-4" />
           </Button>
-          {exercise.isCustom && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`Delete ${exercise.name}`}
-              onClick={onRemove}
-            >
-              <Trash className="size-4" />
-            </Button>
-          )}
-        </div>
+        )}
       </div>
-    </MagicCard>
+    </article>
   )
 }
 
@@ -324,7 +302,7 @@ export default function ExerciseLibrary() {
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="relative w-full max-w-sm">
-              <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto size-4 text-muted-foreground" />
+              <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto size-4 text-ink-subtle" />
               <Input
                 value={search}
                 onChange={(event) => {
@@ -343,20 +321,20 @@ export default function ExerciseLibrary() {
                     setSearch("")
                     setPage(0)
                   }}
-                  className="absolute inset-y-0 end-0 flex w-9 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+                  className="absolute inset-y-0 end-0 flex w-9 items-center justify-center text-ink-subtle transition-colors hover:text-ink"
                 >
                   <X className="size-4" />
                 </button>
               )}
             </div>
-            <p className="text-[10px] tracking-[0.2em] text-muted-foreground uppercase">
+            <p className="eyebrow text-ink-subtle">
               {filtered.length} {filtered.length === 1 ? "exercise" : "exercises"}
             </p>
           </div>
 
           {filtered.length === 0 ? (
-            <div className="border border-border bg-background px-6 py-16 text-center">
-              <p className="text-sm text-muted-foreground">
+            <div className="rounded-lg border border-hairline bg-surface-1 px-6 py-16 text-center">
+              <p className="caption text-ink-subtle">
                 {allExercises.length
                   ? "No exercises match your search."
                   : "No exercises yet. Add a custom exercise to get started."}
@@ -380,16 +358,16 @@ export default function ExerciseLibrary() {
 
               {pageCount > 1 && (
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-xs text-muted-foreground">
+                  <p className="caption text-ink-subtle">
                     Showing{" "}
-                    <span className="text-foreground">
+                    <span className="text-ink">
                       {currentPage * PAGE_SIZE + 1}–
                       {Math.min(
                         (currentPage + 1) * PAGE_SIZE,
                         filtered.length
                       )}
                     </span>{" "}
-                    of <span className="text-foreground">{filtered.length}</span>
+                    of <span className="text-ink">{filtered.length}</span>
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -404,7 +382,7 @@ export default function ExerciseLibrary() {
                       <ChevronLeft className="size-4" />
                       Prev
                     </Button>
-                    <span className="px-2 text-xs tracking-[0.15em] text-muted-foreground uppercase">
+                    <span className="eyebrow px-2 text-ink-subtle">
                       Page {currentPage + 1} / {pageCount}
                     </span>
                     <Button
@@ -550,10 +528,8 @@ export default function ExerciseLibrary() {
 
               <dl className="grid grid-cols-1 gap-4 border-y border-hairline py-4 sm:grid-cols-2">
                 <div>
-                  <dt className="text-[10px] tracking-[0.2em] text-ink-subtle uppercase">
-                    Primary muscles
-                  </dt>
-                  <dd className="mt-1 text-sm text-ink">
+                  <dt className="eyebrow text-ink-subtle">Primary muscles</dt>
+                  <dd className="mt-1 caption text-ink">
                     {detailPrimaryMuscles.length
                       ? detailPrimaryMuscles
                           .map((muscle) => formatLabel(muscle))
@@ -562,10 +538,8 @@ export default function ExerciseLibrary() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-[10px] tracking-[0.2em] text-ink-subtle uppercase">
-                    Secondary muscles
-                  </dt>
-                  <dd className="mt-1 text-sm text-ink">
+                  <dt className="eyebrow text-ink-subtle">Secondary muscles</dt>
+                  <dd className="mt-1 caption text-ink">
                     {detailSecondaryMuscles.length
                       ? detailSecondaryMuscles
                           .map((muscle) => formatLabel(muscle))
@@ -574,31 +548,23 @@ export default function ExerciseLibrary() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-[10px] tracking-[0.2em] text-ink-subtle uppercase">
-                    Equipment
-                  </dt>
-                  <dd className="mt-1 text-sm text-ink">
+                  <dt className="eyebrow text-ink-subtle">Equipment</dt>
+                  <dd className="mt-1 caption text-ink">
                     {details.equipment
                       ? formatLabel(details.equipment)
                       : "Bodyweight"}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-[10px] tracking-[0.2em] text-ink-subtle uppercase">
-                    MET
-                  </dt>
-                  <dd className="mt-1 text-sm text-ink">
-                    {details.met ?? "—"}
-                  </dd>
+                  <dt className="eyebrow text-ink-subtle">MET</dt>
+                  <dd className="mt-1 caption text-ink">{details.met ?? "—"}</dd>
                 </div>
               </dl>
 
               {details.instructions.length > 0 && (
                 <div>
-                  <h3 className="text-[10px] tracking-[0.2em] text-ink-subtle uppercase">
-                    Instructions
-                  </h3>
-                  <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm leading-relaxed text-ink-muted">
+                  <h3 className="eyebrow text-ink-subtle">Instructions</h3>
+                  <ol className="mt-2 list-decimal space-y-1 pl-5 body-md text-ink-muted">
                     {details.instructions.map((step, index) => (
                       <li key={`${index}-${step}`}>{step}</li>
                     ))}
@@ -608,10 +574,8 @@ export default function ExerciseLibrary() {
 
               {details.tips.length > 0 && (
                 <div>
-                  <h3 className="text-[10px] tracking-[0.2em] text-ink-subtle uppercase">
-                    Tips
-                  </h3>
-                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-ink-muted">
+                  <h3 className="eyebrow text-ink-subtle">Tips</h3>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 body-md text-ink-muted">
                     {details.tips.map((tip, index) => (
                       <li key={`${index}-${tip}`}>{tip}</li>
                     ))}

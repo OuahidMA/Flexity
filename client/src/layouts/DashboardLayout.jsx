@@ -5,10 +5,14 @@
  * that shows the current role label and signed-in identity. Child pages render
  * through the nested `<Outlet />`, so this layout is mounted once per dashboard
  * session.
+ *
+ * The shell reads only semantic tokens, so it follows the light/dark theme
+ * switched from the header. Header controls are icon-only to keep the bar calm.
  */
 import { PanelLeft } from "lucide-react"
 import { Outlet } from "react-router-dom"
 import { AppSidebar } from "@/components/app-sidebar"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/hooks/useAuth"
 import { getRoleLabel } from "@/lib/roles"
 import {
@@ -28,17 +32,19 @@ export default function DashboardLayout() {
       <AppSidebar />
       <AnimatedSidebarInset className="bg-canvas">
         <header className="flex h-16 shrink-0 items-center gap-3 border-b border-hairline bg-canvas px-4 sm:px-6 lg:px-10">
-          <AnimatedSidebarTrigger className="text-ink-subtle transition-colors hover:bg-surface-2 hover:text-ink">
+          <AnimatedSidebarTrigger className="text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink">
             <PanelLeft aria-hidden="true" className="size-4" />
           </AnimatedSidebarTrigger>
-          <div className="h-4 w-px bg-hairline" aria-hidden="true" />
-          <p className="text-[10px] font-normal tracking-[0.28em] text-ink-subtle uppercase">
+          <div className="h-4 w-px bg-hairline-strong" aria-hidden="true" />
+          <p className="eyebrow text-ink-muted">
             {getRoleLabel(role)}
           </p>
           <div className="flex flex-1 items-center justify-end gap-3">
-            <span className="hidden text-[10px] tracking-[0.2em] text-ink-tertiary uppercase sm:inline">
+            <span className="caption hidden text-ink-muted sm:inline">
               {user?.profile?.name || user?.email}
             </span>
+            <span className="h-4 w-px bg-hairline" aria-hidden="true" />
+            <ThemeToggle />
           </div>
         </header>
         <div className="flex-1">

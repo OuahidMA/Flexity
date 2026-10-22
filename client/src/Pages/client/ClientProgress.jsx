@@ -43,7 +43,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 const SELECT_CLASS =
-  "h-10 w-full rounded-xs border border-hairline bg-surface-1 px-3 text-sm text-ink outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50"
+  "h-11 w-full min-w-0 rounded-xs border border-hairline-strong bg-surface-1 px-3 text-base text-ink transition-colors outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
 
 /**
  * Defaults to the routine scheduled today, then the first active routine.
@@ -206,7 +206,7 @@ export default function ClientProgress() {
         header: "Date",
         accessorKey: "date",
         cell: ({ row }) => (
-          <span className="whitespace-nowrap text-muted-foreground">
+          <span className="whitespace-nowrap text-ink-subtle">
             {formatProgressDate(row.getValue("date"), { year: true })}
           </span>
         ),
@@ -218,8 +218,10 @@ export default function ClientProgress() {
         accessorKey: "exerciseName",
         cell: ({ row }) => (
           <div className="min-w-0 space-y-1">
-            <p className="truncate font-bold">{row.getValue("exerciseName")}</p>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="truncate text-[13px] font-medium text-ink">
+              {row.getValue("exerciseName")}
+            </p>
+            <p className="truncate caption text-ink-subtle">
               {row.original.routineName || row.original.primaryMuscle || "—"}
               {row.original.dayLabel ? ` · ${row.original.dayLabel}` : ""}
             </p>
@@ -236,7 +238,7 @@ export default function ClientProgress() {
         header: "Reps / Time",
         id: "metric",
         cell: ({ row }) => (
-          <span className="text-muted-foreground tabular-nums">
+          <span className="text-ink-subtle tabular-nums">
             {formatMetricSummary(row.original)}
           </span>
         ),
@@ -246,7 +248,7 @@ export default function ClientProgress() {
         header: "Weight",
         id: "weight",
         cell: ({ row }) => (
-          <span className="text-muted-foreground tabular-nums">
+          <span className="text-ink-subtle tabular-nums">
             {formatWeightSummary(row.original)}
           </span>
         ),
@@ -260,13 +262,13 @@ export default function ClientProgress() {
 
           return (
             <div className="flex items-center gap-2">
-              <div className="h-1.5 w-16 overflow-hidden bg-muted">
+              <div className="h-1.5 w-16 overflow-hidden bg-surface-4">
                 <div
-                  className="h-full bg-primary"
+                  className="h-full bg-ink"
                   style={{ width: `${(volume / volumePeak) * 100}%` }}
                 />
               </div>
-              <span className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
+              <span className="caption whitespace-nowrap text-ink-subtle tabular-nums">
                 {volume.toLocaleString()} kg
               </span>
             </div>
@@ -325,11 +327,11 @@ export default function ClientProgress() {
       </div>
 
       {/* Coach-prescribed logging table. */}
-      <div className="border bg-card">
-        <div className="border-b px-4 py-4 sm:px-5">
-          <h3 className="text-sm font-bold">Log this workout</h3>
-          <p className="text-xs text-muted-foreground">
-            Inputs follow your coach's setup: reps for strength work, seconds
+      <div className="rounded-lg border border-hairline bg-surface-1">
+        <div className="border-b border-hairline px-5 py-4">
+          <h3 className="display-sm text-ink">Log this workout</h3>
+          <p className="caption mt-1 text-ink-subtle">
+            Inputs follow your coach&apos;s setup: reps for strength work, seconds
             for timed sets.
           </p>
         </div>
@@ -345,7 +347,7 @@ export default function ClientProgress() {
           <>
             {/* Workout selection. Day options include rest days so the client
                 sees the full schedule without leaving the page. */}
-            <div className="grid gap-4 border-b px-4 py-4 sm:grid-cols-2 sm:px-5 lg:grid-cols-[1.6fr_1.3fr_0.9fr]">
+            <div className="grid gap-4 border-b border-hairline px-5 py-4 sm:grid-cols-2 lg:grid-cols-[1.6fr_1.3fr_0.9fr]">
               <div className="space-y-2">
                 <Label htmlFor="progress-routine">Routine</Label>
                 <select
@@ -433,11 +435,11 @@ export default function ClientProgress() {
       </div>
 
       {/* Check-in history from the API. */}
-      <div className="border bg-card">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-4 sm:px-5">
+      <div className="rounded-lg border border-hairline bg-surface-1">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-5 py-4">
           <div>
-            <h3 className="text-sm font-bold">Check-in history</h3>
-            <p className="text-xs text-muted-foreground">
+            <h3 className="display-sm text-ink">Check-in history</h3>
+            <p className="caption mt-1 text-ink-subtle">
               Every saved exercise, newest first
             </p>
           </div>
@@ -453,7 +455,7 @@ export default function ClientProgress() {
           )}
         </div>
 
-        <div className="p-4 sm:p-5">
+        <div className="p-5">
           {progressLoading && logs.length === 0 ? (
             <LoadingState label="Loading progress..." />
           ) : progressError ? (
@@ -470,9 +472,7 @@ export default function ClientProgress() {
             <div className="space-y-6">
               {/* Volume per logged day (not per exercise). */}
               <div>
-                <h4 className="text-xs font-bold tracking-[0.15em] text-muted-foreground uppercase">
-                  Volume trend
-                </h4>
+                <h4 className="eyebrow text-ink-subtle">Volume trend</h4>
                 <div className="mt-3 flex h-32 items-end gap-2">
                   {dailyVolume.map((day) => (
                     <div
@@ -481,7 +481,7 @@ export default function ClientProgress() {
                     >
                       <div className="flex w-full flex-1 items-end">
                         <div
-                          className="w-full bg-primary/70 transition-colors hover:bg-primary"
+                          className="w-full bg-ink transition-colors hover:bg-ink-muted"
                           style={{
                             height: `${Math.max(
                               (day.volume / dailyPeak) * 100,
@@ -491,7 +491,7 @@ export default function ClientProgress() {
                           title={`${day.volume.toLocaleString()} kg`}
                         />
                       </div>
-                      <span className="text-[10px] whitespace-nowrap text-muted-foreground">
+                      <span className="caption whitespace-nowrap text-ink-subtle">
                         {formatProgressDate(day.date)}
                       </span>
                     </div>

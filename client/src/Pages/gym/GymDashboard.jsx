@@ -6,7 +6,13 @@
  * payload; navigation links lead to the full member/coach management screens.
  */
 import { Link } from "react-router-dom"
-import { CalendarDays, ClipboardList, Dumbbell, Users } from "lucide-react"
+import {
+  ArrowUpRight,
+  CalendarDays,
+  ClipboardList,
+  Dumbbell,
+  Users,
+} from "lucide-react"
 
 import { useAuth } from "@/hooks/useAuth"
 import { useApiData } from "@/hooks/useApiData"
@@ -67,6 +73,10 @@ export default function GymDashboard() {
   const recentMembers = data?.recentMembers ?? []
   const coaches = data?.coaches ?? []
   const gymName = data?.gym?.name ?? "Your gym"
+  const pendingMembers = Math.max(stats.members - stats.activeMembers, 0)
+  const activeShare = stats.members
+    ? Math.round((stats.activeMembers / stats.members) * 100)
+    : 0
 
   return (
     <div className="space-y-6">
@@ -114,13 +124,80 @@ export default function GymDashboard() {
         />
       </div>
 
+      {/* Management surface: direct routes to the two operational rosters and
+          a live read on how much of the membership is fully onboarded. */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Link
+          to="/dashboard/gym/members"
+          className="group rounded-lg border border-hairline bg-surface-1 p-5 shadow-[var(--shadow-level-1)] transition-colors hover:border-hairline-strong"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <span className="grid size-9 place-items-center rounded-md border border-hairline bg-surface-2 text-ink-muted">
+              <Users className="size-4" aria-hidden="true" />
+            </span>
+            <ArrowUpRight
+              className="size-4 text-ink-tertiary transition-colors group-hover:text-ink"
+              aria-hidden="true"
+            />
+          </div>
+          <h3 className="cap-label mt-5 text-ink">Members</h3>
+          <p className="caption mt-1.5 text-ink-subtle">
+            Onboard clients, issue setup PINs and keep every plan current.
+          </p>
+        </Link>
+
+        <Link
+          to="/dashboard/gym/coaches"
+          className="group rounded-lg border border-hairline bg-surface-1 p-5 shadow-[var(--shadow-level-1)] transition-colors hover:border-hairline-strong"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <span className="grid size-9 place-items-center rounded-md border border-hairline bg-surface-2 text-ink-muted">
+              <Dumbbell className="size-4" aria-hidden="true" />
+            </span>
+            <ArrowUpRight
+              className="size-4 text-ink-tertiary transition-colors group-hover:text-ink"
+              aria-hidden="true"
+            />
+          </div>
+          <h3 className="cap-label mt-5 text-ink">Coaches</h3>
+          <p className="caption mt-1.5 text-ink-subtle">
+            Invite coaches, review specialities and balance client rosters.
+          </p>
+        </Link>
+
+        <div className="rounded-lg border border-hairline bg-surface-1 p-5 shadow-[var(--shadow-level-1)]">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="cap-label text-ink">Member mix</h3>
+            <Badge variant="secondary">{activeShare}% active</Badge>
+          </div>
+          <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-surface-4">
+            <div
+              className="h-full rounded-full bg-primary"
+              style={{ width: `${activeShare}%` }}
+            />
+          </div>
+          <dl className="mt-4 grid grid-cols-2 gap-3">
+            <div>
+              <dt className="eyebrow text-ink-subtle">Active</dt>
+              <dd className="display-sm mt-1 text-ink">
+                {stats.activeMembers}
+              </dd>
+            </div>
+            <div>
+              <dt className="eyebrow text-ink-subtle">Onboarding</dt>
+              <dd className="display-sm mt-1 text-ink">{pendingMembers}</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
       {/* Recent activity and tenant context. */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="border bg-card lg:col-span-2">
-          <div className="flex items-center justify-between border-b px-6 py-5">
+        <div className="overflow-hidden rounded-lg border border-hairline bg-surface-1 lg:col-span-2">
+          <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
             <div>
-              <h3 className="text-sm font-bold">Newest members</h3>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <h3 className="display-sm text-ink">Newest members</h3>
+              <p className="caption mt-1 text-ink-subtle">
                 Latest client accounts across your gym
               </p>
             </div>
@@ -135,11 +212,11 @@ export default function GymDashboard() {
           </div>
 
           {recentMembers.length === 0 ? (
-            <div className="px-6 py-12 text-center text-sm text-muted-foreground">
+            <div className="px-6 py-12 text-center caption text-ink-subtle">
               No clients yet.{" "}
               <Link
                 to="/dashboard/gym/members"
-                className="font-bold text-primary hover:text-primary-hover"
+                className="cap-label text-ink transition-colors hover:text-ink-muted"
               >
                 Add your first member
               </Link>
@@ -162,23 +239,23 @@ export default function GymDashboard() {
                 {recentMembers.map((member) => (
                   <TableRow key={member.id}>
                     <TableCell className="px-5 py-4">
-                      <p className="font-bold">{member.name || "—"}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
+                      <p className="text-[13px] font-medium text-ink">
+                        {member.name || "—"}
+                      </p>
+                      <p className="mt-0.5 caption text-ink-subtle">
                         {member.email || "Awaiting setup"}
                       </p>
                     </TableCell>
                     <TableCell className="px-5 py-4">
                       {member.setupRequired ? (
-                        <span className="font-mono text-xs font-bold tracking-[0.16em]">
+                        <span className="text-[13px] font-medium tracking-[0.16em] text-ink tabular-nums">
                           {formatPin(member.pin)}
                         </span>
                       ) : (
-                        <span className="text-xs text-muted-foreground">
-                          Activated
-                        </span>
+                        <span className="caption text-ink-subtle">Activated</span>
                       )}
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-muted-foreground">
+                    <TableCell className="px-5 py-4 text-ink-subtle">
                       {member.coachName || "Unassigned"}
                     </TableCell>
                     <TableCell className="px-5 py-4">
@@ -192,7 +269,7 @@ export default function GymDashboard() {
                         }
                       />
                     </TableCell>
-                    <TableCell className="px-5 py-4 text-right text-muted-foreground">
+                    <TableCell className="px-5 py-4 text-right text-ink-subtle">
                       {formatDate(member.joinedAt)}
                     </TableCell>
                   </TableRow>
@@ -204,50 +281,59 @@ export default function GymDashboard() {
 
         <div className="space-y-4">
           {/* Compact roster preview; the full list lives on the coaches page. */}
-          <div className="border bg-card p-5">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold">Coach roster</h3>
-              <CalendarDays className="size-4 text-muted-foreground" />
+          <div className="overflow-hidden rounded-lg border border-hairline bg-surface-1">
+            <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
+              <h3 className="display-sm text-ink">Coach roster</h3>
+              <CalendarDays className="size-4 text-ink-subtle" aria-hidden="true" />
             </div>
 
             {coaches.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">
+              <p className="px-5 py-6 caption text-ink-subtle">
                 No coaches yet. Invite one from the coaches page.
               </p>
             ) : (
-              <div className="mt-4 space-y-3">
-                {coaches.slice(0, 5).map((coach) => (
-                  <div
-                    key={coach.id}
-                    className="flex items-center justify-between gap-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-bold">
-                        {coach.name || coach.email}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {coach.speciality || "Coach"}
-                      </p>
-                    </div>
-                    <Badge variant="secondary">{coach.clients} clients</Badge>
-                  </div>
-                ))}
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="h-10 px-5">Coach</TableHead>
+                    <TableHead className="h-10 px-5 text-right">Clients</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {coaches.slice(0, 5).map((coach) => (
+                    <TableRow key={coach.id}>
+                      <TableCell className="px-5 py-3">
+                        <p className="truncate text-[13px] font-medium text-ink">
+                          {coach.name || coach.email}
+                        </p>
+                        <p className="truncate caption text-ink-subtle">
+                          {coach.speciality || "Coach"}
+                        </p>
+                      </TableCell>
+                      <TableCell className="px-5 py-3 text-right">
+                        <Badge variant="secondary">{coach.clients}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
 
-            <Button
-              variant="outline"
-              className="mt-4 w-full"
-              nativeButton={false}
-              render={<Link to="/dashboard/gym/coaches" />}
-            >
-              Manage coaches
-            </Button>
+            <div className="border-t border-hairline p-3">
+              <Button
+                variant="outline"
+                className="w-full"
+                nativeButton={false}
+                render={<Link to="/dashboard/gym/coaches" />}
+              >
+                Manage coaches
+              </Button>
+            </div>
           </div>
 
           {/* Active tenant theme tokens hydrated by AuthContext. */}
-          <div className="border bg-card p-5">
-            <h3 className="text-sm font-bold">Gym branding</h3>
+          <div className="rounded-lg border border-hairline bg-surface-1 p-5">
+            <h3 className="display-sm text-ink">Gym branding</h3>
             <div className="mt-4 flex gap-2">
               {[
                 gymBranding.primaryColor,
@@ -256,10 +342,10 @@ export default function GymDashboard() {
               ].map((color) => (
                 <div key={color} className="flex-1">
                   <div
-                    className="h-10 border"
+                    className="h-10 border border-hairline"
                     style={{ backgroundColor: color }}
                   />
-                  <p className="mt-1.5 font-mono text-[10px] text-muted-foreground">
+                  <p className="eyebrow mt-1.5 leading-none text-ink-subtle tabular-nums">
                     {color}
                   </p>
                 </div>

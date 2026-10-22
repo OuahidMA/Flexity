@@ -77,17 +77,17 @@ export default function Account() {
         <div className="grid gap-4 lg:grid-cols-3">
           <form
             onSubmit={handleSubmit}
-            className="border bg-card p-6 lg:col-span-2"
+            className="rounded-lg border border-hairline bg-surface-1 p-6 lg:col-span-2"
           >
             <div className="flex items-center gap-3 border-b border-hairline pb-4">
-              <span className="grid size-10 place-items-center bg-primary text-primary-foreground">
+              <span className="grid size-10 shrink-0 place-items-center bg-primary text-primary-foreground">
                 <KeyRound className="size-5" aria-hidden="true" />
               </span>
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-[0.12em]">
+                <h3 className="display-sm text-ink">
                   Replace your setup PIN
                 </h3>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="caption mt-1 text-ink-subtle">
                   Your PIN is deleted the moment this form is submitted.
                 </p>
               </div>
@@ -149,28 +149,29 @@ export default function Account() {
               </div>
 
               {error && (
-                <p className="border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                <p
+                  role="alert"
+                  className="rounded-xs border border-destructive/40 bg-destructive/10 px-3 py-2 caption text-destructive"
+                >
                   {error}
                 </p>
               )}
 
               <Button type="submit" disabled={saving} className="gap-2">
-                <ShieldCheck className="size-4" />
+                <ShieldCheck className="size-4" aria-hidden="true" />
                 {saving ? "Saving..." : "Finish setup"}
               </Button>
             </div>
           </form>
 
-          <aside className="border bg-surface-1 p-6">
-            <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-ink-subtle">
-              Why this step?
-            </h3>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          <aside className="rounded-lg border border-hairline bg-surface-1 p-6">
+            <h3 className="eyebrow text-ink-subtle">Why this step?</h3>
+            <p className="caption mt-3 text-ink-subtle">
               Your gym created this account with a one-time PIN so no shared
               password ever travels over chat or paper. Pick credentials only you
               know; the PIN stops working immediately after setup.
             </p>
-            <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+            <ul className="mt-4 space-y-2 caption text-ink-subtle">
               <li className="border-t border-hairline pt-2">
                 Email becomes your normal sign-in identity.
               </li>
@@ -184,31 +185,25 @@ export default function Account() {
           </aside>
         </div>
       ) : (
-        <div className="max-w-2xl border bg-card p-6">
+        <div className="max-w-2xl border border-hairline bg-surface-1 p-6">
           <dl className="divide-y divide-hairline">
             <div className="flex items-center justify-between gap-6 py-4 first:pt-0">
-              <dt className="text-xs uppercase tracking-[0.16em] text-ink-subtle">
-                Name
-              </dt>
-              <dd className="text-sm font-bold">{user?.profile?.name || "—"}</dd>
+              <dt className="eyebrow text-ink-subtle">Name</dt>
+              <dd className="text-[13px] font-medium text-ink">
+                {user?.profile?.name || "—"}
+              </dd>
             </div>
             <div className="flex items-center justify-between gap-6 py-4">
-              <dt className="text-xs uppercase tracking-[0.16em] text-ink-subtle">
-                Email
-              </dt>
-              <dd className="text-sm">{user?.email || "Not set"}</dd>
+              <dt className="eyebrow text-ink-subtle">Email</dt>
+              <dd className="caption text-ink">{user?.email || "Not set"}</dd>
             </div>
             <div className="flex items-center justify-between gap-6 py-4">
-              <dt className="text-xs uppercase tracking-[0.16em] text-ink-subtle">
-                Role
-              </dt>
-              <dd className="text-sm capitalize">{getRoleLabel(role)}</dd>
+              <dt className="eyebrow text-ink-subtle">Role</dt>
+              <dd className="caption text-ink">{getRoleLabel(role)}</dd>
             </div>
             <div className="flex items-center justify-between gap-6 py-4">
-              <dt className="text-xs uppercase tracking-[0.16em] text-ink-subtle">
-                Password
-              </dt>
-              <dd className="text-sm text-muted-foreground">
+              <dt className="eyebrow text-ink-subtle">Password</dt>
+              <dd className="caption text-ink-subtle">
                 Stored securely · contact your gym to reset
               </dd>
             </div>

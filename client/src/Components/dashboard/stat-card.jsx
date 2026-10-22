@@ -30,29 +30,30 @@ export function StatCard({
   const TrendIcon = trendDirection === "down" ? ArrowDownRight : ArrowUpRight
 
   return (
-    <div className="relative overflow-hidden border border-hairline bg-surface-3 p-5 transition-colors hover:border-hairline-strong">
-      <div className="absolute inset-x-0 top-0 h-px bg-hairline-strong" />
+    <div className="relative overflow-hidden rounded-lg border border-hairline bg-surface-1 p-5 transition-colors hover:border-hairline-strong">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-normal tracking-[0.24em] text-ink-subtle uppercase">
+          <p className="eyebrow text-ink-subtle">
             {label}
           </p>
-          <p className="mt-3 text-4xl leading-[0.95] font-bold tracking-[-0.02em] text-ink">
+          <p className="display-md mt-3 text-ink">
             {value}
           </p>
         </div>
         {Icon && (
-          <span className="grid size-9 shrink-0 place-items-center border border-hairline-strong bg-canvas text-ink-subtle">
+          <span className="grid size-9 shrink-0 place-items-center rounded-md border border-hairline bg-surface-2 text-ink-muted">
             <Icon className="size-4" />
           </span>
         )}
       </div>
-      <div className="mt-4 flex items-center gap-2 text-xs">
+      <div className="mt-4 flex items-center gap-2">
         {trend != null && (
           <span
             className={cn(
-              "inline-flex items-center gap-1 font-normal tracking-[0.06em] uppercase",
-              trendDirection === "down" ? "text-destructive" : "text-ink"
+              "inline-flex items-center gap-1 caption",
+              trendDirection === "down"
+                ? "text-destructive"
+                : "text-semantic-success"
             )}
           >
             <TrendIcon className="size-3.5" />
@@ -60,7 +61,7 @@ export function StatCard({
           </span>
         )}
         {hint && (
-          <span className="text-ink-subtle">{hint}</span>
+          <span className="caption text-ink-subtle">{hint}</span>
         )}
       </div>
     </div>

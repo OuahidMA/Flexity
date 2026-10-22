@@ -80,37 +80,31 @@ export function ClientProgressDialog({ client, open, onOpenChange }) {
             <>
               {/* Compact summary so the coach sees adherence at a glance. */}
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="border border-hairline bg-canvas px-4 py-3">
-                  <p className="text-[10px] tracking-[0.18em] text-ink-subtle uppercase">
-                    Sessions
-                  </p>
-                  <p className="mt-1 text-2xl font-bold">{sessions}</p>
+                <div className="rounded-lg border border-hairline bg-surface-1 px-4 py-3">
+                  <p className="eyebrow text-ink-subtle">Sessions</p>
+                  <p className="display-sm mt-2 text-ink">{sessions}</p>
                 </div>
-                <div className="border border-hairline bg-canvas px-4 py-3">
-                  <p className="text-[10px] tracking-[0.18em] text-ink-subtle uppercase">
-                    Sets logged
-                  </p>
-                  <p className="mt-1 text-2xl font-bold">{totalSets}</p>
+                <div className="rounded-lg border border-hairline bg-surface-1 px-4 py-3">
+                  <p className="eyebrow text-ink-subtle">Sets logged</p>
+                  <p className="display-sm mt-2 text-ink">{totalSets}</p>
                 </div>
-                <div className="border border-hairline bg-canvas px-4 py-3">
-                  <p className="text-[10px] tracking-[0.18em] text-ink-subtle uppercase">
-                    Volume
-                  </p>
-                  <p className="mt-1 text-2xl font-bold">
+                <div className="rounded-lg border border-hairline bg-surface-1 px-4 py-3">
+                  <p className="eyebrow text-ink-subtle">Volume</p>
+                  <p className="display-sm mt-2 text-ink">
                     {totalVolume.toLocaleString()} kg
                   </p>
                 </div>
               </div>
 
               {dailyVolume.length > 1 && (
-                <div className="flex h-24 items-end gap-2 border border-hairline bg-canvas px-4 py-3">
+                <div className="flex h-24 items-end gap-2 border border-hairline bg-surface-1 px-4 py-3">
                   {dailyVolume.map((day) => (
                     <div
                       key={day.date}
                       className="flex h-full flex-1 items-end"
                     >
                       <div
-                        className="w-full bg-primary/70"
+                        className="w-full bg-ink"
                         style={{
                           height: `${Math.max(
                             (day.volume / dailyPeak) * 100,
@@ -141,21 +135,23 @@ export function ClientProgressDialog({ client, open, onOpenChange }) {
                   <TableBody>
                     {logs.map((log) => (
                       <TableRow key={log.id}>
-                        <TableCell className="whitespace-nowrap text-muted-foreground">
+                        <TableCell className="whitespace-nowrap text-ink-subtle">
                           {formatProgressDate(log.date, { year: true })}
                         </TableCell>
                         <TableCell>
-                          <p className="font-bold">{log.exerciseName}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-[13px] font-medium text-ink">
+                            {log.exerciseName}
+                          </p>
+                          <p className="caption text-ink-subtle">
                             {log.routineName || "—"}
                             {log.dayLabel ? ` · ${log.dayLabel}` : ""}
                           </p>
                         </TableCell>
                         <TableCell>{log.sets}</TableCell>
-                        <TableCell className="whitespace-nowrap text-muted-foreground tabular-nums">
+                        <TableCell className="whitespace-nowrap text-ink-subtle tabular-nums">
                           {formatMetricSummary(log)}
                         </TableCell>
-                        <TableCell className="whitespace-nowrap text-muted-foreground tabular-nums">
+                        <TableCell className="whitespace-nowrap text-ink-subtle tabular-nums">
                           {formatWeightSummary(log)}
                         </TableCell>
                         <TableCell className="whitespace-nowrap tabular-nums">

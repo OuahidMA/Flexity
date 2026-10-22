@@ -153,10 +153,10 @@ export default function GymCoaches() {
         accessorKey: "name",
         cell: ({ row }) => (
           <div className="min-w-0 space-y-1 py-1.5">
-            <p className="truncate font-bold text-foreground">
+            <p className="truncate text-[13px] font-medium text-ink">
               {row.getValue("name") || "—"}
             </p>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="truncate caption text-ink-subtle">
               {row.original.email || "Awaiting setup"}
             </p>
           </div>
@@ -176,11 +176,11 @@ export default function GymCoaches() {
         accessorKey: "pin",
         cell: ({ row }) =>
           row.original.setupRequired ? (
-            <span className="font-mono text-xs font-bold tracking-[0.16em] text-foreground">
+            <span className="text-[13px] font-medium tracking-[0.16em] text-ink tabular-nums">
               {formatPin(row.original.pin)}
             </span>
           ) : (
-            <span className="text-xs text-muted-foreground">Activated</span>
+            <span className="caption text-ink-subtle">Activated</span>
           ),
         size: 130,
       },
@@ -213,7 +213,7 @@ export default function GymCoaches() {
         header: "Joined",
         accessorKey: "joinedAt",
         cell: ({ row }) => (
-          <span className="text-muted-foreground">
+          <span className="text-ink-subtle">
             {formatDate(row.getValue("joinedAt"))}
           </span>
         ),

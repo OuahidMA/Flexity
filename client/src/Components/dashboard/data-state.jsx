@@ -9,13 +9,13 @@ import { Button } from "@/components/ui/button"
 /**
  * @param {object} props
  * @param {string} [props.label="Loading..."] - Context-specific status text.
- * @returns {JSX.Element} Centered spinner with uppercase status label.
+ * @returns {JSX.Element} Centered spinner with a contextual status label.
  */
 export function LoadingState({ label = "Loading..." }) {
   return (
-    <div className="flex min-h-40 items-center justify-center gap-2 text-[10px] tracking-[0.24em] text-ink-subtle uppercase">
+    <div className="flex min-h-40 items-center justify-center gap-2 text-ink-subtle">
       <Loader2 className="size-4 animate-spin text-ink" />
-      {label}
+      <span className="eyebrow">{label}</span>
     </div>
   )
 }
@@ -29,9 +29,9 @@ export function LoadingState({ label = "Loading..." }) {
  */
 export function ErrorState({ message, onRetry }) {
   return (
-    <div className="flex min-h-40 flex-col items-center justify-center gap-3 border border-hairline bg-surface-2 p-6 text-center">
+    <div className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-lg border border-hairline bg-surface-2 p-6 text-center">
       <AlertCircle className="size-6 text-destructive" />
-      <p className="max-w-md text-sm text-ink-subtle">
+      <p className="caption max-w-md text-ink-subtle">
         {message || "Unable to load this data. Please try again."}
       </p>
       {onRetry && (
@@ -52,13 +52,13 @@ export function ErrorState({ message, onRetry }) {
  */
 export function EmptyState({ title, description, action }) {
   return (
-    <div className="flex min-h-40 flex-col items-center justify-center gap-2 border border-dashed border-hairline-strong bg-surface-2 p-8 text-center">
+    <div className="flex min-h-40 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-hairline-strong bg-surface-2 p-8 text-center">
       <Inbox className="size-6 text-ink-tertiary" />
-      <p className="text-sm font-bold tracking-[0.08em] text-ink uppercase">
+      <p className="cap-label text-ink">
         {title}
       </p>
       {description && (
-        <p className="max-w-md text-sm text-ink-subtle">{description}</p>
+        <p className="caption max-w-md text-ink-subtle">{description}</p>
       )}
       {action}
     </div>

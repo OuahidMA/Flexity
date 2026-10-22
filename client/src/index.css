@@ -1,13 +1,35 @@
+/* Cascade layer order. RSuite sits at the bottom of the stack: its global reset
+   (body canvas, heading weights, `button { border-radius: 0 }`) must never
+   outrank the app's base typography or Tailwind's utilities. */
+@layer theme, rs, base, components, utilities;
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "rsuite/dist/rsuite.min.css" layer(rs);
+@import "@fontsource-variable/inter";
 @import "@fontsource-variable/inter-tight";
 
 @custom-variant dark (&:is(.dark *));
 
+/* ==========================================================================
+   DESIGN TOKENS — DESIGN.md (Supabase SaaS, light + dark)
+
+   Light is the canonical marketing canvas: #ffffff surfaces, #f9fafb bands,
+   #e5e7eb hairlines and near-black slate ink. Dark is the studio workspace:
+   a #171717 canvas with #1c1c1c / #212121 panels, #2e2e2e hairlines and the
+   signature #3ecf8e emerald. Exactly one chromatic brand event in both modes.
+
+   Every component reads the semantic token layer (`bg-canvas`, `bg-surface-1`,
+   `text-ink-muted`, `border-hairline`, ...), so the `.dark` class swaps the
+   whole palette without touching a single component.
+   ========================================================================== */
+
 @theme inline {
+    --font-display: var(--font-sans);
     --font-heading: var(--font-sans);
-    --font-sans: 'Inter Tight Variable', 'Inter Tight', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-sans: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-condensed: 'Inter Tight Variable', 'Inter Tight', 'Arial Narrow', Arial, Verdana, sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -33,6 +55,7 @@
     --color-secondary: var(--secondary);
     --color-primary-foreground: var(--primary-foreground);
     --color-primary: var(--primary);
+    --color-primary-soft: var(--primary-soft);
     --color-popover-foreground: var(--popover-foreground);
     --color-popover: var(--popover);
     --color-card-foreground: var(--card-foreground);
@@ -40,6 +63,10 @@
     --color-foreground: var(--foreground);
     --color-background: var(--background);
     --color-canvas: var(--canvas);
+    --color-canvas-soft: var(--canvas-soft);
+    --color-canvas-light: var(--canvas-light);
+    --color-canvas-night: var(--canvas-night);
+    --color-on-dark: var(--on-dark);
     --color-surface-1: var(--surface-1);
     --color-surface-2: var(--surface-2);
     --color-surface-3: var(--surface-3);
@@ -52,28 +79,59 @@
     --color-ink-subtle: var(--ink-subtle);
     --color-ink-tertiary: var(--ink-tertiary);
     --color-primary-hover: var(--primary-hover);
-    --color-brand-secure: var(--brand-secure);
     --color-semantic-success: var(--semantic-success);
-    --radius-xs: 2px;
-    --radius-sm: 3px;
-    --radius-md: 4px;
-    --radius-lg: 6px;
-    --radius-xl: 8px;
-    --radius-2xl: 12px;
-    --radius-3xl: 16px;
-    --radius-4xl: 24px;
-    --radius-pill: 46px;
+    --color-semantic-warning: var(--semantic-warning);
+    --color-semantic-info: var(--semantic-info);
+    --radius-xs: var(--radius-token-xs);
+    --radius-sm: var(--radius-token-sm);
+    --radius-md: var(--radius-token-md);
+    --radius-lg: var(--radius-token-lg);
+    --radius-xl: var(--radius-token-xl);
+    --radius-2xl: var(--radius-token-2xl);
+    --radius-3xl: var(--radius-token-3xl);
+    --radius-4xl: var(--radius-token-4xl);
+    --radius-pill: var(--radius-token-pill);
 }
 
 :root {
+    color-scheme: light;
+
+    /* Canvas + panels — the crisp white marketing/product surface. */
+    --canvas: #ffffff;
+    --canvas-soft: #f9fafb;
+    --canvas-light: #f3f4f6;
+    /* Always-dark brand panel (login split, inverted pricing tier). */
+    --canvas-night: #101010;
+    --surface-1: #ffffff;
+    --surface-2: #f9fafb;
+    --surface-3: #f3f4f6;
+    --surface-4: #e5e7eb;
+    --hairline: #e5e7eb;
+    --hairline-strong: #d1d5db;
+    --hairline-tertiary: #9ca3af;
+
+    /* Type — dark slate ink ladder. */
+    --ink: #111827;
+    --ink-muted: #4b5563;
+    --ink-subtle: #6b7280;
+    --ink-tertiary: #9ca3af;
+    --on-dark: #ffffff;
+
     --background: var(--canvas);
     --foreground: var(--ink);
     --card: var(--surface-1);
     --card-foreground: var(--ink);
     --popover: var(--surface-2);
     --popover-foreground: var(--ink);
-    --primary: #ffed00;
-    --primary-foreground: #000000;
+
+    /* Primary — professional darkened Supabase emerald on light canvas. */
+    --primary: #24b47e;
+    --primary-foreground: #06231a;
+    --primary-hover: #1e9e6e;
+    --primary-soft: #3ecf8e;
+    --primary-deep: #178a5e;
+    --primary-focus: rgba(36, 180, 126, 0.35);
+
     --secondary: var(--surface-2);
     --secondary-foreground: var(--ink);
     --muted: var(--surface-2);
@@ -82,126 +140,137 @@
     --accent-foreground: var(--ink);
     --border: var(--hairline);
     --input: var(--surface-1);
-    --ring: var(--primary-focus);
-    --chart-1: #ffed00;
-    --chart-2: #e6d200;
-    --chart-3: #b8a800;
-    --chart-4: #8a8a8a;
-    --chart-5: #333333;
-    --canvas: #000000;
-    --surface-1: #0a0a0a;
-    --surface-2: #111111;
-    --surface-3: #1a1a1a;
-    --surface-4: #262626;
-    --hairline: #1f1f1f;
-    --hairline-strong: #3a3a3a;
-    --hairline-tertiary: #4a4a4a;
-    --divider-dark: rgba(255, 255, 255, 0.16);
-    --brand-secure: #78694F;
-    --ink: #ffffff;
-    --ink-muted: rgba(255, 255, 255, 0.72);
-    --ink-subtle: #8a8a8a;
-    --ink-tertiary: #666666;
-    --primary-hover: #e6d200;
-    --primary-focus: #ffed0080;
-    --semantic-success: #8dc572;
-    --semantic-warning: #f0ad4e;
-    --semantic-info: #337ab7;
-    --destructive: #be6464;
+    --ring: rgba(17, 24, 39, 0.45);
+
+    /* Charts stay monochrome: ink first, then descending greys. */
+    --chart-1: #111827;
+    --chart-2: #4b5563;
+    --chart-3: #6b7280;
+    --chart-4: #9ca3af;
+    --chart-5: #d1d5db;
+
+    /* Functional status hues only — never used as brand colour. */
+    --semantic-success: #15803d;
+    --semantic-warning: #b45309;
+    --semantic-info: #2563eb;
+    --destructive: #dc2626;
     --destructive-foreground: #ffffff;
-    --semantic-overlay: #000000;
-    --inverse-canvas: #ffffff;
-    --inverse-surface-1: #f7f7f7;
-    --inverse-surface-2: #ffffff;
+
+    /* Elevation ladder from DESIGN.md. */
+    --shadow-level-1: 0 1px 3px rgba(15, 23, 42, 0.06);
+    --shadow-level-2: 0 8px 24px rgba(15, 23, 42, 0.08);
+    --shadow-level-3: 0 16px 48px rgba(15, 23, 42, 0.12);
+
     --radius: 4px;
     --radius-md: 4px;
     --radius-lg: 6px;
     --radius-xl: 8px;
-    --radius-pill: 46px;
-    --sidebar: #000000;
-    --sidebar-foreground: #ffffff;
-    --sidebar-primary: #ffed00;
-    --sidebar-primary-foreground: #000000;
-    --sidebar-accent: #111111;
-    --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: #1f1f1f;
-    --sidebar-ring: #ffed00;
+    --radius-pill: 32px;
+
+    /* Themeable radius scale — DESIGN.md: xs 4, sm 6, md 8, lg 12, xl 16. */
+    --radius-token-xs: 4px;
+    --radius-token-sm: 6px;
+    --radius-token-md: 8px;
+    --radius-token-lg: 12px;
+    --radius-token-xl: 16px;
+    --radius-token-2xl: 16px;
+    --radius-token-3xl: 16px;
+    --radius-token-4xl: 16px;
+    --radius-token-pill: 9999px;
+
+    --sidebar: #ffffff;
+    --sidebar-foreground: var(--ink);
+    --sidebar-primary: #24b47e;
+    --sidebar-primary-foreground: #06231a;
+    --sidebar-accent: var(--surface-3);
+    --sidebar-accent-foreground: var(--ink);
+    --sidebar-border: var(--hairline);
+    --sidebar-ring: var(--ring);
+
+    /* RSuite ships a global reset. Its layer is floored below the app layers,
+       but pin the handful of tokens it reads for the page shell so nothing can
+       repaint the canvas or swap the typeface. */
+    --rs-body: var(--canvas);
+    --rs-html-font-size: 16px;
+    --rs-font-family-base: var(--font-sans);
+    --rs-heading-font-family: var(--font-sans);
+    --rs-heading-font-weight: 500;
+    --rs-heading-color: var(--ink);
+    --rs-text-primary: var(--ink);
+    --rs-text-secondary: var(--ink-muted);
+    --rs-text-heading: var(--ink);
 }
 
+/* Dark studio workspace: near-black canvas, elevated charcoal panels, hairline
+   rules and the full-strength signature emerald. */
 .dark {
-    --background: var(--canvas);
-    --foreground: var(--ink);
-    --card: var(--surface-1);
-    --card-foreground: var(--ink);
-    --popover: var(--surface-2);
-    --popover-foreground: var(--ink);
-    --primary: #ffed00;
-    --primary-foreground: #000000;
-    --secondary: var(--surface-2);
-    --secondary-foreground: var(--ink);
-    --muted: var(--surface-2);
-    --muted-foreground: var(--ink-muted);
-    --accent: var(--surface-3);
-    --accent-foreground: var(--ink);
-    --border: var(--hairline);
-    --input: var(--surface-1);
-    --ring: var(--primary-focus);
-    --chart-1: #ffed00;
-    --chart-2: #e6d200;
-    --chart-3: #b8a800;
-    --chart-4: #8a8a8a;
-    --chart-5: #333333;
-    --canvas: #000000;
-    --surface-1: #0a0a0a;
-    --surface-2: #111111;
-    --surface-3: #1a1a1a;
-    --surface-4: #262626;
-    --hairline: #1f1f1f;
-    --hairline-strong: #3a3a3a;
-    --hairline-tertiary: #4a4a4a;
-    --divider-dark: rgba(255, 255, 255, 0.16);
-    --brand-secure: #78694F;
-    --ink: #ffffff;
-    --ink-muted: rgba(255, 255, 255, 0.72);
+    color-scheme: dark;
+
+    --canvas: #171717;
+    --canvas-soft: #1c1c1c;
+    --canvas-light: #212121;
+    --canvas-night: #101010;
+    --surface-1: #212121;
+    --surface-2: #262626;
+    --surface-3: #2e2e2e;
+    --surface-4: #383838;
+    --hairline: #2e2e2e;
+    --hairline-strong: #3f3f3f;
+    --hairline-tertiary: #525252;
+
+    --ink: #ededed;
+    --ink-muted: #a3a3a3;
     --ink-subtle: #8a8a8a;
-    --ink-tertiary: #666666;
-    --primary-hover: #e6d200;
-    --primary-focus: #ffed0080;
-    --semantic-success: #8dc572;
-    --semantic-warning: #f0ad4e;
-    --semantic-info: #337ab7;
-    --destructive: #be6464;
-    --destructive-foreground: #ffffff;
-    --semantic-overlay: #000000;
-    --inverse-canvas: #ffffff;
-    --inverse-surface-1: #f7f7f7;
-    --inverse-surface-2: #ffffff;
-    --radius: 4px;
-    --radius-md: 4px;
-    --radius-lg: 6px;
-    --radius-xl: 8px;
-    --radius-pill: 46px;
-    --sidebar: #000000;
-    --sidebar-foreground: #ffffff;
-    --sidebar-primary: #ffed00;
-    --sidebar-primary-foreground: #000000;
-    --sidebar-accent: #111111;
-    --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: #1f1f1f;
-    --sidebar-ring: #ffed00;
+    --ink-tertiary: #707070;
+
+    --primary: #3ecf8e;
+    --primary-foreground: #171717;
+    --primary-hover: #24b47e;
+    --primary-soft: #4ade80;
+    --primary-deep: #24b47e;
+    --primary-focus: rgba(62, 207, 142, 0.45);
+
+    --ring: rgba(237, 237, 237, 0.55);
+
+    --chart-1: #ededed;
+    --chart-2: #a3a3a3;
+    --chart-3: #707070;
+    --chart-4: #474747;
+    --chart-5: #2e2e2e;
+
+    --semantic-success: #4ade80;
+    --semantic-warning: #f5b544;
+    --semantic-info: #60a5fa;
+    --destructive: #f87171;
+    --destructive-foreground: #171717;
+
+    --shadow-level-1: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-level-2: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-level-3: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+    --sidebar: #1c1c1c;
+    --sidebar-primary: #3ecf8e;
+    --sidebar-primary-foreground: #171717;
+    --sidebar-accent: var(--surface-2);
+    --sidebar-border: var(--hairline);
+    --sidebar-ring: var(--ring);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-hairline outline-ring/50;
     }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-size: 1rem;
     font-weight: 400;
     -webkit-font-smoothing: antialiased;
     }
   html {
     @apply font-sans;
+    /* Anchor targets clear the fixed marketing header. */
+    scroll-padding-top: 5rem;
     }
   h1,
   h2,
@@ -209,122 +278,261 @@
   h4,
   h5,
   h6 {
-    font-weight: 700;
-    letter-spacing: 0;
-    line-height: 0.95;
-    text-transform: uppercase;
-  }
+    color: inherit;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    letter-spacing: -0.42px;
+    line-height: 1.2;
+    text-transform: none;
+    }
   /* Links inherit body ink and never carry a default underline — the system
      expresses links through weight/colour, not decoration. */
   a {
     color: inherit;
     text-decoration: none;
-  }
+    }
   a:hover,
   a:focus,
   a:active,
   a:visited {
     text-decoration: none;
+    }  ::selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
   }
-  ::selection {
-    background: #ffed00;
-    color: #000000;
+  /* Form controls follow the active canvas instead of the OS default. */
+  input,
+  select,
+  textarea {
+    color-scheme: inherit;
   }
+  /* Keyboard focus is a light hairline ring, never a browser default glow. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    }
 }
 
-/* Belt-and-braces: keep anchors decoration-free even when utilities or UA
-   styles would add an underline (buttons rendered as links, nav, etc.). */
-a {
-  text-decoration: none;
-}
-a:hover,
-a:focus,
-a:active,
-a:visited {
-  text-decoration: none;
-}
+/* ==========================================================================
+   TYPE SCALE — DESIGN.md typography tiers
+   Display: Inter at weight 500 with negative tracking, sentence case. The
+   legacy uppercase condensed ramp is gone — this system never shouts.
+   ========================================================================== */
 
-/* RSuite is only used by the routine builder: align it with the black canvas. */
+@layer components {
+  .display-xxl {
+    font-family: var(--font-sans);
+    font-size: 64px;
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -1.92px;
+    text-transform: none;
+    }
+
+  .display-xl {
+    font-family: var(--font-sans);
+    font-size: 48px;
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -1.44px;
+    text-transform: none;
+    }
+
+  .display-lg {
+    font-family: var(--font-sans);
+    font-size: 36px;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.72px;
+    text-transform: none;
+    }
+
+  .display-md {
+    font-family: var(--font-sans);
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.42px;
+    text-transform: none;
+    }
+
+  .display-sm {
+    font-family: var(--font-sans);
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: -0.42px;
+    text-transform: none;
+    }
+
+  /* micro — eyebrow / fine print. */
+  .eyebrow {
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.45;
+    letter-spacing: 0;
+    text-transform: none;
+    }
+
+  /* button-md — every button and control label. */
+  .cap-label {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0;
+    text-transform: none;
+    }
+
+  .body-lg {
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.55;
+    letter-spacing: 0;
+    }
+
+  .body-md {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: 0;
+    }
+
+  .caption {
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.45;
+    letter-spacing: 0;
+    }
+  }
+
+@media (max-width: 960px) {
+  .display-xxl { font-size: 48px; letter-spacing: -1.44px; }
+  .display-xl { font-size: 36px; letter-spacing: -0.72px; }
+  .display-lg { font-size: 28px; letter-spacing: -0.42px; }
+  .display-md { font-size: 22px; }
+  .display-sm { font-size: 22px; }
+  }
+
+@media (max-width: 767px) {
+  .display-xxl { font-size: 36px; letter-spacing: -0.72px; }
+  .display-xl { font-size: 28px; letter-spacing: -0.42px; }
+  .display-lg { font-size: 22px; }
+  }
+
+@media (max-width: 599px) {
+  .display-xxl { font-size: 28px; letter-spacing: -0.42px; }
+  .display-xl { font-size: 22px; }
+  .display-lg { font-size: 20px; }
+  }
+
+/* Smooth anchor scrolling for the marketing navigation, but only when the
+   visitor has not asked for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+    }
+  }
+
+/* DESIGN.md control geometry: buttons and text inputs use the 6px radius and
+   a single hairline border. */
+[data-slot="button"],
+[data-slot="input"] {
+  border-radius: var(--radius-token-sm);
+  }
+
+[data-slot="input"] {
+  border-color: var(--hairline);
+  }
+
+/* RSuite is only used by the routine builder. Map its palette onto the same
+   semantic tokens so the table follows the active light/dark theme. */
 .routine-table {
-  --rs-gray-0: #000000;
-  --rs-gray-50: #0a0a0a;
-  --rs-gray-100: #111111;
-  --rs-gray-200: #1f1f1f;
-  --rs-gray-300: #3a3a3a;
-  --rs-gray-400: #4a4a4a;
-  --rs-gray-500: #8a8a8a;
-  --rs-gray-600: #9a9a9a;
-  --rs-gray-700: #bdbdbd;
-  --rs-gray-800: #f5f5f5;
-  --rs-gray-900: #ffffff;
-  --rs-primary-50: #332f00;
-  --rs-primary-100: #4d4600;
-  --rs-primary-200: #7a6f00;
-  --rs-primary-300: #b8a800;
-  --rs-primary-400: #e6d200;
-  --rs-primary-500: #ffed00;
-  --rs-primary-600: #e6d200;
-  --rs-primary-700: #ffffff;
-  --rs-primary-800: #e6e6e6;
-  --rs-primary-900: #ffffff;
-  --rs-bg-card: #000000;
-  --rs-bg-overlay: #0a0a0a;
-  --rs-bg-well: #111111;
-  --rs-text-primary: #ffffff;
-  --rs-text-secondary: #8a8a8a;
-  --rs-text-heading: #ffffff;
-  --rs-text-active: #ffed00;
-  --rs-border-primary: #1f1f1f;
-  --rs-border-secondary: #111111;
-  --rs-input-bg: #000000;
-  --rs-btn-subtle-text: #ffffff;
-  --rs-btn-subtle-hover-bg: #1a1a1a;
-  --rs-btn-subtle-hover-text: #ffffff;
-  --rs-state-hover-bg: #0a0a0a;
-  --rs-listbox-option-hover-bg: #1a1a1a;
-  --rs-table-border-color: #1f1f1f;
-  --rs-table-scrollbar-track: #0a0a0a;
-  --rs-table-scrollbar-thumb: #4a4a4a;
+  --rs-gray-0: var(--surface-1);
+  --rs-gray-50: var(--surface-2);
+  --rs-gray-100: var(--surface-3);
+  --rs-gray-200: var(--surface-4);
+  --rs-gray-300: var(--hairline);
+  --rs-gray-400: var(--hairline-strong);
+  --rs-gray-500: var(--ink-tertiary);
+  --rs-gray-600: var(--ink-subtle);
+  --rs-gray-700: var(--ink-muted);
+  --rs-gray-800: var(--ink);
+  --rs-gray-900: var(--ink);
+  --rs-primary-50: var(--surface-2);
+  --rs-primary-100: var(--surface-3);
+  --rs-primary-200: var(--surface-4);
+  --rs-primary-300: var(--hairline-strong);
+  --rs-primary-400: var(--ink-tertiary);
+  --rs-primary-500: var(--ink-subtle);
+  --rs-primary-600: var(--ink-muted);
+  --rs-primary-700: var(--ink);
+  --rs-primary-800: var(--ink);
+  --rs-primary-900: var(--ink);
+  --rs-bg-card: var(--surface-1);
+  --rs-bg-overlay: var(--surface-2);
+  --rs-bg-well: var(--canvas);
+  --rs-text-primary: var(--ink);
+  --rs-text-secondary: var(--ink-subtle);
+  --rs-text-heading: var(--ink);
+  --rs-text-active: var(--ink);
+  --rs-border-primary: var(--hairline);
+  --rs-border-secondary: var(--hairline);
+  --rs-input-bg: var(--surface-1);
+  --rs-btn-subtle-text: var(--ink);
+  --rs-btn-subtle-hover-bg: var(--surface-2);
+  --rs-btn-subtle-hover-text: var(--ink);
+  /* Links are never underlined in this system. */
+  --rs-link-hover-decoration: none;
+  --rs-link-active-decoration: none;
+  --rs-state-hover-bg: var(--surface-2);
+  --rs-listbox-option-hover-bg: var(--surface-3);
+  --rs-table-border-color: var(--hairline);
+  --rs-table-scrollbar-track: var(--canvas);
+  --rs-table-scrollbar-thumb: var(--hairline-strong);
 }
 
 .routine-table .rs-table-cell {
-  background-color: #000000;
-  color: #ffffff;
+  background-color: var(--surface-1);
+  color: var(--ink);
 }
 
 .routine-table .rs-table-row-header .rs-table-cell {
-  background-color: #0a0a0a;
-  color: #8a8a8a;
-  font-size: 11px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  background-color: var(--surface-2);
+  color: var(--ink-subtle);
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .routine-table .rs-table-row:hover .rs-table-cell {
-  background-color: #0a0a0a;
+  background-color: var(--surface-2);
 }
 
 .routine-table .rs-input {
-  background-color: #000000;
-  border-color: #1f1f1f;
-  border-radius: 0;
-  color: #ffffff;
+  background-color: var(--surface-1);
+  border-color: var(--hairline);
+  border-radius: 6px;
+  color: var(--ink);
+}
+
+.routine-table .rs-input::placeholder {
+  color: var(--ink-subtle);
 }
 
 .routine-table .rs-input:focus {
-  border-color: #ffffff;
-  box-shadow: 0 0 0 1px #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary-focus);
 }
 
 .routine-table .rs-btn-icon {
-  color: #8a8a8a;
+  color: var(--ink-subtle);
 }
 
 .routine-table .rs-btn-icon:hover {
-  background-color: #1a1a1a;
-  color: #ffffff;
+  background-color: var(--surface-3);
+  color: var(--ink);
 }
 
 .routine-table .rs-btn-icon:disabled {
-  color: #3a3a3a;
+  color: var(--ink-tertiary);
 }

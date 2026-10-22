@@ -1,109 +1,124 @@
+/* FullCalendar "monarch" theme palette.
+   Every value maps onto the app's semantic token ladder, so the calendar chrome
+   follows the light/dark theme instead of pinning a fixed canvas. Workout blocks
+   use a soft emerald tint; rest days stay neutral. */
+
 :root {
-  /* primary */
-  --fc-monarch-primary: #6750A4;
-  --fc-monarch-primary-foreground: #FFFFFF;
-  --fc-monarch-primary-over: #7461ae;
-  --fc-monarch-primary-down: #8272b7;
+  --fc-workout-bg: #ecfdf5;
+  --fc-workout-fg: #065f46;
+  --fc-workout-border: #a7f3d0;
+  --fc-rest-bg: #f9fafb;
+  --fc-rest-fg: #6b7280;
+  --fc-rest-border: #e5e7eb;
+
+  /* primary — filled control */
+  --fc-monarch-primary: #111827;
+  --fc-monarch-primary-foreground: #ffffff;
+  --fc-monarch-primary-over: #1f2937;
+  --fc-monarch-primary-down: #000000;
 
   /* secondary */
-  --fc-monarch-secondary: #EADDFF;
-  --fc-monarch-secondary-foreground: #4F378B;
-  --fc-monarch-secondary-over: #ddd1f1;
-  --fc-monarch-secondary-down: #d0c4e3;
+  --fc-monarch-secondary: #f3f4f6;
+  --fc-monarch-secondary-foreground: #111827;
+  --fc-monarch-secondary-over: #e5e7eb;
+  --fc-monarch-secondary-down: #d1d5db;
 
   /* tertiary */
-  --fc-monarch-tertiary: #895264;
-  --fc-monarch-tertiary-foreground: #FFFFFF;
-  --fc-monarch-tertiary-over: #956272;
-  --fc-monarch-tertiary-down: #a17381;
+  --fc-monarch-tertiary: #ffffff;
+  --fc-monarch-tertiary-foreground: #111827;
+  --fc-monarch-tertiary-over: #f9fafb;
+  --fc-monarch-tertiary-down: #f3f4f6;
 
   /* calendar content */
-  --fc-monarch-event: var(--fc-monarch-primary);
-  --fc-monarch-event-contrast: var(--fc-monarch-primary-foreground);
-  --fc-monarch-highlight: #eaddff4D;
-  --fc-monarch-now: #B3261E;
+  --fc-monarch-event: #f3f4f6;
+  --fc-monarch-event-contrast: #111827;
+  --fc-monarch-highlight: rgba(17, 24, 39, 0.06);
+  --fc-monarch-now: #24b47e;
 
   /* controls */
-  --fc-monarch-selected: #625B71;
-  --fc-monarch-selected-foreground: #FFFFFF;
-  --fc-monarch-selected-over: #706a7e;
-  --fc-monarch-selected-down: #7f798c;
-  --fc-monarch-outline: #ff9dbb;
+  --fc-monarch-selected: #111827;
+  --fc-monarch-selected-foreground: #ffffff;
+  --fc-monarch-selected-over: #1f2937;
+  --fc-monarch-selected-down: #000000;
+  --fc-monarch-outline: rgba(17, 24, 39, 0.5);
 
   /* popover */
-  --fc-monarch-popover: var(--fc-monarch-background);
+  --fc-monarch-popover: #ffffff;
+  --fc-monarch-popover-foreground: #111827;
 
   /* neutral backgrounds */
   --fc-monarch-background: #ffffff;
-  --fc-monarch-faint: #79697b1A;
-  --fc-monarch-muted: #79697b26;
-  --fc-monarch-strong: #79697b4D;
-  --fc-monarch-stronger: #79697b59;
-  --fc-monarch-strongest: #79697b66;
+  --fc-monarch-faint: rgba(17, 24, 39, 0.04);
+  --fc-monarch-muted: rgba(17, 24, 39, 0.06);
+  --fc-monarch-strong: rgba(17, 24, 39, 0.1);
+  --fc-monarch-stronger: rgba(17, 24, 39, 0.14);
+  --fc-monarch-strongest: rgba(17, 24, 39, 0.18);
 
   /* neutral foregrounds */
-  --fc-monarch-foreground: #0c090c;
-  --fc-monarch-faint-foreground: #bebebe;
-  --fc-monarch-muted-foreground: #8d8d8d;
+  --fc-monarch-foreground: #111827;
+  --fc-monarch-faint-foreground: #9ca3af;
+  --fc-monarch-muted-foreground: #6b7280;
+  --fc-monarch-strong-foreground: #111827;
 
   /* neutral borders */
-  --fc-monarch-border: #dedce1;
-  --fc-monarch-strong-border: #bcbabe;
+  --fc-monarch-border: #e5e7eb;
+  --fc-monarch-strong-border: #d1d5db;
 }
 
-@media not print {
-  .dark {
-    /* primary */
-    --fc-monarch-primary: #D0BCFF;
-    --fc-monarch-primary-foreground: #381E72;
-    --fc-monarch-primary-over: #d5c3ff;
-    --fc-monarch-primary-down: #d9caff;
+.dark {
+  --fc-workout-bg: rgba(62, 207, 142, 0.14);
+  --fc-workout-fg: #3ecf8e;
+  --fc-workout-border: rgba(62, 207, 142, 0.32);
+  --fc-rest-bg: #1c1c1c;
+  --fc-rest-fg: #8a8a8a;
+  --fc-rest-border: #2e2e2e;
 
-    /* secondary */
-    --fc-monarch-secondary: #4F378B;
-    --fc-monarch-secondary-foreground: #EADDFF;
-    --fc-monarch-secondary-over: #564191;
-    --fc-monarch-secondary-down: #5e4b97;
+  --fc-monarch-primary: #ededed;
+  --fc-monarch-primary-foreground: #171717;
+  --fc-monarch-primary-over: #ffffff;
+  --fc-monarch-primary-down: #d4d4d4;
 
-    /* tertiary */
-    --fc-monarch-tertiary: #EFB8C8;
-    --fc-monarch-tertiary-foreground: #492532;
-    --fc-monarch-tertiary-over: #f1bfcd;
-    --fc-monarch-tertiary-down: #f3c6d3;
+  --fc-monarch-secondary: #212121;
+  --fc-monarch-secondary-foreground: #ededed;
+  --fc-monarch-secondary-over: #262626;
+  --fc-monarch-secondary-down: #1c1c1c;
 
-    /* calendar content */
-    --fc-monarch-event: var(--fc-monarch-primary);
-    --fc-monarch-event-contrast: var(--fc-monarch-primary-foreground);
-    --fc-monarch-highlight: #4f378b4D;
-    --fc-monarch-now: #F2B8B5;
+  --fc-monarch-tertiary: #1c1c1c;
+  --fc-monarch-tertiary-foreground: #ededed;
+  --fc-monarch-tertiary-over: #212121;
+  --fc-monarch-tertiary-down: #171717;
 
-    /* controls */
-    --fc-monarch-selected: #CCC2DC;
-    --fc-monarch-selected-foreground: #332D41;
-    --fc-monarch-selected-over: #d1c8e0;
-    --fc-monarch-selected-down: #d6cee3;
-    --fc-monarch-outline: #ff8a9e;
+  --fc-monarch-event: #212121;
+  --fc-monarch-event-contrast: #ededed;
+  --fc-monarch-highlight: rgba(237, 237, 237, 0.08);
+  --fc-monarch-now: #3ecf8e;
 
-    /* popover */
-    --fc-monarch-popover: rgb(26 17 15);
-    --fc-monarch-popover-foreground: rgb(241 223 218);
+  --fc-monarch-selected: #212121;
+  --fc-monarch-selected-foreground: #ffffff;
+  --fc-monarch-selected-over: #262626;
+  --fc-monarch-selected-down: #1c1c1c;
+  --fc-monarch-outline: rgba(237, 237, 237, 0.55);
 
-    /* neutral backgrounds */
-    --fc-monarch-background: #030712;
+  --fc-monarch-popover: #1c1c1c;
+  --fc-monarch-popover-foreground: #ededed;
 
-    /* neutral foregrounds */
-    --fc-monarch-foreground: #ffffff;
-    --fc-monarch-faint-foreground: #898989;
-    --fc-monarch-muted-foreground: #b0b0b0;
+  --fc-monarch-background: #171717;
+  --fc-monarch-faint: rgba(237, 237, 237, 0.06);
+  --fc-monarch-muted: rgba(237, 237, 237, 0.08);
+  --fc-monarch-strong: rgba(237, 237, 237, 0.12);
+  --fc-monarch-stronger: rgba(237, 237, 237, 0.16);
+  --fc-monarch-strongest: rgba(237, 237, 237, 0.2);
 
-    /* neutral borders */
-    --fc-monarch-border: #323036;
-    --fc-monarch-strong-border: #615d67;
-  }
+  --fc-monarch-foreground: #ededed;
+  --fc-monarch-faint-foreground: #707070;
+  --fc-monarch-muted-foreground: #8a8a8a;
+  --fc-monarch-strong-foreground: #ffffff;
+
+  --fc-monarch-border: #2e2e2e;
+  --fc-monarch-strong-border: #3f3f3f;
 }
 
-/* Match the dashboard's black/yellow canvas without touching the theme's
-   control styling. */
+/* The dashboard panel already supplies the canvas; the calendar floats on it. */
 .flexity-calendar {
   --fc-monarch-background: transparent;
 }
@@ -112,33 +127,56 @@
   font-family: var(--font-sans);
 }
 
+/* The monarch theme paints each event through an inline `--fc-event-color`
+   custom property, so overriding the event inputs is not enough. Target the
+   harness itself: emerald tint for training days, neutral for rest days. */
+.flexity-calendar [style*="--fc-event-color"] {
+  background-color: var(--fc-workout-bg) !important;
+  border-color: var(--fc-workout-border) !important;
+  color: var(--fc-workout-fg) !important;
+}
+
+.flexity-calendar [style*="--fc-event-color"]:has(.fc-workout-event.is-rest) {
+  background-color: var(--fc-rest-bg) !important;
+  border-color: var(--fc-rest-border) !important;
+  color: var(--fc-rest-fg) !important;
+}
+
 .flexity-calendar .fc-workout-event {
   display: flex;
   flex-direction: column;
   gap: 1px;
   min-width: 0;
   padding: 3px 5px;
+  color: inherit;
   line-height: 1.15;
 }
 
 .flexity-calendar .fc-workout-event-label {
   overflow: hidden;
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .flexity-calendar .fc-workout-event-routine {
   overflow: hidden;
-  font-size: 0.62rem;
+  font-size: 0.65rem;
   font-weight: 400;
   opacity: 0.72;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.flexity-calendar .fc-workout-event.is-rest .fc-workout-event-label {
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+/* The calendar underlines its links on hover by default. The design system
+   never underlines a link, so strip it from the widget chrome. */
+.flexity-calendar a,
+.flexity-calendar a:hover,
+.flexity-calendar a:focus,
+.flexity-calendar a:active,
+.flexity-calendar a:visited,
+.flexity-calendar .fc :is(:hover, :hover *) {
+  text-decoration: none !important;
 }

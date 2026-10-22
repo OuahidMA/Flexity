@@ -11,6 +11,7 @@ import { useCallback, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import {
   BarChart3,
+  CalendarDays,
   ClipboardCheck,
   Copy,
   UserX,
@@ -19,12 +20,14 @@ import {
 
 import { useAuth } from "@/hooks/useAuth"
 import { useApiData } from "@/hooks/useApiData"
+import { getWeekdayLabel } from "@/lib/workout-splits"
 import { DataTable, RowActions } from "@/components/data-table"
 import { ErrorState, LoadingState } from "@/components/dashboard/data-state"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { StatCard } from "@/components/dashboard/stat-card"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { ClientProgressDialog } from "@/components/workout/client-progress-dialog"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 
@@ -60,6 +63,9 @@ export default function CoachDashboard() {
   const { data: overview, refresh: refreshOverview } = useApiData(
     "/coach/overview"
   )
+  // Routines carry the weekly schedule (days + split labels) used by the
+  // coach's planning panel and the attendance roster header.
+  const { data: routines, loading: routinesLoading } = useApiData("/routines")
   // The selected client whose saved progress is open in the dialog.
   const [progressClient, setProgressClient] = useState(null)
 
@@ -138,10 +144,10 @@ export default function CoachDashboard() {
         accessorKey: "name",
         cell: ({ row }) => (
           <div className="min-w-0">
-            <p className="truncate font-bold text-foreground">
+            <p className="truncate text-[13px] font-medium text-ink">
               {row.getValue("name") || "—"}
             </p>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="truncate caption text-ink-subtle">
               {row.original.email}
             </p>
           </div>
@@ -170,7 +176,7 @@ export default function CoachDashboard() {
         header: "Joined",
         accessorKey: "joinedAt",
         cell: ({ row }) => (
-          <span className="text-muted-foreground">
+          <span className="text-ink-subtle">
             {formatDate(row.getValue("joinedAt"))}
           </span>
         ),
@@ -212,6 +218,27 @@ export default function CoachDashboard() {
   )
 
   const activeClients = rows.filter((client) => client.active).length
+
+  // Flatten every scheduled day into one week view. A routine can contribute
+  // several days, and rest days are kept so the coach sees the full split.
+  const scheduleDays = useMemo(
+    () =>
+      (routines ?? []).flatMap((routine) =>
+        (routine.days ?? []).map((day) => ({
+          ...day,
+          dayOfWeek: Number(day.dayOfWeek),
+          routineName: routine.name,
+          routineStatus: routine.status,
+          clientName: routine.clientName,
+        }))
+      ),
+    [routines]
+  )
+  const today = new Date().getDay()
+  const weekOrder = [1, 2, 3, 4, 5, 6, 0]
+  const todaySessions = scheduleDays.filter(
+    (day) => day.dayOfWeek === today && !day.isRest
+  )
 
   return (
     <div className="space-y-6">
@@ -263,6 +290,146 @@ export default function CoachDashboard() {
           hint={`${overview?.routines ?? 0} total`}
           icon={ClipboardCheck}
         />
+      </div>
+
+      {/* Weekly schedule + a fast route into each client's saved progress. */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="overflow-hidden rounded-lg border border-hairline bg-surface-1 lg:col-span-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-5 py-4">
+            <div>
+              <h3 className="display-sm text-ink">This week's schedule</h3>
+              <p className="caption mt-1 text-ink-subtle">
+                Split days from the routines you have published
+              </p>
+            </div>
+            <Badge variant="outline">
+              {scheduleDays.filter((day) => !day.isRest).length} sessions
+            </Badge>
+          </div>
+
+          <div className="grid grid-cols-4 gap-px border-b border-hairline bg-hairline sm:grid-cols-7">
+            {weekOrder.map((dayOfWeek) => {
+              const sessions = scheduleDays.filter(
+                (day) => day.dayOfWeek === dayOfWeek && !day.isRest
+              )
+              const isToday = dayOfWeek === today
+
+              return (
+                <div
+                  key={dayOfWeek}
+                  className={`bg-surface-1 px-2 py-3 text-center ${
+                    isToday ? "bg-surface-2" : ""
+                  }`}
+                >
+                  <p className="eyebrow text-ink-subtle">
+                    {getWeekdayLabel(dayOfWeek, { short: true })}
+                  </p>
+                  <p
+                    className={`display-sm mt-1 ${
+                      sessions.length ? "text-ink" : "text-ink-tertiary"
+                    }`}
+                  >
+                    {sessions.length}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="divide-y divide-hairline">
+            {routinesLoading && routines === null ? (
+              <p className="px-5 py-5 caption text-ink-subtle">
+                Loading schedule...
+              </p>
+            ) : todaySessions.length === 0 ? (
+              <div className="px-5 py-8 text-center">
+                <CalendarDays
+                  className="mx-auto size-5 text-ink-tertiary"
+                  aria-hidden="true"
+                />
+                <p className="cap-label mt-3 text-ink">Nothing scheduled today</p>
+                <p className="caption mt-1 text-ink-subtle">
+                  Add training days in a routine to fill the week.
+                </p>
+              </div>
+            ) : (
+              todaySessions.map((session, index) => (
+                <div
+                  key={`${session.routineName}-${session.dayOfWeek}-${index}`}
+                  className="flex flex-wrap items-center justify-between gap-3 px-5 py-3"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-sm border border-hairline bg-surface-2 text-ink-muted">
+                      <CalendarDays className="size-4" aria-hidden="true" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-[13px] font-medium text-ink">
+                        {session.label || "Workout"}
+                      </p>
+                      <p className="truncate caption text-ink-subtle">
+                        {session.routineName}
+                        {session.clientName ? ` · ${session.clientName}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary">
+                    {session.exercises?.length ?? 0}{" "}
+                    {session.exercises?.length === 1 ? "exercise" : "exercises"}
+                  </Badge>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-hairline bg-surface-1 p-5">
+          <h3 className="display-sm text-ink">Client progress logs</h3>
+          <p className="caption mt-1 text-ink-subtle">
+            Open the set-by-set history a client has saved.
+          </p>
+
+          {rows.length === 0 ? (
+            <p className="caption mt-4 text-ink-subtle">
+              Add a client to your roster to see their logs.
+            </p>
+          ) : (
+            <div className="mt-4 space-y-2">
+              {rows.slice(0, 5).map((client) => (
+                <button
+                  key={client.id}
+                  type="button"
+                  onClick={() => setProgressClient(client)}
+                  className="flex w-full items-center justify-between gap-3 rounded-sm border border-hairline bg-surface-2/60 px-3 py-2 text-left transition-colors outline-none hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-[13px] font-medium text-ink">
+                      {client.name || client.email}
+                    </span>
+                    <span className="block truncate caption text-ink-subtle">
+                      {client.status} client
+                    </span>
+                  </span>
+                  <BarChart3
+                    className="size-4 shrink-0 text-ink-muted"
+                    aria-hidden="true"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Attendance roster: every assigned client, with their saved progress
+          one click away. */}
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-hairline pb-3">
+        <div>
+          <h3 className="display-sm text-ink">Attendance roster</h3>
+          <p className="caption mt-1 text-ink-subtle">
+            {activeClients} active of {rows.length} assigned clients
+          </p>
+        </div>
+        <Badge variant="outline">{rows.length} clients</Badge>
       </div>
 
       {/* Gate the table on the primary clients request. */}

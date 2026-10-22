@@ -111,7 +111,6 @@ export function RowActions({ items = [], label = "Open menu" }) {
           <Button
             size="icon-sm"
             variant="ghost"
-            className="shadow-none"
             aria-label={label}
           />
         }
@@ -287,13 +286,13 @@ export function DataTable({
               type="text"
               aria-label={searchPlaceholder}
             />
-            <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80">
+            <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-ink-subtle">
               <ListFilter size={16} strokeWidth={2} aria-hidden="true" />
             </div>
             {Boolean(table.getColumn(searchColumnId)?.getFilterValue()) && (
               <button
                 type="button"
-                className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-xs text-muted-foreground/80 transition-colors outline-offset-2 hover:text-foreground focus:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70"
+                className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-xs text-ink-subtle transition-colors outline-offset-2 hover:text-ink focus:z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring/70"
                 aria-label="Clear filter"
                 onClick={() => {
                   table.getColumn(searchColumnId)?.setFilterValue("")
@@ -318,14 +317,14 @@ export function DataTable({
                 />
                 Status
                 {selectedStatuses.length > 0 && (
-                  <span className="inline-flex h-5 items-center rounded-xs border border-border bg-background px-1 text-[0.625rem] font-bold text-muted-foreground/70">
+                  <span className="inline-flex h-5 items-center rounded-xs border border-hairline bg-surface-2 px-1 text-[11px] font-medium tabular-nums text-ink-subtle">
                     {selectedStatuses.length}
                   </span>
                 )}
               </PopoverTrigger>
               <PopoverContent className="min-w-40 p-3" align="start">
                 <div className="space-y-3">
-                  <div className="text-xs font-bold text-muted-foreground">
+                  <div className="eyebrow text-ink-subtle">
                     Filters
                   </div>
                   <div className="space-y-3">
@@ -343,7 +342,7 @@ export function DataTable({
                           className="flex grow justify-between gap-2 font-normal"
                         >
                           {value}
-                          <span className="ms-2 text-xs text-muted-foreground">
+                          <span className="ms-2 caption text-ink-subtle">
                             {statusCounts.get(value)}
                           </span>
                         </Label>
@@ -376,7 +375,6 @@ export function DataTable({
                   .map((column) => (
                     <DropdownMenuCheckboxItem
                       key={column.id}
-                      className="capitalize"
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) =>
                         column.toggleVisibility(Boolean(value))
@@ -405,14 +403,14 @@ export function DataTable({
                   aria-hidden="true"
                 />
                 Delete
-                <span className="inline-flex h-5 items-center rounded-xs border border-border bg-background px-1 text-[0.625rem] font-bold text-muted-foreground/70">
+                <span className="inline-flex h-5 items-center rounded-xs border border-hairline bg-surface-2 px-1 text-[11px] font-medium tabular-nums text-ink-subtle">
                   {selectedRows.length}
                 </span>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <div className="flex flex-col gap-2 max-sm:items-center sm:flex-row sm:gap-4">
                   <div
-                    className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-xs border border-hairline-strong"
                     aria-hidden="true"
                   >
                     <CircleAlert className="opacity-80" size={16} strokeWidth={2} />
@@ -441,7 +439,7 @@ export function DataTable({
 
       {/* Table body. Headers are keyboard-sortable; an empty result falls back
           to a single full-width message row. */}
-      <div className="overflow-hidden rounded-sm border border-border bg-background">
+      <div className="overflow-hidden rounded-lg border border-hairline bg-surface-1">
         <Table className="table-fixed">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -519,7 +517,7 @@ export function DataTable({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center text-muted-foreground"
+                  className="h-24 text-center text-ink-subtle"
                 >
                   {emptyMessage}
                 </TableCell>
@@ -554,9 +552,9 @@ export function DataTable({
           </Select>
         </div>
 
-        <div className="flex grow justify-end whitespace-nowrap text-sm text-muted-foreground">
+        <div className="flex grow justify-end whitespace-nowrap caption text-ink-subtle">
           <p aria-live="polite">
-            <span className="text-foreground">
+            <span className="text-ink">
               {table.getState().pagination.pageIndex *
                 table.getState().pagination.pageSize +
                 1}
@@ -571,7 +569,7 @@ export function DataTable({
                 table.getRowCount()
               )}
             </span>{" "}
-            of <span className="text-foreground">{table.getRowCount()}</span>
+            of <span className="text-ink">{table.getRowCount()}</span>
           </p>
         </div>
 

@@ -2,8 +2,13 @@ import { cva } from "class-variance-authority"
 
 import { cn } from "cn"
 
+/**
+ * Badges are DESIGN.md micro tags: 12px, regular weight, sentence case and a
+ * full pill radius. The palette stays monochrome apart from functional status
+ * states, which carry a hue.
+ */
 const badgeVariants = cva(
-  "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-xs border px-2.5 py-0.5 text-[10px] font-bold tracking-[0.12em] uppercase whitespace-nowrap transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 [&>svg]:pointer-events-none [&>svg]:size-3",
+  "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border px-2.5 py-1 text-[12px] leading-none font-normal whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas [&>svg]:pointer-events-none [&>svg]:size-3",
   {
     variants: {
       variant: {

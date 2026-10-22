@@ -53,9 +53,10 @@ function buildEvents(routines) {
       daysOfWeek: [day.dayOfWeek],
       allDay: true,
       display: "block",
-      backgroundColor: day.isRest ? "#111111" : "#ffed00",
-      borderColor: day.isRest ? "#3a3a3a" : "#ffed00",
-      textColor: day.isRest ? "#8a8a8a" : "#000000",
+      // FullCalendar's monarch theme paints its own harness, so the tint lives
+      // in the palette stylesheet (`[style*="--fc-event-color"]`). `is-rest`
+      // selects the neutral rest-day treatment.
+      classNames: day.isRest ? ["is-rest"] : [],
       extendedProps: {
         isRest: Boolean(day.isRest),
         label: day.label || (day.isRest ? "Rest" : "Workout"),

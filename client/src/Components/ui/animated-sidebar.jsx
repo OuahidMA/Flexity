@@ -316,7 +316,7 @@ function MobileSidebar({ ariaLabel, children, className, side }) {
         transition={context.reduce ? REDUCED_TRANSITION : PANEL_TRANSITION}
         onClick={() => context.setOpenMobile(false)}
         className={cn(
-          "fixed inset-0 bg-canvas/40",
+          "fixed inset-0 bg-black/70",
           context.openMobile ? "pointer-events-auto" : "pointer-events-none",
         )}
       />
@@ -379,7 +379,7 @@ function MobileSidebar({ ariaLabel, children, className, side }) {
         }}
         className={cn(
           "pointer-events-auto fixed inset-y-0 flex h-dvh w-(--sidebar-width-mobile) max-w-[88vw] flex-col overflow-hidden",
-          "border-border bg-background shadow-2xl will-change-transform",
+          "border-hairline bg-surface-1 will-change-transform",
           side === "left" ? "left-0 border-r" : "right-0 border-l",
           !context.openMobile && "pointer-events-none",
           className,
@@ -456,14 +456,14 @@ export const AnimatedSidebar = forwardRef(function AnimatedSidebar(
         }}
         transition={context.reduce ? REDUCED_TRANSITION : PANEL_TRANSITION}
         className={cn(
-          "sticky top-0 flex h-svh w-full flex-col overflow-hidden bg-background",
+          "sticky top-0 flex h-svh w-full flex-col overflow-hidden bg-surface-1",
           collapsible === "offcanvas" && "w-[var(--sidebar-width)]",
           variant === "sidebar" &&
             (side === "left"
-              ? "border-border border-r"
-              : "border-border border-l"),
+              ? "border-hairline border-r"
+              : "border-hairline border-l"),
           variant === "floating" &&
-            "m-2 h-[calc(100svh-1rem)] rounded-lg border border-border",
+            "m-2 h-[calc(100svh-1rem)] rounded-lg border border-hairline",
           variant === "inset" && "m-2 h-[calc(100svh-1rem)] rounded-lg",
           panelClassName,
         )}
@@ -504,8 +504,8 @@ export const AnimatedSidebarTrigger = forwardRef(
           if (!event.defaultPrevented) context.toggleSidebar()
         }}
         className={cn(
-          "inline-flex size-10 shrink-0 items-center justify-center rounded-xs outline-none",
-          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "inline-flex size-10 shrink-0 items-center justify-center rounded-sm outline-none",
+          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas",
           className,
         )}
       />
@@ -533,7 +533,7 @@ export const AnimatedSidebarClose = forwardRef(
           else context.setOpen(false)
         }}
         className={cn(
-          "inline-flex size-10 shrink-0 items-center justify-center rounded-xs outline-none",
+          "inline-flex size-10 shrink-0 items-center justify-center rounded-sm outline-none",
           "focus-visible:ring-2 focus-visible:ring-ring",
           className,
         )}
@@ -565,7 +565,7 @@ export const AnimatedSidebarRail = forwardRef(
         }}
         className={cn(
           "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 outline-none md:block",
-          "after:absolute after:inset-y-0 after:left-1/2 after:w-px after:bg-transparent after:transition-colors hover:after:bg-border",
+          "after:absolute after:inset-y-0 after:left-1/2 after:w-px after:bg-transparent after:transition-colors hover:after:bg-hairline-strong",
           "data-[side=right]:right-0 data-[side=right]:translate-x-1/2 data-[side=left]:left-full",
           className,
         )}
@@ -582,7 +582,7 @@ export const AnimatedSidebarInset = forwardRef(
         ref={forwardedRef}
         data-slot="sidebar-inset"
         className={cn(
-          "relative flex min-h-svh min-w-0 flex-1 flex-col bg-background",
+          "relative flex min-h-svh min-w-0 flex-1 flex-col bg-canvas",
           "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-lg",
           className,
         )}
@@ -628,7 +628,7 @@ export const AnimatedSidebarFooter = forwardRef(
         ref={forwardedRef}
         data-slot="sidebar-footer"
         className={cn(
-          "flex shrink-0 flex-col gap-2 border-border border-t p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]",
+          "flex shrink-0 flex-col gap-2 border-hairline border-t p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]",
           className,
         )}
       />
@@ -663,7 +663,7 @@ export const AnimatedSidebarGroupLabel = forwardRef(
         aria-hidden={collapsed}
         data-slot="sidebar-group-label"
         className={cn(
-          "mb-1 h-7 overflow-hidden px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground transition-opacity",
+          "eyebrow mb-1 flex h-7 items-center overflow-hidden px-2 text-ink-subtle transition-opacity",
           collapsed ? "opacity-0" : "opacity-100",
           className,
         )}
@@ -744,7 +744,7 @@ export const AnimatedSidebarMenuSub = forwardRef(
             transition={context.reduce ? { duration: 0.12 } : undefined}
             data-slot="sidebar-menu-sub"
             className={cn(
-              "relative mt-1 ml-5 flex min-w-0 flex-col gap-0.5 border-border border-l pl-3",
+              "relative mt-1 ml-5 flex min-w-0 flex-col gap-0.5 border-hairline border-l pl-3",
               className,
             )}
           >
@@ -806,10 +806,10 @@ export function AnimatedSidebarMenuSubButton({
   )
 
   const interactiveClassName = cn(
-        "flex min-h-8 w-full min-w-0 items-center gap-2 rounded-xs px-2 text-left text-xs outline-none",
-    "text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground",
-    "focus-visible:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring",
-    isActive && "bg-muted/70 text-foreground",
+    "flex min-h-8 w-full min-w-0 items-center gap-2 rounded-sm px-2 text-left cap-label leading-none outline-none",
+    "text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink",
+    "focus-visible:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring",
+    isActive && "bg-surface-2 text-ink",
     disabled && "cursor-not-allowed opacity-40",
     className,
   )
@@ -883,7 +883,13 @@ export function AnimatedSidebarMenuButton({
         <motion.span
           layoutId={context.layoutId}
           transition={context.reduce ? { duration: 0 } : SPRING_LAYOUT}
-          className="absolute inset-0 rounded-xs bg-muted"
+          className="absolute inset-0 rounded-sm bg-surface-2"
+        />
+      ) : null}
+      {isActive ? (
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-1.5 left-0 w-0.5 bg-primary"
         />
       ) : null}
       {icon ? (
@@ -916,7 +922,7 @@ export function AnimatedSidebarMenuButton({
         {children}
       </motion.span>
       {badge && !panel.collapsed ? (
-        <span className="relative z-10 shrink-0 text-xs text-muted-foreground">
+        <span className="caption relative z-10 shrink-0 text-ink-muted">
           {badge}
         </span>
       ) : null}
@@ -930,7 +936,7 @@ export function AnimatedSidebarMenuButton({
             x: panel.collapsed ? 4 : 0,
           }}
           transition={context.reduce ? { duration: 0 } : SPRING_LAYOUT}
-          className="relative z-10 grid size-4 shrink-0 place-items-center text-muted-foreground"
+          className="relative z-10 grid size-4 shrink-0 place-items-center text-ink-muted"
         >
           <ChevronRight className="size-3.5" />
         </motion.span>
@@ -939,10 +945,10 @@ export function AnimatedSidebarMenuButton({
   )
 
   const interactiveClassName = cn(
-      "relative flex min-h-9 w-full min-w-0 items-center gap-2.5 overflow-hidden rounded-xs px-3 text-left text-sm font-bold outline-none",
-    "text-muted-foreground transition-colors hover:text-foreground",
-    "focus-visible:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring",
-    isActive && "text-foreground",
+      "relative flex min-h-9 w-full min-w-0 items-center gap-2.5 overflow-hidden rounded-sm px-3 text-left cap-label leading-none outline-none",
+    "text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink",
+    "focus-visible:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring",
+    isActive && "bg-surface-2 text-ink",
     disabled && "cursor-not-allowed opacity-40",
     className,
   )

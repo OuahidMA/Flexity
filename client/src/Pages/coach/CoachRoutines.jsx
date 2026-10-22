@@ -124,10 +124,10 @@ export default function CoachRoutines() {
         accessorKey: "name",
         cell: ({ row }) => (
           <div className="min-w-0">
-            <p className="truncate font-bold text-foreground">
+            <p className="truncate text-[13px] font-medium text-ink">
               {row.getValue("name")}
             </p>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="truncate caption text-ink-subtle">
               {getSplitLabel(row.original.splitType)}
               {" · "}
               {row.original.goal || row.original.description || "No goal set"}
@@ -158,7 +158,7 @@ export default function CoachRoutines() {
         header: "Client",
         accessorKey: "clientName",
         cell: ({ row }) => (
-          <span className="text-muted-foreground">
+          <span className="text-ink-subtle">
             {row.getValue("clientName") || "Unassigned"}
           </span>
         ),
@@ -178,7 +178,7 @@ export default function CoachRoutines() {
         header: "Updated",
         accessorKey: "updatedAt",
         cell: ({ row }) => (
-          <span className="text-muted-foreground">
+          <span className="text-ink-subtle">
             {formatDate(row.getValue("updatedAt"))}
           </span>
         ),

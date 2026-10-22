@@ -58,7 +58,7 @@ const EDITOR_STYLES = `
 `
 
 const SELECT_CLASS =
-  "h-10 w-full rounded-xs border border-hairline bg-surface-1 px-3 text-sm text-ink outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50"
+  "h-11 w-full min-w-0 rounded-xs border border-hairline-strong bg-surface-1 px-3 text-base text-ink transition-colors outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
 
 // Client-only row keys. A routine can contain the same exercise twice, so the
 // API exercise id cannot be used as the React/RSuite row key.
@@ -196,7 +196,7 @@ function EditableCell({ rowData, dataKey, dataType = "string", onChange, ...prop
       ) : dataType === "number" ? (
         value
       ) : (
-        value || <span className="text-muted-foreground">—</span>
+        value || <span className="text-ink-subtle">—</span>
       )}
     </Cell>
   )
@@ -281,10 +281,10 @@ function ScheduleDayRow({
         </select>
       ) : (
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold">
+          <p className="truncate text-[13px] font-medium text-ink">
             {getWeekdayLabel(day.dayOfWeek)}
           </p>
-          <p className="text-[10px] tracking-[0.16em] text-muted-foreground uppercase">
+          <p className="eyebrow text-ink-subtle">
             {day.isRest ? "Recovery" : day.label}
           </p>
         </div>
@@ -319,7 +319,7 @@ function ScheduleDayRow({
         )}
       </select>
 
-      <span className="text-xs text-muted-foreground">
+      <span className="caption text-ink-subtle">
         {day.isRest
           ? "No training"
           : `${exerciseCount} exercise${exerciseCount === 1 ? "" : "s"}`}
@@ -676,7 +676,7 @@ function RoutineEditor({ routineId, isEditing, initialRoutine }) {
       />
 
       {/* Routine metadata: name, split, client assignment, and description. */}
-      <div className="border bg-card p-5">
+      <div className="rounded-lg border border-hairline bg-surface-1 p-5">
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="routine-name">Routine name</Label>
@@ -758,11 +758,11 @@ function RoutineEditor({ routineId, isEditing, initialRoutine }) {
       </div>
 
       {/* Weekly schedule: each day is rest or a named split day. */}
-      <div className="border bg-card">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4">
+      <div className="rounded-lg border border-hairline bg-surface-1">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-5 py-4">
           <div>
-            <h3 className="text-sm font-bold">Schedule</h3>
-            <p className="text-xs text-muted-foreground">
+            <h3 className="display-sm text-ink">Schedule</h3>
+            <p className="caption mt-1 text-ink-subtle">
               {scheduleMode === "week"
                 ? "Set every day of the week as a workout or rest day."
                 : "Choose the one weekday this routine applies to."}
@@ -774,7 +774,7 @@ function RoutineEditor({ routineId, isEditing, initialRoutine }) {
           </Badge>
         </div>
 
-        <div className="divide-y">
+        <div className="divide-y divide-hairline">
           {days.map((day) => (
             <ScheduleDayRow
               key={day.dayOfWeek}
@@ -799,21 +799,21 @@ function RoutineEditor({ routineId, isEditing, initialRoutine }) {
             : "grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]"
         }
       >
-        <div className="min-w-0 border bg-card">
-          <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
+        <div className="min-w-0 border border-hairline bg-surface-1">
+          <div className="flex items-center justify-between gap-3 border-b border-hairline px-5 py-4">
             <div>
-              <h3 className="text-sm font-bold">
+              <h3 className="display-sm text-ink">
                 {activeDayName} ·{" "}
                 {activeDayData?.isRest ? "Rest day" : activeDayData?.label}
               </h3>
-              <p className="text-xs text-muted-foreground">
+              <p className="caption mt-1 text-ink-subtle">
                 {activeDayData?.isRest
                   ? "Recovery day — no exercises scheduled."
                   : `${rows.length} exercises · use the edit icon to adjust a row`}
               </p>
             </div>
             {saveError && (
-              <p className="max-w-xs text-right text-xs text-destructive">
+              <p className="max-w-xs text-right caption text-destructive">
                 {saveError}
               </p>
             )}
@@ -821,7 +821,7 @@ function RoutineEditor({ routineId, isEditing, initialRoutine }) {
 
           {activeDayData?.isRest ? (
             <div className="flex flex-wrap items-center justify-between gap-3 p-5">
-              <p className="text-sm text-muted-foreground">
+              <p className="caption text-ink-subtle">
                 This day is set as rest. Switch it to a workout day to add
                 exercises for the client.
               </p>
@@ -852,9 +852,7 @@ function RoutineEditor({ routineId, isEditing, initialRoutine }) {
                   <HeaderCell>#</HeaderCell>
                   <Cell>
                     {(_rowData, rowIndex) => (
-                      <span className="text-muted-foreground">
-                        {rowIndex + 1}
-                      </span>
+                      <span className="text-ink-subtle">{rowIndex + 1}</span>
                     )}
                   </Cell>
                 </Column>
@@ -864,8 +862,10 @@ function RoutineEditor({ routineId, isEditing, initialRoutine }) {
                   <Cell>
                     {(rowData) => (
                       <div className="min-w-0">
-                        <p className="truncate font-bold">{rowData.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">
+                        <p className="truncate text-[13px] font-medium text-ink">
+                          {rowData.name}
+                        </p>
+                        <p className="truncate caption text-ink-subtle">
                           {rowData.primaryMuscle}
                         </p>
                       </div>
@@ -895,7 +895,7 @@ function RoutineEditor({ routineId, isEditing, initialRoutine }) {
                             event.target.value
                           )
                         }
-                        className="h-8 w-full rounded-xs border border-hairline bg-surface-1 px-1.5 text-xs text-ink outline-none focus-visible:border-primary"
+                        className="h-8 w-full rounded-xs border border-hairline-strong bg-surface-1 px-1.5 text-[13px] text-ink outline-none focus-visible:border-primary"
                         aria-label={`Tracking mode for ${rowData.name}`}
                       >
                         <option value="reps">Reps</option>
@@ -974,14 +974,14 @@ function RoutineEditor({ routineId, isEditing, initialRoutine }) {
 
         {/* Add-exercise panel: search the catalog and append to the active day. */}
         {!activeDayData?.isRest && (
-          <div className="border bg-card">
-            <div className="border-b px-5 py-4">
-              <h3 className="text-sm font-bold">Exercise library</h3>
-              <p className="text-xs text-muted-foreground">
+          <div className="rounded-lg border border-hairline bg-surface-1">
+            <div className="border-b border-hairline px-5 py-4">
+              <h3 className="display-sm text-ink">Exercise library</h3>
+              <p className="caption mt-1 text-ink-subtle">
                 Add movements to {activeDayName}
               </p>
               <div className="relative mt-3">
-                <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-ink-subtle" />
                 <Input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
@@ -993,7 +993,7 @@ function RoutineEditor({ routineId, isEditing, initialRoutine }) {
 
             <div className="max-h-125 overflow-y-auto p-3">
               {exercisesLoading ? (
-                <p className="p-3 text-sm text-muted-foreground">
+                <p className="p-3 caption text-ink-subtle">
                   Loading exercises...
                 </p>
               ) : exercisesError ? (
@@ -1004,11 +1004,11 @@ function RoutineEditor({ routineId, isEditing, initialRoutine }) {
                   />
                 </div>
               ) : filteredExercises.length === 0 ? (
-                <div className="p-3 text-sm text-muted-foreground">
+                <div className="p-3 caption text-ink-subtle">
                   <p>No exercises found.</p>
                   <Link
                     to="/dashboard/coach/exercises"
-                    className="mt-2 inline-block font-bold text-primary hover:text-primary-hover"
+                    className="mt-2 inline-block font-medium text-ink hover:text-ink-muted"
                   >
                     Open the exercise library
                   </Link>
@@ -1018,13 +1018,13 @@ function RoutineEditor({ routineId, isEditing, initialRoutine }) {
                   {filteredExercises.map((exercise) => (
                     <li
                       key={exercise.id}
-                      className="flex items-center justify-between gap-2 px-2 py-2 hover:bg-hairline-strong"
+                      className="flex items-center justify-between gap-2 px-2 py-2 transition-colors hover:bg-surface-2"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-bold">
+                        <p className="truncate text-[13px] font-medium text-ink">
                           {exercise.name}
                         </p>
-                        <p className="truncate text-xs text-muted-foreground">
+                        <p className="truncate caption text-ink-subtle">
                           {exercise.primaryMuscle}
                         </p>
                       </div>

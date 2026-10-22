@@ -9,21 +9,21 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
-import "rsuite/dist/rsuite.min.css";
 import "./index.css";
 import App from "./App.jsx";
 import { AuthProvider } from "@/context/AuthContext";
 
-// RSuite's global styles are loaded here so the routine table is styled
-// consistently before any route renders.
+// RSuite's global styles are loaded from index.css inside the `rs` cascade
+// layer so the routine table is styled consistently without outranking the
+// Tailwind utilities the design system depends on.
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <ThemeProvider
         attribute="class"
         defaultTheme="dark"
-        forcedTheme="dark"
-        enableSystem={false}
+        enableSystem
+        storageKey="flexity-theme"
       >
         <AuthProvider>
           <App />

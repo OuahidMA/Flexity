@@ -7,16 +7,20 @@
  */
 import { Link } from "react-router-dom"
 import {
-  CalendarDays,
+  Activity,
+  CalendarCheck,
   ClipboardList,
   Dumbbell,
   Moon,
   Target,
+  TrendingUp,
 } from "lucide-react"
 
 import { useAuth } from "@/hooks/useAuth"
 import { useApiData } from "@/hooks/useApiData"
+import { formatProgressDate, progressDateKey } from "@/lib/progress"
 import {
+  WEEKDAYS,
   getSplitLabel,
   getWeekdayLabel,
 } from "@/lib/workout-splits"
@@ -48,6 +52,12 @@ const STATUS_LABELS = {
 export default function ClientDashboard() {
   const { user } = useAuth()
   const { data: workouts, loading, error, refresh } = useApiData("/client/workouts")
+  const {
+    data: progress,
+    loading: progressLoading,
+    error: progressError,
+    refresh: refreshProgress,
+  } = useApiData("/client/progress")
 
   // Show dedicated states before touching `workouts` so a null payload never
   // reaches the aggregation logic below.
@@ -70,6 +80,39 @@ export default function ClientDashboard() {
   const firstName = (user?.profile?.name || user?.email || "there").split(
     " "
   )[0]
+
+  // Logged history drives the fitness metrics and the recent-session table.
+  const logs = progress ?? []
+  const sessionCount = new Set(
+    logs.map((log) => progressDateKey(log.date)).filter(Boolean)
+  ).size
+  const loggedVolume = logs.reduce((total, log) => total + (log.volume || 0), 0)
+  const recentLogs = logs.slice(0, 6)
+
+  // The weekly split behaves as the client's bookings: each scheduled training
+  // day is surfaced with its next calendar date, Monday first.
+  const bookings = WEEKDAYS.flatMap((weekday) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const offset = (weekday.value - today.getDay() + 7) % 7
+    const date = new Date(today)
+    date.setDate(today.getDate() + offset)
+
+    return routines.flatMap((routine) =>
+      (routine.days ?? [])
+        .filter(
+          (day) => Number(day.dayOfWeek) === weekday.value && !day.isRest
+        )
+        .map((day) => ({
+          key: `${routine.id}-${weekday.value}`,
+          date,
+          weekday: weekday.short,
+          label: day.label || "Workout",
+          routineName: routine.name,
+          coachName: routine.coachName,
+        }))
+    )
+  }).slice(0, 6)
 
   // The calendar is driven entirely by the coach's saved weekly schedule.
   // Today's card prefers an active routine, then falls back to any scheduled one.
@@ -137,19 +180,14 @@ export default function ClientDashboard() {
         }
       />
 
-      {/* Summary KPIs derived from the assigned routines. */}
+      {/* Personal fitness metrics: planned work from the routines and actual
+          work from the logged history. */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Routines"
-          value={routines.length}
-          hint="assigned by your coach"
-          icon={ClipboardList}
-        />
-        <StatCard
-          label="Active"
+          label="Active routines"
           value={active.length}
-          hint="currently running"
-          icon={CalendarDays}
+          hint={`of ${routines.length} assigned`}
+          icon={ClipboardList}
         />
         <StatCard
           label="Exercises"
@@ -163,15 +201,21 @@ export default function ClientDashboard() {
           hint="planned volume"
           icon={Target}
         />
+        <StatCard
+          label="Volume logged"
+          value={`${loggedVolume.toLocaleString()} kg`}
+          hint={`${sessionCount} sessions saved`}
+          icon={TrendingUp}
+        />
       </div>
 
       {/* Client-only schedule calendar. Only split labels and rest days are
           shown here; the prescribed exercises live below. */}
-      <div className="border bg-card">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4">
+      <div className="overflow-hidden rounded-lg border border-hairline bg-surface-1">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-5 py-4">
           <div>
-            <h3 className="text-sm font-bold">Training calendar</h3>
-            <p className="text-xs text-muted-foreground">
+            <h3 className="display-sm text-ink">Training calendar</h3>
+            <p className="caption mt-1 text-ink-subtle">
               Your coach's weekly split and recovery days
             </p>
           </div>
@@ -193,10 +237,130 @@ export default function ClientDashboard() {
         </div>
       </div>
 
+      {/* Booked sessions (the coach's weekly split ahead of the client) and the
+          workout logs saved by the client. */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="overflow-hidden rounded-lg border border-hairline bg-surface-1">
+          <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
+            <div>
+              <h3 className="display-sm text-ink">Booked sessions</h3>
+              <p className="caption mt-1 text-ink-subtle">
+                Your coach's scheduled training days
+              </p>
+            </div>
+            <CalendarCheck className="size-4 text-ink-subtle" aria-hidden="true" />
+          </div>
+
+          {bookings.length === 0 ? (
+            <div className="px-5 py-8 text-center">
+              <p className="cap-label text-ink">No sessions booked</p>
+              <p className="caption mt-1 text-ink-subtle">
+                They will appear as soon as your coach publishes a weekly split.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-hairline">
+              {bookings.map((booking) => (
+                <div
+                  key={booking.key}
+                  className="flex items-center justify-between gap-3 px-5 py-3"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="w-12 shrink-0 rounded-sm border border-hairline bg-surface-2 px-1 py-1 text-center">
+                      <p className="eyebrow leading-none text-ink-subtle">
+                        {booking.weekday}
+                      </p>
+                      <p className="mt-1 text-[13px] font-medium text-ink tabular-nums">
+                        {booking.date.getDate()}
+                      </p>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-[13px] font-medium text-ink">
+                        {booking.label}
+                      </p>
+                      <p className="truncate caption text-ink-subtle">
+                        {booking.routineName}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="success">Confirmed</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="overflow-hidden rounded-lg border border-hairline bg-surface-1 lg:col-span-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-5 py-4">
+            <div>
+              <h3 className="display-sm text-ink">Recent workout logs</h3>
+              <p className="caption mt-1 text-ink-subtle">
+                Exercises saved from your prescribed sessions
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              nativeButton={false}
+              render={<Link to="/dashboard/client/progress" />}
+            >
+              <Activity className="size-3.5" />
+              Open log
+            </Button>
+          </div>
+
+          {progressLoading && progress === null ? (
+            <LoadingState label="Loading workout logs..." />
+          ) : progressError ? (
+            <ErrorState message={progressError.message} onRetry={refreshProgress} />
+          ) : recentLogs.length === 0 ? (
+            <div className="p-5">
+              <EmptyState
+                title="No workouts logged yet"
+                description="Save your first session from the progress page and it will show up here."
+              />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Date</TableHead>
+                  <TableHead>Exercise</TableHead>
+                  <TableHead>Sets</TableHead>
+                  <TableHead className="text-right">Volume</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recentLogs.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell className="whitespace-nowrap text-ink-subtle">
+                      {formatProgressDate(log.date, { year: true })}
+                    </TableCell>
+                    <TableCell>
+                      <p className="truncate text-[13px] font-medium text-ink">
+                        {log.exerciseName}
+                      </p>
+                      <p className="truncate caption text-ink-subtle">
+                        {log.routineName || "—"}
+                      </p>
+                    </TableCell>
+                    <TableCell className="tabular-nums">{log.sets}</TableCell>
+                    <TableCell className="text-right text-ink-subtle tabular-nums">
+                      {(log.volume || 0).toLocaleString()} kg
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      </div>
+
       {/* Today's split plus the full assigned-routine table. */}
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="border bg-card p-5 lg:col-span-1">
-          <p className="text-xs font-bold tracking-[0.15em] text-muted-foreground uppercase">
+        <div className="rounded-lg border border-hairline bg-surface-1 p-5 lg:col-span-1">
+          <p className="eyebrow text-ink-subtle">
             Today · {getWeekdayLabel(todayDayOfWeek)}
           </p>
 
@@ -204,13 +368,13 @@ export default function ClientDashboard() {
             <>
               <div className="mt-3 flex items-center gap-2">
                 {todayEntry.day.isRest ? (
-                  <Moon className="size-5 text-muted-foreground" />
+                  <Moon className="size-5 text-ink-subtle" aria-hidden="true" />
                 ) : (
-                  <Dumbbell className="size-5 text-primary" />
+                  <Dumbbell className="size-5 text-ink" aria-hidden="true" />
                 )}
-                <h3 className="text-xl font-bold">{todayLabel}</h3>
+                <h3 className="display-sm text-ink">{todayLabel}</h3>
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="caption mt-1 text-ink-subtle">
                 {todayEntry.routine.name}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
@@ -233,8 +397,8 @@ export default function ClientDashboard() {
             </>
           ) : nextWorkout ? (
             <>
-              <h3 className="mt-3 text-xl font-bold">{nextWorkout.name}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <h3 className="display-sm mt-3 text-ink">{nextWorkout.name}</h3>
+              <p className="caption mt-1 text-ink-subtle">
                 {nextWorkout.goal ||
                   nextWorkout.description ||
                   "Assigned routine"}
@@ -250,17 +414,17 @@ export default function ClientDashboard() {
               </div>
             </>
           ) : (
-            <p className="mt-3 text-sm text-muted-foreground">
+            <p className="caption mt-3 text-ink-subtle">
               No routines assigned yet. Your coach will publish one soon.
             </p>
           )}
         </div>
 
-        <div className="border bg-card lg:col-span-2">
-          <div className="flex items-center justify-between border-b px-5 py-4">
+        <div className="overflow-hidden rounded-lg border border-hairline bg-surface-1 lg:col-span-2">
+          <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
             <div>
-              <h3 className="text-sm font-bold">Assigned routines</h3>
-              <p className="text-xs text-muted-foreground">
+              <h3 className="display-sm text-ink">Assigned routines</h3>
+              <p className="caption mt-1 text-ink-subtle">
                 Created by your coach and updated in real time
               </p>
             </div>
@@ -288,13 +452,13 @@ export default function ClientDashboard() {
               <TableBody>
                 {routines.map((routine) => (
                   <TableRow key={routine.id}>
-                    <TableCell className="font-bold">
-                      <p>{routine.name}</p>
-                      <p className="text-xs font-normal text-muted-foreground">
+                    <TableCell className="font-medium">
+                      <p className="text-[13px] text-ink">{routine.name}</p>
+                      <p className="caption font-normal text-ink-subtle">
                         {getSplitLabel(routine.splitType)}
                       </p>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="text-ink-subtle">
                       {routine.goal || "—"}
                     </TableCell>
                     <TableCell>{routine.exerciseCount}</TableCell>
@@ -315,34 +479,34 @@ export default function ClientDashboard() {
       {/* Exercise sequence for today's split day (or the next routine when the
           coach has not scheduled today). Ordered by `order`. */}
       {exercisePreview && (
-        <div className="border bg-card">
-          <div className="border-b px-5 py-4">
-            <h3 className="text-sm font-bold">{exercisePreview.title}</h3>
-            <p className="text-xs text-muted-foreground">
+        <div className="overflow-hidden rounded-lg border border-hairline bg-surface-1">
+          <div className="border-b border-hairline px-5 py-4">
+            <h3 className="display-sm text-ink">{exercisePreview.title}</h3>
+            <p className="caption mt-1 text-ink-subtle">
               {exercisePreview.subtitle}
             </p>
           </div>
-          <div className="divide-y">
+          <div className="divide-y divide-hairline">
             {exercisePreview.exercises.map((exercise, index) => (
               <div
                 key={`${exercise.exerciseId}-${index}`}
                 className="flex flex-wrap items-center justify-between gap-3 px-5 py-3"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="grid size-7 shrink-0 place-items-center bg-muted text-xs font-bold">
+                  <span className="grid size-7 shrink-0 place-items-center bg-surface-3 text-[12px] font-medium text-ink">
                     {index + 1}
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-bold">
+                    <p className="truncate text-[13px] font-medium text-ink">
                       {exercise.name}
                     </p>
-                    <p className="truncate text-xs text-muted-foreground">
+                    <p className="truncate caption text-ink-subtle">
                       {exercise.primaryMuscle}
                       {exercise.notes ? ` · ${exercise.notes}` : ""}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-ink-subtle">
                   <Badge variant="outline">{exercise.sets} sets</Badge>
                   <Badge variant="outline">
                     {exercise.trackingType === "time"

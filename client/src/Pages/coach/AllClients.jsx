@@ -100,10 +100,10 @@ export default function AllClients() {
         accessorKey: "name",
         cell: ({ row }) => (
           <div className="min-w-0 space-y-1">
-            <p className="truncate font-bold text-foreground">
+            <p className="truncate text-[13px] font-medium text-ink">
               {row.getValue("name") || "—"}
             </p>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="truncate caption text-ink-subtle">
               {row.original.email}
             </p>
           </div>
@@ -133,11 +133,11 @@ export default function AllClients() {
         accessorKey: "coachName",
         cell: ({ row }) => (
           <div className="min-w-0 space-y-1">
-            <p className="truncate text-muted-foreground">
+            <p className="truncate text-ink-subtle">
               {row.getValue("coachName") || "Unassigned"}
             </p>
             {row.original.coach && (
-              <p className="truncate text-xs text-muted-foreground">
+              <p className="truncate caption text-ink-subtle">
                 {row.original.coach}
               </p>
             )}
@@ -149,7 +149,7 @@ export default function AllClients() {
         header: "Joined",
         accessorKey: "joinedAt",
         cell: ({ row }) => (
-          <span className="text-muted-foreground">
+          <span className="text-ink-subtle">
             {formatDate(row.getValue("joinedAt"))}
           </span>
         ),
@@ -163,7 +163,7 @@ export default function AllClients() {
 
           if (client.assignedToMe) {
             return (
-              <span className="text-[10px] tracking-[0.18em] text-ink-subtle uppercase">
+              <span className="eyebrow leading-none text-ink-subtle">
                 On roster
               </span>
             )
@@ -171,7 +171,7 @@ export default function AllClients() {
 
           if (!client.available) {
             return (
-              <span className="text-[10px] tracking-[0.18em] text-ink-subtle uppercase">
+              <span className="eyebrow leading-none text-ink-subtle">
                 Unavailable
               </span>
             )
@@ -244,7 +244,7 @@ export default function AllClients() {
       </div>
 
       {selectError && (
-        <p className="border-l-2 border-destructive bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <p className="rounded-xs border border-destructive/40 bg-destructive/10 px-4 py-3 caption text-destructive">
           {selectError}
         </p>
       )}

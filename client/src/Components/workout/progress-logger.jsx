@@ -143,11 +143,11 @@ function ExerciseSetRows({ exercise, sets, errors, rowKey, onChange }) {
               rowSpan={sets.length}
               className="min-w-32 px-3 py-3 align-top sm:px-4"
             >
-              <p className="font-bold text-foreground">{exercise.name}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="text-[13px] font-medium text-ink">{exercise.name}</p>
+              <p className="mt-1 caption text-ink-subtle">
                 {exercise.primaryMuscle || "Exercise"}
               </p>
-              <p className="mt-1 text-[10px] text-muted-foreground md:hidden">
+              <p className="mt-1 eyebrow text-ink-subtle md:hidden">
                 {prescriptionLabel(exercise)}
               </p>
             </TableCell>
@@ -155,11 +155,11 @@ function ExerciseSetRows({ exercise, sets, errors, rowKey, onChange }) {
               rowSpan={sets.length}
               className="hidden align-top whitespace-nowrap md:table-cell"
             >
-              <span className="text-xs font-medium text-muted-foreground">
+              <span className="caption text-ink-subtle">
                 {prescriptionLabel(exercise)}
               </span>
               {exercise.notes && (
-                <p className="mt-1 max-w-40 text-[10px] text-muted-foreground">
+                <p className="mt-1 max-w-40 eyebrow text-ink-subtle">
                   {exercise.notes}
                 </p>
               )}
@@ -167,7 +167,7 @@ function ExerciseSetRows({ exercise, sets, errors, rowKey, onChange }) {
           </>
         )}
 
-        <TableCell className="w-12 px-2 text-xs text-muted-foreground tabular-nums">
+        <TableCell className="w-12 px-2 caption text-ink-subtle tabular-nums">
           {index + 1}
         </TableCell>
 
@@ -189,7 +189,7 @@ function ExerciseSetRows({ exercise, sets, errors, rowKey, onChange }) {
               } for ${exercise.name}, set ${index + 1}`}
               aria-invalid={Boolean(errors[setKey]) || undefined}
             />
-            <span className="text-[10px] text-muted-foreground">
+            <span className="eyebrow text-ink-subtle">
               {isTime ? "sec" : "reps"}
             </span>
           </div>
@@ -210,7 +210,7 @@ function ExerciseSetRows({ exercise, sets, errors, rowKey, onChange }) {
               disabled={set.noWeight}
               className={
                 set.noWeight
-                  ? "h-8 w-16 bg-muted/50 px-2 text-muted-foreground sm:w-20"
+                  ? "h-8 w-16 bg-surface-2 px-2 text-ink-subtle sm:w-20"
                   : "h-8 w-16 px-2 sm:w-20"
               }
               aria-label={`Weight for ${exercise.name}, set ${index + 1}`}
@@ -218,7 +218,7 @@ function ExerciseSetRows({ exercise, sets, errors, rowKey, onChange }) {
             />
             <label
               htmlFor={`no-weight-${rowKey}-${index}`}
-              className="flex cursor-pointer items-center gap-1 text-[10px] text-muted-foreground"
+              className="flex cursor-pointer items-center gap-1 eyebrow text-ink-subtle"
             >
               <Checkbox
                 id={`no-weight-${rowKey}-${index}`}
@@ -235,7 +235,7 @@ function ExerciseSetRows({ exercise, sets, errors, rowKey, onChange }) {
             </label>
           </div>
           {errors[setKey] && (
-            <p className="mt-1 max-w-36 text-[10px] text-destructive">
+            <p className="mt-1 max-w-36 caption text-destructive">
               {errors[setKey]}
             </p>
           )}
@@ -395,8 +395,8 @@ export function ProgressLogger({
 
   return (
     <form onSubmit={handleSave}>
-      <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3 text-xs text-muted-foreground sm:px-5">
-        <span className="font-bold text-ink">{dayLabel}</span>
+      <div className="flex flex-wrap items-center gap-2 border-b border-hairline px-5 py-3 caption text-ink-subtle">
+        <span className="font-medium text-ink">{dayLabel}</span>
         <span>·</span>
         <span>{exercises.length} exercises</span>
         <span>·</span>
@@ -442,8 +442,8 @@ export function ProgressLogger({
         </Table>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-4 sm:px-5">
-        <div className="text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline px-5 py-4">
+        <div className="caption text-ink-subtle">
           {saveState.error && (
             <p className="text-destructive">{saveState.error}</p>
           )}
@@ -453,7 +453,7 @@ export function ProgressLogger({
           {!saveState.error && !saveState.success && (
             <p>
               {exercises.length} exercises · {totalSets} sets · fields
-              pre-filled with your coach's targets
+              pre-filled with your coach&apos;s targets
             </p>
           )}
         </div>

@@ -114,11 +114,11 @@ function UserForm({
         <Label>Setup PIN</Label>
 
         {pin ? (
-          <div className="border border-hairline bg-surface-1 p-4">
-            <p className="font-mono text-2xl font-bold tracking-[0.24em] text-ink">
+          <div className="rounded-lg border border-hairline bg-surface-1 p-4">
+            <p className="display-sm text-ink tabular-nums">
               {formatPin(pin)}
             </p>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+            <p className="caption mt-2 text-ink-subtle">
               Share this PIN with {name.trim() || "the member"}. It is deleted
               from their account as soon as they finish setup.
             </p>
@@ -154,7 +154,7 @@ function UserForm({
           </div>
         ) : (
           <div className="border border-dashed border-hairline bg-surface-1 p-4">
-            <p className="text-sm text-muted-foreground">
+            <p className="caption text-ink-subtle">
               Generate a PIN before creating the account. It is shown here so you
               can hand it to the member.
             </p>
@@ -172,12 +172,12 @@ function UserForm({
         )}
 
         {pinError && (
-          <p className="text-sm text-destructive">{pinError}</p>
+          <p className="caption text-destructive">{pinError}</p>
         )}
       </div>
 
       {error && (
-        <p className="rounded-xs border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="rounded-xs border border-destructive/40 bg-destructive/10 px-3 py-2 caption text-destructive">
           {error}
         </p>
       )}
