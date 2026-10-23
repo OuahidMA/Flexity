@@ -27,6 +27,7 @@ import { FcGoogle } from "react-icons/fc"
 import { useAuth } from "@/hooks/useAuth"
 import { formatPin } from "@/lib/pins"
 import { getRoleHome } from "@/lib/roles"
+import { BrandMark } from "@/components/brand-mark"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -112,9 +113,7 @@ export default function Login() {
           to="/"
           className="relative inline-flex items-center gap-3 text-on-dark transition-opacity hover:opacity-70"
         >
-          <span className="grid size-9 place-items-center rounded-sm bg-primary text-primary-foreground">
-            <ShieldCheck className="size-4" aria-hidden="true" />
-          </span>
+          <BrandMark className="size-9" />
           <span className="cap-label leading-none">
             Flexity
           </span>
@@ -162,9 +161,7 @@ export default function Login() {
           to="/"
           className="mb-10 inline-flex items-center gap-3 text-ink transition-opacity hover:opacity-70 lg:hidden"
         >
-          <span className="grid size-9 place-items-center rounded-sm bg-primary text-primary-foreground">
-            <ShieldCheck className="size-4" aria-hidden="true" />
-          </span>
+          <BrandMark className="size-9" />
           <span className="cap-label leading-none">
             Flexity
           </span>

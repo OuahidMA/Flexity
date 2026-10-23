@@ -2,9 +2,9 @@
  * Fixed marketing header.
  *
  * Structure follows the Deepcon header pattern: a fixed translucent bar with a
- * blurred backdrop, the gold wordmark tile on the left, navigation centred in
- * the bar and a single gold CTA on the right. Below the `md` breakpoint the
- * navigation collapses into an animated sheet.
+ * blurred backdrop, the brand mark on the left, navigation centred in the bar
+ * and a single gold CTA on the right. Below the `md` breakpoint the navigation
+ * collapses into an animated sheet.
  *
  * Every colour comes from the semantic token layer, so the header follows the
  * active light/dark theme automatically.
@@ -12,8 +12,9 @@
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { AnimatePresence, motion } from "motion/react"
-import { Dumbbell, Menu, X } from "lucide-react"
+import { Menu, X } from "lucide-react"
 
+import { BrandMark } from "@/components/brand-mark"
 import { ThemeToggle } from "@/components/theme-toggle"
 
 const DEFAULT_NAV_ITEMS = [
@@ -50,8 +51,8 @@ function HeaderLink({ href, className, children, ...props }) {
 
 /**
  * @param {object} props
- * @param {string} [props.logoSrc] - Optional logo image. Falls back to the
- *   Flexity wordmark when omitted.
+ * @param {string} [props.logoSrc] - Optional custom logo image. Falls back to
+ *   the Flexity brand mark when omitted.
  * @param {string} [props.logoAlt="Flexity"] - Alt text for the logo image.
  * @param {{label: string, href: string, external?: boolean}[]} [props.navItems]
  *   Anchors rendered in the centre of the bar.
@@ -102,7 +103,7 @@ export default function FloatingHeader({
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-hairline bg-canvas/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-[80rem] items-center justify-between px-6 py-3 lg:px-12">
-        {/* Wordmark — the gold tile is the brand's signature accent. */}
+        {/* Brand — the logo tile is the brand's signature accent. */}
         <motion.a
           href="#top"
           aria-label="Flexity home"
@@ -120,9 +121,7 @@ export default function FloatingHeader({
               src={logoSrc}
             />
           ) : (
-            <span className="grid size-8 place-items-center rounded-sm bg-primary text-primary-foreground">
-              <Dumbbell className="size-4" aria-hidden="true" />
-            </span>
+            <BrandMark />
           )}
           <span className="cap-label leading-none text-ink">Flexity</span>
         </motion.a>

@@ -9,6 +9,8 @@
 import { useState } from "react"
 import { ArrowRight, Calendar, Dumbbell, ShieldCheck } from "lucide-react"
 
+import { BrandMark } from "@/components/brand-mark"
+
 const ROLES = [
   { key: "admin", title: "Gym administrator", icon: ShieldCheck },
   { key: "coach", title: "Coach", icon: Dumbbell },
@@ -92,9 +94,7 @@ export default function DashboardPreview({
         {/* Browser chrome */}
         <div className="flex items-center justify-between border-b border-hairline bg-surface-1 px-4 py-3">
           <div className="flex items-center gap-2.5 cap-label text-ink">
-            <span className="grid size-6 place-items-center rounded-sm bg-primary text-primary-foreground">
-              <ShieldCheck className="size-3.5" aria-hidden="true" />
-            </span>
+            <BrandMark className="size-6" />
             Flexity
           </div>
           <div className="flex items-center gap-1.5" aria-hidden="true">

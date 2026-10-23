@@ -25,6 +25,7 @@ import {
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth"
 import { getRoleLabel } from "@/lib/roles"
+import { BrandMark } from "@/components/brand-mark"
 import {
   AnimatedSidebar,
   AnimatedSidebarClose,
@@ -111,9 +112,7 @@ export function AppSidebar(props) {
               className="size-8 shrink-0 object-contain"
             />
           ) : (
-            <span className="grid size-8 shrink-0 place-items-center rounded-sm bg-primary text-primary-foreground">
-              <Dumbbell className="size-4" />
-            </span>
+            <BrandMark />
           )}
           <div className="min-w-0 flex-1 group-data-[state=collapsed]/sidebar:hidden">
             <p className="truncate cap-label leading-none text-ink">
