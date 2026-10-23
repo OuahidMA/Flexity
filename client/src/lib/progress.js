@@ -124,3 +124,118 @@ export function buildDailyVolume(logs) {
     .sort(([first], [second]) => first.localeCompare(second))
     .map(([date, volume]) => ({ date, volume }))
 }
+
+/**
+ * Builds one chronological series per exercise for the progression chart.
+ *
+ * Multiple logs of the same exercise on the same day (for example two routine
+ * lines) collapse into a single session: the point is the heaviest set lifted
+ * that day and the bar is the combined volume. Exercises that were only ever
+ * logged as bodyweight are omitted because they have no weight to plot.
+ *
+ * @param {Array<object>} logs - Serialized progress logs, any order.
+ * @returns {Array<object>} Exercise series, most recently trained first.
+ */
+export function buildExerciseProgress(logs) {
+  const groups = new Map()
+
+  for (const log of logs ?? []) {
+    const exerciseName = String(log.exerciseName ?? "").trim()
+    const groupKey = log.exerciseId
+      ? `id:${log.exerciseId}`
+      : `name:${exerciseName.toLowerCase()}`
+    const dateKey = progressDateKey(log.date)
+
+    if (!groupKey || !dateKey) continue
+
+    let group = groups.get(groupKey)
+
+    if (!group) {
+      group = {
+        key: groupKey,
+        name: exerciseName || "Exercise",
+        primaryMuscle: log.primaryMuscle ?? "",
+        sessions: new Map(),
+        totalVolume: 0,
+      }
+      groups.set(groupKey, group)
+    }
+
+    // Logs snapshot the exercise name, so prefer the newest non-empty snapshot.
+    if (exerciseName) group.name = exerciseName
+    if (log.primaryMuscle) group.primaryMuscle = log.primaryMuscle
+
+    const weights = (log.trackingData ?? [])
+      .map((set) => set.weight)
+      .filter(
+        (weight) => weight !== null && weight !== undefined && Number.isFinite(Number(weight))
+      )
+      .map(Number)
+    const topWeight = weights.length > 0 ? Math.max(...weights) : null
+    const volume = Number(log.volume) || 0
+
+    const session = group.sessions.get(dateKey) ?? {
+      date: dateKey,
+      weight: null,
+      volume: 0,
+    }
+
+    if (topWeight !== null) {
+      session.weight =
+        session.weight === null ? topWeight : Math.max(session.weight, topWeight)
+    }
+
+    session.volume += volume
+    group.sessions.set(dateKey, session)
+    group.totalVolume += volume
+  }
+
+  return [...groups.values()]
+    .map(({ sessions, ...group }) => {
+      const points = [...sessions.values()].sort((first, second) =>
+        first.date.localeCompare(second.date)
+      )
+      const weightedPoints = points.filter((point) => point.weight !== null)
+      const firstWeight = weightedPoints[0]?.weight ?? null
+      const latestWeight = weightedPoints.at(-1)?.weight ?? null
+      const bestWeight =
+        weightedPoints.length > 0
+          ? Math.max(...weightedPoints.map((point) => point.weight))
+          : null
+      const gain =
+        firstWeight !== null && latestWeight !== null
+          ? latestWeight - firstWeight
+          : 0
+      const gainPercent = firstWeight ? (gain / firstWeight) * 100 : 0
+      // Three identical sessions in a row means the lifter has stalled even
+      // though the volume may still be climbing.
+      const recent = weightedPoints.slice(-3)
+      const plateau =
+        recent.length === 3 &&
+        recent.every((point) => point.weight === recent[0].weight)
+      const trend = plateau
+        ? "plateau"
+        : gain > 0
+          ? "progressing"
+          : gain < 0
+            ? "regressing"
+            : "steady"
+
+      return {
+        ...group,
+        points,
+        weightedPoints,
+        firstWeight,
+        latestWeight,
+        bestWeight,
+        gain,
+        gainPercent,
+        plateau,
+        trend,
+        sessions: points.length,
+        lastDate: points.at(-1)?.date ?? "",
+      }
+    })
+    .filter((group) => group.weightedPoints.length > 0)
+    .sort((first, second) => second.lastDate.localeCompare(first.lastDate))
+}

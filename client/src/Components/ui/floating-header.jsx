@@ -2,8 +2,8 @@
  * Fixed marketing header.
  *
  * Structure follows the Deepcon header pattern: a fixed translucent bar with a
- * blurred backdrop, the emerald wordmark tile on the left, navigation centred in
- * the bar and a single emerald CTA on the right. Below the `md` breakpoint the
+ * blurred backdrop, the gold wordmark tile on the left, navigation centred in
+ * the bar and a single gold CTA on the right. Below the `md` breakpoint the
  * navigation collapses into an animated sheet.
  *
  * Every colour comes from the semantic token layer, so the header follows the
@@ -18,7 +18,6 @@ import { ThemeToggle } from "@/components/theme-toggle"
 
 const DEFAULT_NAV_ITEMS = [
   { label: "Features", href: "#features" },
-  { label: "Product", href: "#product" },
   { label: "Pricing", href: "#pricing" },
   { label: "FAQ", href: "#faq" },
 ]
@@ -103,7 +102,7 @@ export default function FloatingHeader({
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-hairline bg-canvas/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-[80rem] items-center justify-between px-6 py-3 lg:px-12">
-        {/* Wordmark — the emerald tile is the brand's signature accent. */}
+        {/* Wordmark — the gold tile is the brand's signature accent. */}
         <motion.a
           href="#top"
           aria-label="Flexity home"

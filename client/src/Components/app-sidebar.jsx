@@ -6,7 +6,7 @@
  * signed-in identity plus sign-out.
  *
  * The rail follows the DESIGN.md brand theme: charcoal canvas, hairline rules,
- * soft-white labels and one emerald accent reserved for the brand mark and the
+ * soft-white labels and one gold accent reserved for the brand mark and the
  * active indicator.
  */
 import {
@@ -99,7 +99,7 @@ export function AppSidebar(props) {
       ariaLabel="Dashboard navigation"
       collapsible="icon"
       className=""
-      panelClassName="border-hairline bg-surface-1"
+      panelClassName="border-hairline bg-canvas-soft"
       {...props}
     >
       <AnimatedSidebarHeader className="border-hairline border-b p-3 pb-2">

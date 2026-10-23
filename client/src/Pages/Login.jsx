@@ -8,7 +8,7 @@
  *
  * The composition follows DESIGN.md: a night brand panel (`card-feature-dark`)
  * paired with the charcoal canvas form panel, weight-500 display type and one
- * emerald `button-primary-green` CTA. All state stays local except the
+ * gold `button-primary-gold` CTA. All state stays local except the
  * session, which AuthContext owns.
  */
 import { useState } from "react"
@@ -182,7 +182,7 @@ export default function Login() {
             </p>
           </header>
 
-          {/* Mode switch — the active tab is the emerald primary CTA. */}
+          {/* Mode switch — the active tab is the Gold VIP primary CTA. */}
           <div
             role="tablist"
             aria-label="Sign-in method"

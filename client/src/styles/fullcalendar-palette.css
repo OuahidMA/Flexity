@@ -1,74 +1,74 @@
 /* FullCalendar "monarch" theme palette.
    Every value maps onto the app's semantic token ladder, so the calendar chrome
    follows the light/dark theme instead of pinning a fixed canvas. Workout blocks
-   use a soft emerald tint; rest days stay neutral. */
+   use a soft champagne-gold tint; rest days stay neutral. */
 
 :root {
-  --fc-workout-bg: #ecfdf5;
-  --fc-workout-fg: #065f46;
-  --fc-workout-border: #a7f3d0;
-  --fc-rest-bg: #f9fafb;
-  --fc-rest-fg: #6b7280;
-  --fc-rest-border: #e5e7eb;
+  --fc-workout-bg: #fbf6e4;
+  --fc-workout-fg: #7a5c12;
+  --fc-workout-border: #f3e5ab;
+  --fc-rest-bg: #f2f2ef;
+  --fc-rest-fg: #707070;
+  --fc-rest-border: #e2e2de;
 
   /* primary — filled control */
-  --fc-monarch-primary: #111827;
-  --fc-monarch-primary-foreground: #ffffff;
-  --fc-monarch-primary-over: #1f2937;
+  --fc-monarch-primary: #171717;
+  --fc-monarch-primary-foreground: #f9f9f8;
+  --fc-monarch-primary-over: #2a2a2a;
   --fc-monarch-primary-down: #000000;
 
   /* secondary */
-  --fc-monarch-secondary: #f3f4f6;
-  --fc-monarch-secondary-foreground: #111827;
-  --fc-monarch-secondary-over: #e5e7eb;
-  --fc-monarch-secondary-down: #d1d5db;
+  --fc-monarch-secondary: #ededeb;
+  --fc-monarch-secondary-foreground: #171717;
+  --fc-monarch-secondary-over: #e2e2de;
+  --fc-monarch-secondary-down: #cbcbc5;
 
   /* tertiary */
-  --fc-monarch-tertiary: #ffffff;
-  --fc-monarch-tertiary-foreground: #111827;
-  --fc-monarch-tertiary-over: #f9fafb;
-  --fc-monarch-tertiary-down: #f3f4f6;
+  --fc-monarch-tertiary: #f9f9f8;
+  --fc-monarch-tertiary-foreground: #171717;
+  --fc-monarch-tertiary-over: #f2f2ef;
+  --fc-monarch-tertiary-down: #ededeb;
 
   /* calendar content */
-  --fc-monarch-event: #f3f4f6;
-  --fc-monarch-event-contrast: #111827;
-  --fc-monarch-highlight: rgba(17, 24, 39, 0.06);
-  --fc-monarch-now: #24b47e;
+  --fc-monarch-event: #ededeb;
+  --fc-monarch-event-contrast: #171717;
+  --fc-monarch-highlight: rgba(23, 23, 23, 0.06);
+  --fc-monarch-now: #d4af37;
 
   /* controls */
-  --fc-monarch-selected: #111827;
-  --fc-monarch-selected-foreground: #ffffff;
-  --fc-monarch-selected-over: #1f2937;
+  --fc-monarch-selected: #171717;
+  --fc-monarch-selected-foreground: #f9f9f8;
+  --fc-monarch-selected-over: #2a2a2a;
   --fc-monarch-selected-down: #000000;
-  --fc-monarch-outline: rgba(17, 24, 39, 0.5);
+  --fc-monarch-outline: rgba(23, 23, 23, 0.5);
 
   /* popover */
-  --fc-monarch-popover: #ffffff;
-  --fc-monarch-popover-foreground: #111827;
+  --fc-monarch-popover: #f9f9f8;
+  --fc-monarch-popover-foreground: #171717;
 
   /* neutral backgrounds */
-  --fc-monarch-background: #ffffff;
-  --fc-monarch-faint: rgba(17, 24, 39, 0.04);
-  --fc-monarch-muted: rgba(17, 24, 39, 0.06);
-  --fc-monarch-strong: rgba(17, 24, 39, 0.1);
-  --fc-monarch-stronger: rgba(17, 24, 39, 0.14);
-  --fc-monarch-strongest: rgba(17, 24, 39, 0.18);
+  --fc-monarch-background: #f9f9f8;
+  --fc-monarch-faint: rgba(23, 23, 23, 0.04);
+  --fc-monarch-muted: rgba(23, 23, 23, 0.06);
+  --fc-monarch-strong: rgba(23, 23, 23, 0.1);
+  --fc-monarch-stronger: rgba(23, 23, 23, 0.14);
+  --fc-monarch-strongest: rgba(23, 23, 23, 0.18);
 
   /* neutral foregrounds */
-  --fc-monarch-foreground: #111827;
-  --fc-monarch-faint-foreground: #9ca3af;
-  --fc-monarch-muted-foreground: #6b7280;
-  --fc-monarch-strong-foreground: #111827;
+  --fc-monarch-foreground: #171717;
+  --fc-monarch-faint-foreground: #b2b2b2;
+  --fc-monarch-muted-foreground: #707070;
+  --fc-monarch-strong-foreground: #171717;
 
   /* neutral borders */
-  --fc-monarch-border: #e5e7eb;
-  --fc-monarch-strong-border: #d1d5db;
+  --fc-monarch-border: #e2e2de;
+  --fc-monarch-strong-border: #cbcbc5;
 }
 
 .dark {
-  --fc-workout-bg: rgba(62, 207, 142, 0.14);
-  --fc-workout-fg: #3ecf8e;
-  --fc-workout-border: rgba(62, 207, 142, 0.32);
+  --fc-workout-bg: rgba(212, 175, 55, 0.14);
+  --fc-workout-fg: #d4af37;
+  --fc-workout-border: rgba(212, 175, 55, 0.32);
   --fc-rest-bg: #1c1c1c;
   --fc-rest-fg: #8a8a8a;
   --fc-rest-border: #2e2e2e;
@@ -91,7 +91,7 @@
   --fc-monarch-event: #212121;
   --fc-monarch-event-contrast: #ededed;
   --fc-monarch-highlight: rgba(237, 237, 237, 0.08);
-  --fc-monarch-now: #3ecf8e;
+  --fc-monarch-now: #d4af37;
 
   --fc-monarch-selected: #212121;
   --fc-monarch-selected-foreground: #ffffff;
@@ -129,7 +129,7 @@
 
 /* The monarch theme paints each event through an inline `--fc-event-color`
    custom property, so overriding the event inputs is not enough. Target the
-   harness itself: emerald tint for training days, neutral for rest days. */
+   harness itself: champagne-gold tint for training days, neutral for rest days. */
 .flexity-calendar [style*="--fc-event-color"] {
   background-color: var(--fc-workout-bg) !important;
   border-color: var(--fc-workout-border) !important;

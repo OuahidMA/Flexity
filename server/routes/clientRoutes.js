@@ -233,6 +233,19 @@ router.post("/progress", async (req, res, next) => {
 
       routineLine = match.line;
       routineDay = match.day;
+
+      // The log's date must fall on the weekday the coach scheduled this day
+      // for. Without this guard, a Thursday session could be saved with a
+      // Friday date by reusing the same routine day.
+      if (
+        routineDay &&
+        date.getUTCDay() !== Number(routineDay.dayOfWeek)
+      ) {
+        throw progressError(
+          400,
+          "This workout is not scheduled for the selected date."
+        );
+      }
     }
 
     const trackingType =

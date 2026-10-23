@@ -379,7 +379,7 @@ function MobileSidebar({ ariaLabel, children, className, side }) {
         }}
         className={cn(
           "pointer-events-auto fixed inset-y-0 flex h-dvh w-(--sidebar-width-mobile) max-w-[88vw] flex-col overflow-hidden",
-          "border-hairline bg-surface-1 will-change-transform",
+          "border-hairline bg-canvas-soft will-change-transform",
           side === "left" ? "left-0 border-r" : "right-0 border-l",
           !context.openMobile && "pointer-events-none",
           className,
@@ -456,7 +456,7 @@ export const AnimatedSidebar = forwardRef(function AnimatedSidebar(
         }}
         transition={context.reduce ? REDUCED_TRANSITION : PANEL_TRANSITION}
         className={cn(
-          "sticky top-0 flex h-svh w-full flex-col overflow-hidden bg-surface-1",
+          "sticky top-0 flex h-svh w-full flex-col overflow-hidden bg-canvas-soft",
           collapsible === "offcanvas" && "w-[var(--sidebar-width)]",
           variant === "sidebar" &&
             (side === "left"

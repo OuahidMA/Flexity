@@ -141,7 +141,7 @@ function ExerciseSetRows({ exercise, sets, errors, rowKey, onChange }) {
           <>
             <TableCell
               rowSpan={sets.length}
-              className="min-w-32 px-3 py-3 align-top sm:px-4"
+              className="min-w-32 px-3 py-3 align-top transition-colors sm:px-4"
             >
               <p className="text-[13px] font-medium text-ink">{exercise.name}</p>
               <p className="mt-1 caption text-ink-subtle">
@@ -153,7 +153,7 @@ function ExerciseSetRows({ exercise, sets, errors, rowKey, onChange }) {
             </TableCell>
             <TableCell
               rowSpan={sets.length}
-              className="hidden align-top whitespace-nowrap md:table-cell"
+              className="hidden align-top whitespace-nowrap transition-colors md:table-cell"
             >
               <span className="caption text-ink-subtle">
                 {prescriptionLabel(exercise)}
@@ -404,7 +404,7 @@ export function ProgressLogger({
       </div>
 
       <div className="overflow-x-auto">
-        <Table>
+        <Table className="progress-logger-table">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="px-3 sm:px-4">Exercise</TableHead>

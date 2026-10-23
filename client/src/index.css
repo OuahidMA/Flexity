@@ -13,12 +13,14 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ==========================================================================
-   DESIGN TOKENS — DESIGN.md (Supabase SaaS, light + dark)
+   DESIGN TOKENS — DESIGN.md (Soft Light & Gold VIP, light + dark)
 
-   Light is the canonical marketing canvas: #ffffff surfaces, #f9fafb bands,
-   #e5e7eb hairlines and near-black slate ink. Dark is the studio workspace:
-   a #171717 canvas with #1c1c1c / #212121 panels, #2e2e2e hairlines and the
-   signature #3ecf8e emerald. Exactly one chromatic brand event in both modes.
+   Light is the canonical marketing canvas: the glare-free pearl #f9f9f8,
+   #f2f2ef nested bands, #e2e2de hairlines and near-black warm ink. Dark is
+   the studio workspace: a #171717 canvas with #1c1c1c / #212121 panels,
+   #2e2e2e hairlines and the same signature #d4af37 Gold VIP accent. Exactly
+   one chromatic brand event in both modes; gold CTAs always carry #171717
+   type, never white.
 
    Every component reads the semantic token layer (`bg-canvas`, `bg-surface-1`,
    `text-ink-muted`, `border-hairline`, ...), so the `.dark` class swaps the
@@ -55,7 +57,12 @@
     --color-secondary: var(--secondary);
     --color-primary-foreground: var(--primary-foreground);
     --color-primary: var(--primary);
+    --color-primary-deep: var(--primary-deep);
     --color-primary-soft: var(--primary-soft);
+    --color-on-primary: var(--on-primary);
+    --color-accent-platinum: var(--accent-platinum);
+    --color-accent-bronze: var(--accent-bronze);
+    --color-accent-amber: var(--accent-amber);
     --color-popover-foreground: var(--popover-foreground);
     --color-popover: var(--popover);
     --color-card-foreground: var(--card-foreground);
@@ -66,6 +73,7 @@
     --color-canvas-soft: var(--canvas-soft);
     --color-canvas-light: var(--canvas-light);
     --color-canvas-night: var(--canvas-night);
+    --color-canvas-night-soft: var(--canvas-night-soft);
     --color-on-dark: var(--on-dark);
     --color-surface-1: var(--surface-1);
     --color-surface-2: var(--surface-2);
@@ -73,6 +81,8 @@
     --color-surface-4: var(--surface-4);
     --color-hairline: var(--hairline);
     --color-hairline-strong: var(--hairline-strong);
+    --color-hairline-cool: var(--hairline-cool);
+    --color-hairline-cool-2: var(--hairline-cool-2);
     --color-hairline-tertiary: var(--hairline-tertiary);
     --color-ink: var(--ink);
     --color-ink-muted: var(--ink-muted);
@@ -96,25 +106,28 @@
 :root {
     color-scheme: light;
 
-    /* Canvas + panels — the crisp white marketing/product surface. */
-    --canvas: #ffffff;
-    --canvas-soft: #f9fafb;
-    --canvas-light: #f3f4f6;
-    /* Always-dark brand panel (login split, inverted pricing tier). */
-    --canvas-night: #101010;
-    --surface-1: #ffffff;
-    --surface-2: #f9fafb;
-    --surface-3: #f3f4f6;
-    --surface-4: #e5e7eb;
-    --hairline: #e5e7eb;
-    --hairline-strong: #d1d5db;
-    --hairline-tertiary: #9ca3af;
+    /* Canvas + panels — soft off-white / pearl, calibrated for eye comfort. */
+    --canvas: #f9f9f8;
+    --canvas-soft: #f2f2ef;
+    --canvas-light: #ededeb;
+    /* Always-dark brand panel (login split, inverted pricing tier, code). */
+    --canvas-night: #1c1c1c;
+    --canvas-night-soft: #202020;
+    --surface-1: #f9f9f8;
+    --surface-2: #f2f2ef;
+    --surface-3: #ededeb;
+    --surface-4: #e5e5e0;
+    --hairline: #e2e2de;
+    --hairline-strong: #cbcbc5;
+    --hairline-cool: #ededeb;
+    --hairline-cool-2: #e5e5e0;
+    --hairline-tertiary: #b2b2b2;
 
-    /* Type — dark slate ink ladder. */
-    --ink: #111827;
-    --ink-muted: #4b5563;
-    --ink-subtle: #6b7280;
-    --ink-tertiary: #9ca3af;
+    /* Type — near-black warm ink ladder (never pure black). */
+    --ink: #171717;
+    --ink-muted: #707070;
+    --ink-subtle: #9a9a9a;
+    --ink-tertiary: #b2b2b2;
     --on-dark: #ffffff;
 
     --background: var(--canvas);
@@ -124,13 +137,19 @@
     --popover: var(--surface-2);
     --popover-foreground: var(--ink);
 
-    /* Primary — professional darkened Supabase emerald on light canvas. */
-    --primary: #24b47e;
-    --primary-foreground: #06231a;
-    --primary-hover: #1e9e6e;
-    --primary-soft: #3ecf8e;
-    --primary-deep: #178a5e;
-    --primary-focus: rgba(36, 180, 126, 0.35);
+    /* Primary — Gold VIP. Filled CTAs keep near-black type on gold. */
+    --primary: #d4af37;
+    --on-primary: #171717;
+    --primary-foreground: var(--on-primary);
+    --primary-hover: #b3922c;
+    --primary-soft: #f3e5ab;
+    --primary-deep: #b3922c;
+    --primary-focus: rgba(212, 175, 55, 0.35);
+
+    /* Rare accents reserved for VIP badges and tier status. */
+    --accent-platinum: #e5e4e2;
+    --accent-bronze: #cd7f32;
+    --accent-amber: #ffbf00;
 
     --secondary: var(--surface-2);
     --secondary-foreground: var(--ink);
@@ -140,14 +159,14 @@
     --accent-foreground: var(--ink);
     --border: var(--hairline);
     --input: var(--surface-1);
-    --ring: rgba(17, 24, 39, 0.45);
+    --ring: rgba(23, 23, 23, 0.45);
 
-    /* Charts stay monochrome: ink first, then descending greys. */
-    --chart-1: #111827;
-    --chart-2: #4b5563;
-    --chart-3: #6b7280;
-    --chart-4: #9ca3af;
-    --chart-5: #d1d5db;
+    /* Charts stay monochrome: ink first, then descending warm greys. */
+    --chart-1: #171717;
+    --chart-2: #545454;
+    --chart-3: #707070;
+    --chart-4: #9a9a9a;
+    --chart-5: #cbcbc5;
 
     /* Functional status hues only — never used as brand colour. */
     --semantic-success: #15803d;
@@ -156,10 +175,10 @@
     --destructive: #dc2626;
     --destructive-foreground: #ffffff;
 
-    /* Elevation ladder from DESIGN.md. */
-    --shadow-level-1: 0 1px 3px rgba(15, 23, 42, 0.06);
-    --shadow-level-2: 0 8px 24px rgba(15, 23, 42, 0.08);
-    --shadow-level-3: 0 16px 48px rgba(15, 23, 42, 0.12);
+    /* Elevation ladder from DESIGN.md — neutral, soft, never glowing. */
+    --shadow-level-1: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-level-2: 0 8px 24px rgba(0, 0, 0, 0.07);
+    --shadow-level-3: 0 16px 48px rgba(0, 0, 0, 0.1);
 
     --radius: 4px;
     --radius-md: 4px;
@@ -178,10 +197,10 @@
     --radius-token-4xl: 16px;
     --radius-token-pill: 9999px;
 
-    --sidebar: #ffffff;
+    --sidebar: var(--canvas-soft);
     --sidebar-foreground: var(--ink);
-    --sidebar-primary: #24b47e;
-    --sidebar-primary-foreground: #06231a;
+    --sidebar-primary: #d4af37;
+    --sidebar-primary-foreground: var(--on-primary);
     --sidebar-accent: var(--surface-3);
     --sidebar-accent-foreground: var(--ink);
     --sidebar-border: var(--hairline);
@@ -202,20 +221,23 @@
 }
 
 /* Dark studio workspace: near-black canvas, elevated charcoal panels, hairline
-   rules and the full-strength signature emerald. */
+   rules and the full-strength Gold VIP accent. */
 .dark {
     color-scheme: dark;
 
     --canvas: #171717;
     --canvas-soft: #1c1c1c;
     --canvas-light: #212121;
-    --canvas-night: #101010;
+    --canvas-night: #1c1c1c;
+    --canvas-night-soft: #202020;
     --surface-1: #212121;
     --surface-2: #262626;
     --surface-3: #2e2e2e;
     --surface-4: #383838;
     --hairline: #2e2e2e;
     --hairline-strong: #3f3f3f;
+    --hairline-cool: #2e2e2e;
+    --hairline-cool-2: #383838;
     --hairline-tertiary: #525252;
 
     --ink: #ededed;
@@ -223,12 +245,13 @@
     --ink-subtle: #8a8a8a;
     --ink-tertiary: #707070;
 
-    --primary: #3ecf8e;
-    --primary-foreground: #171717;
-    --primary-hover: #24b47e;
-    --primary-soft: #4ade80;
-    --primary-deep: #24b47e;
-    --primary-focus: rgba(62, 207, 142, 0.45);
+    --primary: #d4af37;
+    --on-primary: #171717;
+    --primary-foreground: var(--on-primary);
+    --primary-hover: #b3922c;
+    --primary-soft: #f3e5ab;
+    --primary-deep: #b3922c;
+    --primary-focus: rgba(212, 175, 55, 0.45);
 
     --ring: rgba(237, 237, 237, 0.55);
 
@@ -249,8 +272,8 @@
     --shadow-level-3: 0 16px 48px rgba(0, 0, 0, 0.6);
 
     --sidebar: #1c1c1c;
-    --sidebar-primary: #3ecf8e;
-    --sidebar-primary-foreground: #171717;
+    --sidebar-primary: #d4af37;
+    --sidebar-primary-foreground: var(--on-primary);
     --sidebar-accent: var(--surface-2);
     --sidebar-border: var(--hairline);
     --sidebar-ring: var(--ring);
@@ -403,6 +426,29 @@
     line-height: 1.45;
     letter-spacing: 0;
     }
+
+  /* Hero ring background — keep the WebGL effect on the side rails. The
+     mobile mask hugs the outer margins; the desktop mask opens up the rails. */
+  .hero-rings-mask {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      black 0%,
+      black 5%,
+      transparent 12%,
+      transparent 88%,
+      black 95%,
+      black 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      black 0%,
+      black 5%,
+      transparent 12%,
+      transparent 88%,
+      black 95%,
+      black 100%
+    );
+    }
   }
 
 @media (max-width: 960px) {
@@ -423,6 +469,29 @@
   .display-xxl { font-size: 28px; letter-spacing: -0.42px; }
   .display-xl { font-size: 22px; }
   .display-lg { font-size: 20px; }
+  }
+
+@media (min-width: 1024px) {
+  .hero-rings-mask {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      black 0%,
+      black 12%,
+      transparent 26%,
+      transparent 74%,
+      black 88%,
+      black 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      black 0%,
+      black 12%,
+      transparent 26%,
+      transparent 74%,
+      black 88%,
+      black 100%
+    );
+    }
   }
 
 /* Smooth anchor scrolling for the marketing navigation, but only when the
@@ -536,3 +605,16 @@
 .routine-table .rs-btn-icon:disabled {
   color: var(--ink-tertiary);
 }
+
+/* The workout logging table is a form, not a data grid. Each exercise's first
+   row also carries the row-spanning Exercise and Prescription cells, so a plain
+   row hover lights up set 1 whenever the pointer is anywhere over that block.
+   Suppress the row tint while the spanning cells are hovered and tint only
+   those cells instead; every set row keeps its own hover highlight. */
+.progress-logger-table tbody tr:has(td[rowspan]:hover) {
+  background-color: transparent;
+  }
+
+.progress-logger-table tbody tr:has(td[rowspan]:hover) > td[rowspan] {
+  background-color: var(--surface-2);
+  }

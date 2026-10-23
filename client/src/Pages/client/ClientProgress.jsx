@@ -14,6 +14,7 @@
 import { useMemo, useState } from "react"
 import {
   Activity,
+  Ban,
   CalendarDays,
   Dumbbell,
   TrendingUp,
@@ -39,7 +40,6 @@ import { PageHeader } from "@/components/dashboard/page-header"
 import { StatCard } from "@/components/dashboard/stat-card"
 import { ProgressLogger } from "@/components/workout/progress-logger"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 const SELECT_CLASS =
@@ -69,25 +69,17 @@ function pickPreferredRoutine(routines) {
 }
 
 /**
- * @param {Array<object>} days - Routine schedule.
- * @param {number|null} requested - User-selected weekday.
- * @returns {number|null} A weekday present in the schedule.
+ * Weekday for a `yyyy-mm-dd` date input value. Parsed as UTC midnight so the
+ * weekday never shifts with the browser timezone.
+ *
+ * @param {string} value - Date input value.
+ * @returns {number|null} 0 (Sunday) through 6 (Saturday), or null.
  */
-function pickPreferredDay(days, requested) {
-  if (days.length === 0) return null
+function inputDateWeekday(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value ?? ""))) return null
 
-  if (requested !== null && requested !== "") {
-    const current = Number(requested)
-    if (days.some((day) => Number(day.dayOfWeek) === current)) return current
-  }
-
-  const today = new Date().getDay()
-  const preferred =
-    days.find((day) => Number(day.dayOfWeek) === today && !day.isRest) ??
-    days.find((day) => !day.isRest) ??
-    days[0]
-
-  return preferred ? Number(preferred.dayOfWeek) : null
+  const date = new Date(`${value}T00:00:00.000Z`)
+  return Number.isNaN(date.getTime()) ? null : date.getUTCDay()
 }
 
 /**
@@ -111,11 +103,13 @@ export default function ClientProgress() {
   const logs = useMemo(() => progress ?? [], [progress])
 
   const [routineId, setRoutineId] = useState(null)
-  const [dayOfWeek, setDayOfWeek] = useState(null)
-  const [date, setDate] = useState(todayInputValue)
+
+  // Logging is deliberately tied to today. The client cannot pick a date, so a
+  // workout can only be recorded on the day the coach scheduled it.
+  const date = todayInputValue()
 
   // Selection is derived, not synced in an effect: a missing/invalid state
-  // falls back to the coach-scheduled routine and day for today.
+  // falls back to the preferred routine.
   const preferredRoutine = useMemo(() => pickPreferredRoutine(routines), [routines])
 
   const selectedRoutine = useMemo(
@@ -130,19 +124,19 @@ export default function ClientProgress() {
     [selectedRoutine]
   )
 
-  const effectiveDayOfWeek = useMemo(
-    () => pickPreferredDay(scheduledDays, dayOfWeek),
-    [scheduledDays, dayOfWeek]
-  )
+  // The current date is the single source of truth. Its weekday decides which
+  // coach-assigned day can be logged today, so a workout can never be saved on
+  // a different day than the coach scheduled it for.
+  const dateWeekday = useMemo(() => inputDateWeekday(date), [date])
 
   const selectedDay = useMemo(() => {
     if (scheduledDays.length === 0) return null
     return (
       scheduledDays.find(
-        (day) => Number(day.dayOfWeek) === Number(effectiveDayOfWeek)
+        (day) => Number(day.dayOfWeek) === dateWeekday
       ) ?? null
     )
-  }, [scheduledDays, effectiveDayOfWeek])
+  }, [scheduledDays, dateWeekday])
 
   // Schedule-aware exercise list: a specific weekday for weekly routines, or
   // the legacy flat list when a routine has no days.
@@ -164,7 +158,13 @@ export default function ClientProgress() {
   const dayLabel =
     selectedRoutine && scheduledDays.length === 0
       ? "Full routine"
-      : selectedDay?.label || "Workout"
+      : selectedDay?.label || getWeekdayLabel(dateWeekday) || "Workout"
+
+  // Logging is only allowed on coach-assigned training days with exercises.
+  // Unscheduled days, rest days, empty days and "no routine assigned" disable
+  // the logging surface instead of offering a form that can save nothing.
+  const loggingDisabled =
+    !selectedRoutine || Boolean(selectedDay?.isRest) || exercises.length === 0
 
   const sessionCount = useMemo(
     () =>
@@ -194,7 +194,7 @@ export default function ClientProgress() {
   const loggerKey = selectedRoutine
     ? [
         selectedRoutine.id,
-        effectiveDayOfWeek ?? "flat",
+        dateWeekday ?? "flat",
         date,
         progressReady ? "ready" : "pending",
       ].join(":")
@@ -326,18 +326,32 @@ export default function ClientProgress() {
         />
       </div>
 
-      {/* Coach-prescribed logging table. */}
-      <div className="rounded-lg border border-hairline bg-surface-1">
-        <div className="border-b border-hairline px-5 py-4">
-          <h3 className="display-sm text-ink">Log this workout</h3>
-          <p className="caption mt-1 text-ink-subtle">
-            Inputs follow your coach&apos;s setup: reps for strength work, seconds
-            for timed sets.
-          </p>
+      {/* Coach-prescribed logging table. Logging is tied to today, so it is
+          disabled on rest days, unscheduled days, empty days, and when no
+          routine is assigned. */}
+      <div
+        className={`rounded-lg border border-hairline bg-surface-1 ${
+          loggingDisabled ? "cursor-not-allowed" : ""
+        }`}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-hairline px-5 py-4">
+          <div>
+            <h3 className="display-sm text-ink">Log this workout</h3>
+            <p className="caption mt-1 text-ink-subtle">
+              Inputs follow your coach&apos;s setup: reps for strength work,
+              seconds for timed sets.
+            </p>
+          </div>
+          {loggingDisabled && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface-2 px-2.5 py-1 caption text-ink-subtle">
+              <Ban className="size-3.5" aria-hidden="true" />
+              Logging disabled
+            </span>
+          )}
         </div>
 
         {routines.length === 0 ? (
-          <div className="p-5">
+          <div className="cursor-not-allowed p-5" aria-disabled="true">
             <EmptyState
               title="No routines assigned"
               description="Once your coach assigns a routine, its exercises and set targets will appear here."
@@ -345,9 +359,9 @@ export default function ClientProgress() {
           </div>
         ) : (
           <>
-            {/* Workout selection. Day options include rest days so the client
-                sees the full schedule without leaving the page. */}
-            <div className="grid gap-4 border-b border-hairline px-5 py-4 sm:grid-cols-2 lg:grid-cols-[1.6fr_1.3fr_0.9fr]">
+            {/* Routine selection only. The date is fixed to today, so a log can
+                only be created on a day the coach actually scheduled. */}
+            <div className="grid cursor-auto gap-4 border-b border-hairline px-5 py-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="progress-routine">Routine</Label>
                 <select
@@ -365,63 +379,53 @@ export default function ClientProgress() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="progress-day">Day</Label>
-                <select
-                  id="progress-day"
-                  value={effectiveDayOfWeek ?? ""}
-                  onChange={(event) => setDayOfWeek(event.target.value)}
-                  disabled={scheduledDays.length === 0}
-                  className={SELECT_CLASS}
-                >
-                  {scheduledDays.length === 0 ? (
-                    <option value="">Full routine</option>
-                  ) : (
-                    scheduledDays.map((day) => (
-                      <option key={day.dayOfWeek} value={day.dayOfWeek}>
-                        {getWeekdayLabel(day.dayOfWeek, { short: true })} ·{" "}
-                        {day.isRest ? "Rest" : day.label || "Workout"}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="progress-date">Date</Label>
-                <Input
-                  id="progress-date"
-                  type="date"
-                  value={date}
-                  onChange={(event) => setDate(event.target.value)}
-                  required
-                />
+                <Label>Today</Label>
+                <div className="flex h-11 items-center gap-2 rounded-xs border border-hairline bg-surface-2 px-3 text-base text-ink">
+                  <CalendarDays
+                    className="size-4 shrink-0 text-ink-tertiary"
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">
+                    {getWeekdayLabel(dateWeekday) || "Today"} ·{" "}
+                    {formatProgressDate(date)}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {selectedDay?.isRest ? (
-              <div className="p-5">
-                <EmptyState
-                  title="Rest day"
-                  description={`${getWeekdayLabel(
-                    selectedDay.dayOfWeek
-                  )} is a recovery day in ${
-                    selectedRoutine.name
-                  }. Pick another day to log a session.`}
-                />
-              </div>
-            ) : exercises.length === 0 ? (
-              <div className="p-5">
-                <EmptyState
-                  title="No exercises on this day"
-                  description="Your coach has not added exercises to this workout day yet."
-                />
+            {loggingDisabled ? (
+              <div className="cursor-not-allowed p-5" aria-disabled="true">
+                {selectedDay?.isRest ? (
+                  <EmptyState
+                    title="Rest day"
+                    description={`${getWeekdayLabel(
+                      selectedDay.dayOfWeek
+                    )} is a recovery day in ${
+                      selectedRoutine.name
+                    }. Logging is only available on your coach-assigned training days.`}
+                  />
+                ) : scheduledDays.length > 0 && !selectedDay ? (
+                  <EmptyState
+                    title="No workout scheduled today"
+                    description={`${
+                      getWeekdayLabel(dateWeekday) || "Today"
+                    } is not a training day in ${
+                      selectedRoutine.name
+                    }. Logging is only available on your coach-assigned training days.`}
+                  />
+                ) : (
+                  <EmptyState
+                    title="No exercises in today's workout"
+                    description="Your coach has not added exercises to today's workout yet."
+                  />
+                )}
               </div>
             ) : (
               <ProgressLogger
                 key={loggerKey}
                 routineId={selectedRoutine.id}
                 dayOfWeek={
-                  scheduledDays.length === 0 ? null : effectiveDayOfWeek
+                  scheduledDays.length === 0 ? null : dateWeekday
                 }
                 dayLabel={dayLabel}
                 exercises={exercises}

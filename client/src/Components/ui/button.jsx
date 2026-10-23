@@ -5,19 +5,19 @@ import { cn } from "cn"
 
 /**
  * Buttons follow the DESIGN.md button spec: a 6px square-ish radius, hairline
- * borders and the `button-md` label tier. On the dark canvas the primary is the
- * signature emerald `button-primary-green`; every other action stays a
- * hairline-outlined or ghost control so the emerald stays scarce.
+ * borders and the `button-md` label tier. The filled action is the Gold VIP
+ * `button-primary-gold` — gold fill with near-black `on-primary` type; every
+ * other action stays a hairline-outlined or ghost control so gold stays scarce.
  */
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 items-center justify-center gap-2 rounded-sm border border-transparent bg-clip-padding cap-label whitespace-nowrap no-underline transition-colors outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-canvas active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary-hover",
-        /** DESIGN.md `button-primary-green` — the signature emerald CTA. */
+        default: "bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-deep",
+        /** DESIGN.md `button-primary-gold` — the signature Gold VIP CTA. */
         primary:
-          "bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-hover",
+          "bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-deep",
         /** DESIGN.md `button-secondary-outline` — hairline on a surface panel. */
         "secondary-outline":
           "border-hairline-strong bg-surface-1 text-ink hover:bg-surface-2 hover:text-ink",

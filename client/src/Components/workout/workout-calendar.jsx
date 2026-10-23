@@ -1,18 +1,23 @@
 /**
- * Client-facing weekly workout calendar (FullCalendar, week demo).
+ * Client-facing workout calendar (FullCalendar month demo, React/JSX).
  *
- * Only split labels are rendered here: workout days show the split part
- * ("Push", "Lower", "Full Body", ...) and coach-designated recovery days show
- * "Rest". Exercise lists stay on the coach's builder and in the routine detail
- * below the calendar.
+ * This mirrors the upstream Monarch month demo: month, week, and list views
+ * share one toolbar, with the month grid as the initial view. Only split labels
+ * are rendered here: workout days show the split part ("Push", "Lower",
+ * "Full Body", ...) and coach-designated recovery days show "Rest". Exercise
+ * lists stay on the coach's builder and in the routine detail below.
  *
  * Events repeat weekly via FullCalendar's `daysOfWeek` recurrence, so a routine
  * authored for a full week or for a single day stays visible every week.
+ *
+ * The upstream demo's "Add Event" toolbar action is intentionally omitted:
+ * clients cannot create calendar events, and workout logging lives on the
+ * Progress page.
  */
 import { useMemo } from "react"
 import { Calendar } from "@fullcalendar/react"
 import themePlugin from "@fullcalendar/react/themes/monarch"
-import timeGridPlugin from "@fullcalendar/react/timegrid"
+import dayGridPlugin from "@fullcalendar/react/daygrid"
 import listPlugin from "@fullcalendar/react/list"
 
 import "@fullcalendar/react/skeleton.css"
@@ -21,17 +26,21 @@ import "@/styles/fullcalendar-palette.css"
 
 /**
  * @param {object} info - FullCalendar event render info.
- * @returns {JSX.Element} Compact split label plus the source routine name.
+ * @returns {JSX.Element} Compact split label, plus the routine name outside the
+ * month grid where there is room for a second line.
  */
 function renderEventContent(info) {
   const { isRest, label, routineName } = info.event.extendedProps
+  const isMonthGrid = info.view.type === "dayGridMonth"
 
   return (
     <div className={`fc-workout-event${isRest ? " is-rest" : ""}`}>
       <span className="fc-workout-event-label">
         {isRest ? "Rest" : label}
       </span>
-      <span className="fc-workout-event-routine">{routineName}</span>
+      {!isMonthGrid && (
+        <span className="fc-workout-event-routine">{routineName}</span>
+      )}
     </div>
   )
 }
@@ -70,7 +79,7 @@ function buildEvents(routines) {
 /**
  * @param {object} props
  * @param {Array<object>} props.routines - Assigned routines with `days`.
- * @returns {JSX.Element} FullCalendar week/day/list views.
+ * @returns {JSX.Element} FullCalendar month/week/list views.
  */
 export function WorkoutCalendar({ routines }) {
   const events = useMemo(() => buildEvents(routines ?? []), [routines])
@@ -78,27 +87,20 @@ export function WorkoutCalendar({ routines }) {
   return (
     <div className="flexity-calendar">
       <Calendar
-        plugins={[themePlugin, timeGridPlugin, listPlugin]}
+        plugins={[themePlugin, dayGridPlugin, listPlugin]}
         headerToolbar={{
           start: "today prev,next title",
-          end: "timeGridWeek,timeGridDay,listWeek",
+          end: "dayGridMonth,dayGridWeek,listWeek",
         }}
         buttonText={{
           today: "Today",
+          month: "Month",
           week: "Week",
-          day: "Day",
           list: "List",
         }}
-        initialView="timeGridWeek"
+        initialView="dayGridMonth"
         firstDay={1}
         height="auto"
-        expandRows
-        nowIndicator
-        allDaySlot
-        slotMinTime="05:00:00"
-        slotMaxTime="23:00:00"
-        slotDuration="01:00:00"
-        slotLabelInterval="01:00"
         events={events}
         eventContent={renderEventContent}
         dayMaxEvents

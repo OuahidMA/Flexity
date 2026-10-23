@@ -3,7 +3,7 @@
  *
  * Loads `/client/workouts` once, derives summary metrics from the routine list,
  * highlights the next active routine, and shows the prescribed exercise order.
- * All mutations happen on the coach side; this page is read-only.
+ * This page is read-only: logging happens on the Progress page.
  */
 import { Link } from "react-router-dom"
 import {
@@ -25,6 +25,7 @@ import {
   getWeekdayLabel,
 } from "@/lib/workout-splits"
 import { WorkoutCalendar } from "@/components/workout/workout-calendar"
+import { WorkoutProgressChart } from "@/components/workout/workout-progress-chart"
 import { EmptyState, ErrorState, LoadingState } from "@/components/dashboard/data-state"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { StatCard } from "@/components/dashboard/stat-card"
@@ -209,9 +210,23 @@ export default function ClientDashboard() {
         />
       </div>
 
+      {/* Live Chart.js progression view. Recording a session lives on the
+          Progress page, so this dashboard stays read-only. */}
+      {progressLoading && progress === null ? (
+        <div className="flex min-h-72 items-center justify-center rounded-lg border border-hairline bg-surface-1">
+          <LoadingState label="Loading strength progression..." />
+        </div>
+      ) : (
+        <WorkoutProgressChart
+          logs={logs}
+          title="Strength progression"
+          description="Heaviest set per session against total volume — proof of progressive overload."
+        />
+      )}
+
       {/* Client-only schedule calendar. Only split labels and rest days are
           shown here; the prescribed exercises live below. */}
-      <div className="overflow-hidden rounded-lg border border-hairline bg-surface-1">
+      <div className="rounded-lg border border-hairline bg-surface-1">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-5 py-4">
           <div>
             <h3 className="display-sm text-ink">Training calendar</h3>

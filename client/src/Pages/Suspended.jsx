@@ -3,7 +3,7 @@
  *
  * `ProtectedRoute` redirects here before rendering any dashboard content. The
  * screen follows DESIGN.md: the dark charcoal canvas, sentence-case display
- * type, a single hairline-framed notice and one emerald CTA. The warning hue is
+ * type, a single hairline-framed notice and one gold CTA. The warning hue is
  * functional only — it signals state, it never brands.
  */
 import { Link } from "react-router-dom"

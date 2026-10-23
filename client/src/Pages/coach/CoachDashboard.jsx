@@ -22,14 +22,23 @@ import { useAuth } from "@/hooks/useAuth"
 import { useApiData } from "@/hooks/useApiData"
 import { getWeekdayLabel } from "@/lib/workout-splits"
 import { DataTable, RowActions } from "@/components/data-table"
-import { ErrorState, LoadingState } from "@/components/dashboard/data-state"
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+} from "@/components/dashboard/data-state"
 import { PageHeader } from "@/components/dashboard/page-header"
 import { StatCard } from "@/components/dashboard/stat-card"
 import { StatusBadge } from "@/components/dashboard/status-badge"
+import { ClientProgressAnalytics } from "@/components/workout/client-progress-analytics"
 import { ClientProgressDialog } from "@/components/workout/client-progress-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+
+const SELECT_CLASS =
+  "h-11 w-full min-w-0 rounded-xs border border-hairline-strong bg-surface-1 px-3 text-base text-ink transition-colors outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
 
 /**
  * Format an ISO date for table display.
@@ -68,6 +77,8 @@ export default function CoachDashboard() {
   const { data: routines, loading: routinesLoading } = useApiData("/routines")
   // The selected client whose saved progress is open in the dialog.
   const [progressClient, setProgressClient] = useState(null)
+  // The client currently shown in the inline progression section.
+  const [progressClientId, setProgressClientId] = useState(null)
 
   // Normalize the boolean `active` flag into the strings the StatusBadge and
   // faceted filter expect.
@@ -79,6 +90,11 @@ export default function CoachDashboard() {
       })),
     [clients]
   )
+
+  // A missing or removed selection falls back to the first roster client, so
+  // the progression section always has something useful to show.
+  const selectedProgressClient =
+    rows.find((client) => client.id === progressClientId) ?? rows[0] ?? null
 
   // Single-row unassign. Removing the client from local state keeps the table
   // responsive; the overview refresh keeps the stat cards accurate.
@@ -292,9 +308,9 @@ export default function CoachDashboard() {
         />
       </div>
 
-      {/* Weekly schedule + a fast route into each client's saved progress. */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="overflow-hidden rounded-lg border border-hairline bg-surface-1 lg:col-span-2">
+      {/* Weekly schedule from the routines this coach has published. */}
+      <div className="space-y-4">
+        <div className="overflow-hidden rounded-lg border border-hairline bg-surface-1">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hairline px-5 py-4">
             <div>
               <h3 className="display-sm text-ink">This week's schedule</h3>
@@ -382,42 +398,54 @@ export default function CoachDashboard() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-hairline bg-surface-1 p-5">
-          <h3 className="display-sm text-ink">Client progress logs</h3>
-          <p className="caption mt-1 text-ink-subtle">
-            Open the set-by-set history a client has saved.
-          </p>
-
-          {rows.length === 0 ? (
-            <p className="caption mt-4 text-ink-subtle">
-              Add a client to your roster to see their logs.
-            </p>
-          ) : (
-            <div className="mt-4 space-y-2">
-              {rows.slice(0, 5).map((client) => (
-                <button
-                  key={client.id}
-                  type="button"
-                  onClick={() => setProgressClient(client)}
-                  className="flex w-full items-center justify-between gap-3 rounded-sm border border-hairline bg-surface-2/60 px-3 py-2 text-left transition-colors outline-none hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate text-[13px] font-medium text-ink">
-                      {client.name || client.email}
-                    </span>
-                    <span className="block truncate caption text-ink-subtle">
-                      {client.status} client
-                    </span>
-                  </span>
-                  <BarChart3
-                    className="size-4 shrink-0 text-ink-muted"
-                    aria-hidden="true"
-                  />
-                </button>
-              ))}
+        {/* Client progression: choose any roster client and review the same
+            Chart.js view the client sees, plus their full history. */}
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-hairline pb-4">
+            <div className="min-w-0">
+              <h3 className="display-sm text-ink">Client progression</h3>
+              <p className="caption mt-1 text-ink-subtle">
+                Pick a client to inspect strength gains, plateaus, and every
+                saved set.
+              </p>
             </div>
+            <div className="w-full space-y-2 sm:w-72">
+              <Label htmlFor="coach-progress-client">Client</Label>
+              <select
+                id="coach-progress-client"
+                value={selectedProgressClient?.id ?? ""}
+                onChange={(event) => setProgressClientId(event.target.value)}
+                disabled={rows.length === 0}
+                className={SELECT_CLASS}
+              >
+                {rows.length === 0 ? (
+                  <option value="">No clients yet</option>
+                ) : (
+                  rows.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.name || client.email}
+                      {client.active ? "" : " (inactive)"}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+          </div>
+
+          {loading && rows.length === 0 ? (
+            <LoadingState label="Loading clients..." />
+          ) : rows.length === 0 ? (
+            <EmptyState
+              title="No clients on your roster"
+              description="Select a client from All clients to start reviewing their progression."
+            />
+          ) : (
+            <ClientProgressAnalytics
+              clientId={selectedProgressClient?.id}
+              enabled={Boolean(selectedProgressClient)}
+            />
           )}
-        </div>
+        </section>
       </div>
 
       {/* Attendance roster: every assigned client, with their saved progress
