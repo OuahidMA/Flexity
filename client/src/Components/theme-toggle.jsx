@@ -29,7 +29,7 @@ export function ThemeToggle({ className, showLabel = false }) {
 
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", resolvedTheme === "dark" ? "#171717" : "#f9f9f8")
+      ?.setAttribute("content", resolvedTheme === "dark" ? "#171717" : "#FDFBF7")
   }, [resolvedTheme])
 
   /**

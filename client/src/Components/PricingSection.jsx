@@ -1,177 +1,111 @@
 /**
- * Pricing — membership levels.
+ * Pricing — three membership tiers over a subtle particle field.
  *
- * DESIGN.md treatment: three flat cards plus a borderless schedule column on
- * the canvas, one inverted canvas-night featured tier, 1px hairlines and 6px action radii. The gold
- * is reserved for the single filled CTA and the featured card carries the only
- * dark surface. Copy is sentence case — no pill buttons, no uppercase tracking
- * and no second accent colour. Every surface reads the semantic token layer,
- * so the section follows the active light/dark theme automatically.
+ * Structure follows the Sonarly pricing layout: a centred header, a
+ * monthly/yearly segmented toggle and three plan cards with the middle tier
+ * outlined as the recommendation. Everything is expressed with the semantic
+ * token layer, so the section follows the active light/dark theme, and the
+ * single filled action is the Gold VIP CTA. The particle canvas is clipped to
+ * this section and sits behind the cards.
  */
+import { useState } from "react"
 import { Link } from "react-router-dom"
-import { motion } from "motion/react"
-import { Video } from "lucide-react"
+import { Check } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Particles } from "@/components/ui/particles"
+import { ShineBorder } from "@/components/ui/shine-border"
 
-const PLANS = [
-  {
-    id: "monthly",
-    name: "Monthly",
-    description: "Flexibility at your fingertips.",
-    price: "$1499.99",
-    period: "/mo",
-    subtext: "Pause or cancel anytime",
-    highlighted: false,
-    features: [
-      "Unlimited requests",
-      "Unlimited brands",
-      "Unlimited users",
-      "Unlimited assets",
-      "Pause or cancel anytime",
-    ],
-  },
-  {
-    id: "quarterly",
-    name: "Quarterly",
-    description: "Save 10%",
-    price: "$1349.99",
-    period: "/mo",
-    subtext: "Paid quarterly",
-    highlighted: false,
-    features: [
-      "Unlimited requests",
-      "Unlimited brands",
-      "Unlimited users",
-      "Unlimited assets",
-    ],
-  },
-  {
-    id: "yearly",
-    name: "Yearly",
-    description: "Save 20%",
-    price: "$1199.99",
-    period: "/mo",
-    subtext: "Paid annually",
-    highlighted: true,
-    features: [
-      "Unlimited requests",
-      "Unlimited brands",
-      "Unlimited users",
-      "Unlimited assets",
-    ],
-  },
+/** Gold particles, matching the app's `--primary-deep` accent. */
+const PARTICLE_COLOR = "#b3922c"
+
+/** Gold ramp for the animated border on the recommended plan. */
+const SHINE_COLORS = [
+  "var(--primary)",
+  "var(--primary-soft)",
+  "var(--primary-deep)",
 ]
 
-const SCHEDULE_CALL = {
-  title: "Schedule a call",
-  description:
-    "Get your answers. Schedule a call and learn more about how this all works and how it helps you.",
+const PRICING_DATA = {
+  monthly: {
+    solo: { price: "$29", period: "/month" },
+    studio: { price: "$79", period: "/month" },
+    enterprise: { price: "Custom", period: "" },
+  },
+  yearly: {
+    solo: { price: "$24", period: "/month" },
+    studio: { price: "$64", period: "/month" },
+    enterprise: { price: "Custom", period: "" },
+  },
 }
 
 /**
- * @param {object} props
- * @param {(typeof PLANS)[number]} props.plan - Plan content.
- * @param {number} props.index - Position in the grid, used to stagger motion.
- * @returns {JSX.Element} A single pricing card.
+ * @param {(typeof PRICING_DATA)["monthly"]} pricing - Prices for the active
+ *   billing period.
+ * @returns {Array<object>} The three plan cards.
  */
-function PlanCard({ plan, index }) {
-  const featured = plan.highlighted
-
-  return (
-    <motion.article
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.45, delay: index * 0.08 }}
-      className={`flex flex-col rounded-lg border p-8 ${
-        featured
-          ? "border-on-dark/15 bg-canvas-night text-on-dark shadow-[var(--shadow-level-2)]"
-          : "border-hairline bg-surface-1 shadow-[var(--shadow-level-1)]"
-      }`}
-    >
-      <h3 className={`cap-label ${featured ? "text-on-dark" : "text-ink"}`}>
-        {plan.name}
-      </h3>
-
-      <p
-        className={`caption mt-2 min-h-5 ${
-          featured ? "text-on-dark/70" : "text-ink-subtle"
-        }`}
-      >
-        {plan.description}
-      </p>
-
-      <p className="mt-6 flex flex-wrap items-baseline gap-x-1.5">
-        <span className={`display-md ${featured ? "text-on-dark" : "text-ink"}`}>
-          {plan.price}
-        </span>
-        <span
-          className={`caption ${featured ? "text-on-dark/60" : "text-ink-subtle"}`}
-        >
-          {plan.period}
-        </span>
-      </p>
-
-      <p
-        className={`caption mt-1 ${featured ? "text-on-dark/60" : "text-ink-subtle"}`}
-      >
-        {plan.subtext}
-      </p>
-
-      <div className="mt-6 flex flex-col items-stretch gap-1">
-        <Button
-          variant={featured ? "primary" : "secondary-outline"}
-          render={<Link to="/login" />}
-          nativeButton={false}
-          className="w-full"
-        >
-          Get started
-        </Button>
-        <Button
-          variant="link"
-          render={<Link to="/login" />}
-          nativeButton={false}
-          className={`justify-start px-0 ${
-            featured
-              ? "text-on-dark/70 hover:text-on-dark"
-              : "text-ink-muted hover:text-ink"
-          }`}
-        >
-          Book a call
-        </Button>
-      </div>
-
-      <div
-        className={`mt-7 border-t pt-6 ${
-          featured ? "border-on-dark/15" : "border-hairline"
-        }`}
-      >
-        <p className={`eyebrow ${featured ? "text-on-dark" : "text-ink"}`}>
-          Includes
-        </p>
-        <ul className="mt-4 space-y-3">
-          {plan.features.map((feature) => (
-            <li
-              key={feature}
-              className={`flex items-start gap-3 caption ${
-                featured ? "text-on-dark/70" : "text-ink-muted"
-              }`}
-            >
-              <span
-                className={`mt-2 size-1 shrink-0 rounded-full ${
-                  featured ? "bg-on-dark/40" : "bg-ink-tertiary"
-                }`}
-                aria-hidden="true"
-              />
-              <span>{feature}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </motion.article>
-  )
+function buildPlans(pricing) {
+  return [
+    {
+      id: "solo",
+      name: "Solo",
+      subtitle: "For independent coaches getting started",
+      price: pricing.solo.price,
+      period: pricing.solo.period,
+      cta: "Get started",
+      ctaHref: "/login",
+      highlighted: false,
+      features: [
+        "Up to 25 active clients",
+        "1 coach seat",
+        "Workout library and routines",
+        "Client calendar and check-ins",
+        "30 days of progress history",
+      ],
+    },
+    {
+      id: "studio",
+      name: "Studio",
+      subtitle: "For growing gyms running a full coaching team",
+      price: pricing.studio.price,
+      period: pricing.studio.period,
+      cta: "Start 14-day free trial",
+      ctaHref: "/login",
+      highlighted: true,
+      features: [
+        "Up to 150 active clients",
+        "Up to 5 coach seats",
+        "Unlimited routines and exercises",
+        "Progress analytics and exports",
+        "Member billing and renewals",
+        "Priority support",
+      ],
+    },
+    {
+      id: "enterprise",
+      name: "Enterprise",
+      subtitle: "For multi-location gym groups",
+      price: pricing.enterprise.price,
+      period: pricing.enterprise.period,
+      cta: "Let's talk",
+      ctaHref: "/contact",
+      highlighted: false,
+      features: [
+        "Unlimited clients",
+        "Unlimited coach seats",
+        "Every location on one account",
+        "Guided migration and onboarding",
+        "Dedicated account manager",
+        "Single sign-on and audit logs",
+      ],
+    },
+  ]
 }
+
+const BILLING_PERIODS = [
+  { id: "monthly", label: "Monthly" },
+  { id: "yearly", label: "Yearly", badge: "Save 20%" },
+]
 
 /**
  * @param {object} props
@@ -180,50 +114,121 @@ function PlanCard({ plan, index }) {
  * @returns {JSX.Element} The pricing section.
  */
 export default function PricingSection({
-  title = "Membership levels",
-  subtitle = "Choose a plan that fits your needs.",
+  title = "Choose your plan",
+  subtitle = "Start small and scale as you grow. Flexity fits a single coach as well as a multi-location gym group.",
 }) {
+  const [billingPeriod, setBillingPeriod] = useState("monthly")
+  const plans = buildPlans(PRICING_DATA[billingPeriod])
+
   return (
-    <section id="pricing" className="border-b border-hairline py-24 lg:py-32">
-      <div className="mx-auto max-w-[80rem] px-6 lg:px-12">
-        <div className="max-w-2xl">
+    <section
+      id="pricing"
+      className="relative isolate overflow-hidden border-b border-hairline bg-canvas py-24 lg:py-32"
+    >
+      <Particles
+        className="absolute inset-0 z-0"
+        quantity={120}
+        ease={80}
+        color={PARTICLE_COLOR}
+        refresh
+      />
+
+      <div className="relative z-10 mx-auto max-w-[80rem] px-6 lg:px-12">
+        <div className="mx-auto max-w-2xl text-center">
           <p className="eyebrow text-ink-subtle">Pricing</p>
           <h2 className="display-lg mt-5 text-ink">{title}</h2>
           <p className="body-lg mt-5 text-ink-muted">{subtitle}</p>
+
+          <div
+            role="group"
+            aria-label="Billing period"
+            className="mt-8 inline-flex rounded-sm border border-hairline bg-surface-2 p-1"
+          >
+            {BILLING_PERIODS.map((period) => {
+              const active = billingPeriod === period.id
+
+              return (
+                <button
+                  key={period.id}
+                  type="button"
+                  onClick={() => setBillingPeriod(period.id)}
+                  aria-pressed={active}
+                  className={`inline-flex items-center gap-2 rounded-xs px-5 py-2 cap-label transition-colors ${
+                    active
+                      ? "bg-surface-1 text-ink shadow-[var(--shadow-level-1)]"
+                      : "text-ink-muted hover:text-ink"
+                  }`}
+                >
+                  {period.label}
+                  {period.badge && (
+                    <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-medium text-on-primary">
+                      {period.badge}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
-        {/* 4-up → 2-up → 1-up, per DESIGN.md's collapsing strategy. */}
-        <div className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {PLANS.map((plan, index) => (
-            <PlanCard key={plan.id} plan={plan} index={index} />
-          ))}
-
-          <motion.article
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.45, delay: 0.24 }}
-            className="flex flex-col p-8"
-          >
-            <div className="grid size-12 place-items-center rounded-md border border-hairline bg-surface-1 text-ink-muted">
-              <Video className="size-5" aria-hidden="true" />
-            </div>
-
-            <h3 className="cap-label mt-6 text-ink">{SCHEDULE_CALL.title}</h3>
-
-            <p className="body-md mt-3 text-ink-muted">
-              {SCHEDULE_CALL.description}
-            </p>
-
-            <Button
-              variant="link"
-              render={<Link to="/login" />}
-              nativeButton={false}
-              className="mt-6 justify-start px-0 text-ink-muted hover:text-ink"
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
+          {plans.map((plan) => (
+            <article
+              key={plan.id}
+              className={`relative flex flex-col rounded-lg border border-hairline bg-surface-1 p-8 ${
+                plan.highlighted
+                  ? "shadow-[var(--shadow-level-2)]"
+                  : "shadow-[var(--shadow-level-1)]"
+              }`}
             >
-              Book a call
-            </Button>
-          </motion.article>
+              {plan.highlighted && (
+                <ShineBorder
+                  borderWidth={2}
+                  duration={10}
+                  shineColor={SHINE_COLORS}
+                  aria-hidden="true"
+                />
+              )}
+
+              <h3 className="display-sm text-ink">{plan.name}</h3>
+              <p className="caption mt-2 text-ink-subtle">{plan.subtitle}</p>
+
+              <p className="mt-6 flex flex-wrap items-baseline gap-x-1.5">
+                <span className="display-md text-ink">{plan.price}</span>
+                {plan.period && (
+                  <span className="caption text-ink-subtle">{plan.period}</span>
+                )}
+              </p>
+
+              <Button
+                variant={plan.highlighted ? "primary" : "secondary-outline"}
+                size="lg"
+                render={<Link to={plan.ctaHref} />}
+                nativeButton={false}
+                className="mt-6 w-full"
+              >
+                {plan.cta}
+              </Button>
+
+              <div className="mt-8 flex-1 border-t border-hairline pt-6">
+                <p className="eyebrow text-ink-subtle">What&apos;s included</p>
+                <ul className="mt-4 space-y-3">
+                  {plan.features.map((feature) => (
+                    <li
+                      key={feature}
+                      className="flex items-start gap-3 caption text-ink-muted"
+                    >
+                      <Check
+                        className="mt-0.5 size-4 shrink-0 text-ink-tertiary"
+                        aria-hidden="true"
+                      />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </article>
+          ))}
         </div>
       </div>
     </section>

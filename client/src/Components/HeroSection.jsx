@@ -25,7 +25,7 @@ const CONTENT = {
   },
   subheadline:
     "Memberships, coaching and client progress in one system. Every role sees exactly what it needs — nothing more, nothing scattered across spreadsheets and group chats.",
-  primaryButton: "Start free",
+  primaryButton: "Get Started",
   secondaryButton: "Explore the platform",
   note: "No credit card required · Live the same day",
 }

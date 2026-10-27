@@ -24,6 +24,9 @@ createRoot(document.getElementById("root")).render(
         defaultTheme="dark"
         enableSystem
         storageKey="flexity-theme"
+        // Client-only app: the theme is applied after mount, so keep the
+        // bootstrap script inert to avoid React's script-tag warning.
+        scriptProps={{ type: "application/json" }}
       >
         <AuthProvider>
           <App />

@@ -2,8 +2,8 @@
  * Site-wide footer.
  *
  * DESIGN.md's footer spec: a canvas-soft band separated by a single hairline,
- * caption type for the legal row, sentence-case link columns and one outlined
- * CTA. The oversized wordmark closes the page in both light and dark mode.
+ * caption type for the legal row and sentence-case link columns. The oversized
+ * wordmark closes the page in both light and dark mode.
  */
 import { Link } from "react-router-dom"
 import { motion } from "motion/react"
@@ -79,11 +79,6 @@ function FooterAnchor({ href, className, children }) {
  * @param {object} [props.companyInfo]
  * @param {object} [props.servicesColumn]
  * @param {object} [props.pagesColumn]
- * @param {string} [props.ctaHeading]
- * @param {string} [props.ctaHighlight]
- * @param {string} [props.ctaHeadingEnd]
- * @param {string} [props.ctaButtonText]
- * @param {string} [props.ctaButtonHref]
  * @param {string} [props.copyrightYear]
  * @param {string} [props.copyrightText]
  * @param {Array<{label: string, href: string}>} [props.legalLinks]
@@ -95,11 +90,6 @@ export default function Footer({
   companyInfo = defaultCompanyInfo,
   servicesColumn = defaultServicesColumn,
   pagesColumn = defaultPagesColumn,
-  ctaHeading = "Run your gym",
-  ctaHighlight = "without the friction",
-  ctaHeadingEnd = ".",
-  ctaButtonText = "Get started",
-  ctaButtonHref = "/login",
   copyrightYear = "2026",
   copyrightText = "Flexity",
   legalLinks = defaultLegalLinks,
@@ -109,7 +99,7 @@ export default function Footer({
   return (
     <footer className="relative w-full overflow-hidden border-t border-hairline bg-canvas-soft text-ink">
       <div className="mx-auto max-w-[80rem] px-6 pt-16 pb-8 lg:px-12">
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -171,27 +161,6 @@ export default function Footer({
                 </li>
               ))}
             </ul>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            viewport={{ once: true }}
-            className="lg:max-w-xs"
-          >
-            <p className="display-sm text-ink">
-              {ctaHeading}
-              <br />
-              {ctaHighlight}
-              {ctaHeadingEnd}
-            </p>
-            <FooterAnchor
-              href={ctaButtonHref}
-              className="mt-6 inline-flex h-12 items-center gap-2 rounded-sm border border-hairline-strong bg-surface-1 px-6 cap-label text-ink no-underline transition-colors hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
-            >
-              {ctaButtonText}
-            </FooterAnchor>
           </motion.div>
         </div>
 

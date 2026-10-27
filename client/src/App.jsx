@@ -10,6 +10,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import ProtectedRoute from "@/routes/ProtectedRoute";
 import Home from "@/pages/Home";
+import Contact from "@/pages/Contact";
 import Login from "@/pages/Login";
 import Suspended from "@/pages/Suspended";
 import DashboardHome from "@/pages/DashboardHome";
@@ -42,6 +43,7 @@ export default function App() {
       <Route path="/suspended" element={<Suspended />} />
 
       <Route path="/" element={<Home />} />
+      <Route path="/contact" element={<Contact />} />
 
       {/* Authenticated shell shared by every role. */}
       <Route element={<ProtectedRoute allowedRoles={ALL_ROLES} />}>

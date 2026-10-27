@@ -15,7 +15,7 @@
 /* ==========================================================================
    DESIGN TOKENS — DESIGN.md (Soft Light & Gold VIP, light + dark)
 
-   Light is the canonical marketing canvas: the glare-free pearl #f9f9f8,
+   Light is the canonical marketing canvas: the glare-free cream #FDFBF7,
    #f2f2ef nested bands, #e2e2de hairlines and near-black warm ink. Dark is
    the studio workspace: a #171717 canvas with #1c1c1c / #212121 panels,
    #2e2e2e hairlines and the same signature #d4af37 Gold VIP accent. Exactly
@@ -101,13 +101,21 @@
     --radius-3xl: var(--radius-token-3xl);
     --radius-4xl: var(--radius-token-4xl);
     --radius-pill: var(--radius-token-pill);
-}
+  --animate-shine: shine var(--duration) infinite linear
+;
+  @keyframes shine {
+  0% {
+    background-position: 0% 0%;}
+  50% {
+    background-position: 100% 100%;}
+  to {
+    background-position: 0% 0%;}}}
 
 :root {
     color-scheme: light;
 
     /* Canvas + panels — soft off-white / pearl, calibrated for eye comfort. */
-    --canvas: #f9f9f8;
+    --canvas: #fdfbf7;
     --canvas-soft: #f2f2ef;
     --canvas-light: #ededeb;
     /* Always-dark brand panel (login split, inverted pricing tier, code). */
