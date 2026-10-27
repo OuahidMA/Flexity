@@ -17,7 +17,7 @@ const FAQ_ITEMS = [
     value: "client-access",
     question: "What do my clients need?",
     answer:
-      "A phone or a browser. Clients sign in to a workspace built just for them: their assigned workouts, the calendar and their own progress. No downloads, no training.",
+      "A phone or a browser. Clients sign in to a workspace built just for them: their assigned workouts, the calendar and their own progress.",
   },
   {
     value: "migration",
