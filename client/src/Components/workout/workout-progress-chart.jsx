@@ -88,7 +88,7 @@ function readTokens() {
 }
 
 /**
- * Keeps the canvas palette in step with the next-themes class toggle.
+ * Re-reads the semantic colours whenever the palette attributes change.
  *
  * @returns {Record<string, string>} Current semantic colours.
  */

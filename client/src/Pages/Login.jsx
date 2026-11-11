@@ -28,7 +28,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { formatPin } from "@/lib/pins"
 import { getRoleHome } from "@/lib/roles"
 import { BrandMark } from "@/components/brand-mark"
-import { ThemeToggle } from "@/components/theme-toggle"
+import Threads from "@/components/Threads"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -109,6 +109,31 @@ export default function Login() {
     <div className="flex min-h-svh bg-canvas text-ink">
       {/* Brand panel — night canvas, full-bleed type, no gradients. */}
       <section className="relative hidden w-1/2 flex-col justify-between overflow-hidden border-r border-hairline bg-canvas-night p-10 text-on-dark lg:flex xl:p-14">
+        {/* Dynamic WebGL background behind the brand panel content. */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <Threads
+            color="#d19626"
+            lineCount={90}
+            thickness={0.6}
+            softness={1.3}
+            amplitude={1.7}
+            distance={0.4}
+            waves={1.05}
+            speed={0.6}
+            split={0.04}
+            fray={0.5}
+            angle={25}
+            taper={0.85}
+            brightness={1.4}
+            parting={0}
+            enableMouseInteraction={false}
+            fade={0}
+            opacity={1}
+            seed={0}
+            className="h-full w-full"
+          />
+        </div>
+
         <Link
           to="/"
           className="relative inline-flex items-center gap-3 text-on-dark transition-opacity hover:opacity-70"
@@ -154,9 +179,6 @@ export default function Login() {
 
       {/* Form panel — brand canvas, separated by a single hairline. */}
       <section className="relative flex w-full flex-col items-center justify-center bg-canvas px-5 py-10 sm:px-8 lg:w-1/2 lg:py-14">
-        <div className="absolute top-5 right-5 z-10 sm:right-8">
-          <ThemeToggle />
-        </div>
         <Link
           to="/"
           className="mb-10 inline-flex items-center gap-3 text-ink transition-opacity hover:opacity-70 lg:hidden"

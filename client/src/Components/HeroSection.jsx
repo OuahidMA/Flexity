@@ -8,26 +8,25 @@
  * rails. The mask narrows on small screens so the effect stays present but
  * stays out of the copy's way.
  */
-import { useTheme } from "next-themes"
 import { Link } from "react-router-dom"
 import { motion } from "motion/react"
-import { ArrowUpRight, Check } from "lucide-react"
+import { ArrowUpRight } from "lucide-react"
 
 import MagicRings from "@/components/MagicRings"
 import { Button } from "@/components/ui/button"
+import { RainbowButton } from "@/components/ui/rainbow-button"
+import { WordRotate } from "@/components/ui/word-rotate"
 
 const CONTENT = {
-  badge: "The gym operating system",
   headline: {
     line1: "One workspace for",
-    line2Prefix: "your whole",
-    line2Accent: "gym.",
+    line2Prefix: "your",
+    rotatingWords: ["whole gym.", "clients.", "trainers."],
   },
   subheadline:
     "Memberships, coaching and client progress in one system. Every role sees exactly what it needs — nothing more, nothing scattered across spreadsheets and group chats.",
   primaryButton: "Get Started",
   secondaryButton: "Explore the platform",
-  note: "No credit card required · Live the same day",
 }
 
 const containerVariants = {
@@ -54,10 +53,9 @@ const itemVariants = {
 }
 
 export default function HeroSection() {
-  const { resolvedTheme } = useTheme()
-  const ringTheme = resolvedTheme === "light" ? "light" : "dark"
-  const ringColor = ringTheme === "dark" ? "#d4af37" : "#b3922c"
-  const ringColorTwo = ringTheme === "dark" ? "#f3e5ab" : "#d4af37"
+  // The app is dark-only, so the rings always use the gold pair.
+  const ringColor = "#d4af37"
+  const ringColorTwo = "#f3e5ab"
 
   return (
     <section className="relative flex min-h-svh items-center overflow-hidden border-b border-hairline bg-canvas">
@@ -69,12 +67,12 @@ export default function HeroSection() {
         <MagicRings
           color={ringColor}
           colorTwo={ringColorTwo}
-          theme={ringTheme}
+          theme="dark"
           motion="pulse"
           ringCount={6}
           speed={0.6}
-          lineThickness={ringTheme === "dark" ? 1.4 : 2}
-          glow={ringTheme === "dark" ? 1.1 : 1.3}
+          lineThickness={1.4}
+          glow={1.1}
           baseRadius={0.42}
           radiusStep={0.11}
           expansion={0.09}
@@ -84,7 +82,7 @@ export default function HeroSection() {
           tilt={0}
           dispersion={0}
           grain={0}
-          opacity={ringTheme === "dark" ? 0.7 : 0.9}
+          opacity={0.7}
           followMouse={false}
           mouseInfluence={0.2}
           hoverScale={1.05}
@@ -103,25 +101,17 @@ export default function HeroSection() {
           initial="hidden"
           animate="visible"
         >
-          <motion.div
-            variants={itemVariants}
-            className="inline-flex items-center gap-2 rounded-full border border-hairline px-3 py-1.5 eyebrow text-ink-muted"
-          >
-            <span
-              className="size-1.5 rounded-full bg-primary motion-safe:animate-pulse"
-              aria-hidden="true"
-            />
-            {CONTENT.badge}
-          </motion.div>
-
           <motion.h1
             variants={itemVariants}
-            className="display-xxl mt-8 max-w-4xl text-ink"
+            className="display-xxl max-w-4xl text-ink"
           >
             {CONTENT.headline.line1}
             <br />
             {CONTENT.headline.line2Prefix}{" "}
-            <span className="text-primary">{CONTENT.headline.line2Accent}</span>
+            <WordRotate
+              words={CONTENT.headline.rotatingWords}
+              className="text-primary"
+            />
           </motion.h1>
 
           <motion.p
@@ -135,15 +125,14 @@ export default function HeroSection() {
             variants={itemVariants}
             className="mt-10 flex flex-col items-center gap-4 sm:flex-row"
           >
-            <Button
-              variant="primary"
+            <RainbowButton
               size="lg"
               render={<Link to="/login" />}
               nativeButton={false}
             >
               {CONTENT.primaryButton}
               <ArrowUpRight className="size-4" aria-hidden="true" />
-            </Button>
+            </RainbowButton>
             <Button
               variant="secondary-outline"
               size="lg"
@@ -153,14 +142,6 @@ export default function HeroSection() {
               {CONTENT.secondaryButton}
             </Button>
           </motion.div>
-
-          <motion.p
-            variants={itemVariants}
-            className="mt-6 flex items-center gap-2 caption text-ink-subtle"
-          >
-            <Check className="size-3.5 text-primary" aria-hidden="true" />
-            {CONTENT.note}
-          </motion.p>
         </motion.div>
       </div>
     </section>

@@ -12,7 +12,6 @@
 import { PanelLeft } from "lucide-react"
 import { Outlet } from "react-router-dom"
 import { AppSidebar } from "@/components/app-sidebar"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/hooks/useAuth"
 import { getRoleLabel } from "@/lib/roles"
 import {
@@ -43,8 +42,6 @@ export default function DashboardLayout() {
             <span className="caption hidden text-ink-muted sm:inline">
               {user?.profile?.name || user?.email}
             </span>
-            <span className="h-4 w-px bg-hairline" aria-hidden="true" />
-            <ThemeToggle />
           </div>
         </header>
         <div className="flex-1">

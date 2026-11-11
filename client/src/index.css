@@ -15,16 +15,12 @@
 /* ==========================================================================
    DESIGN TOKENS — DESIGN.md (Soft Light & Gold VIP, light + dark)
 
-   Light is the canonical marketing canvas: the glare-free cream #FDFBF7,
-   #f2f2ef nested bands, #e2e2de hairlines and near-black warm ink. Dark is
-   the studio workspace: a #171717 canvas with #1c1c1c / #212121 panels,
-   #2e2e2e hairlines and the same signature #d4af37 Gold VIP accent. Exactly
-   one chromatic brand event in both modes; gold CTAs always carry #171717
-   type, never white.
+   The app is dark-only: a #171717 studio canvas with #1c1c1c / #212121 panels,
+   #2e2e2e hairlines and the signature #d4af37 Gold VIP accent. Exactly one
+   chromatic brand event; gold CTAs always carry #171717 type, never white.
 
    Every component reads the semantic token layer (`bg-canvas`, `bg-surface-1`,
-   `text-ink-muted`, `border-hairline`, ...), so the `.dark` class swaps the
-   whole palette without touching a single component.
+   `text-ink-muted`, `border-hairline`, ...), so the palette lives in one place.
    ========================================================================== */
 
 @theme inline {
@@ -89,6 +85,11 @@
     --color-ink-subtle: var(--ink-subtle);
     --color-ink-tertiary: var(--ink-tertiary);
     --color-primary-hover: var(--primary-hover);
+    --color-gold-1: var(--gold-1);
+    --color-gold-2: var(--gold-2);
+    --color-gold-3: var(--gold-3);
+    --color-gold-4: var(--gold-4);
+    --color-gold-5: var(--gold-5);
     --color-semantic-success: var(--semantic-success);
     --color-semantic-warning: var(--semantic-warning);
     --color-semantic-info: var(--semantic-info);
@@ -109,33 +110,44 @@
   50% {
     background-position: 100% 100%;}
   to {
-    background-position: 0% 0%;}}}
+    background-position: 0% 0%;}}
+  --animate-rainbow: rainbow var(--speed, 2s) infinite linear;
+  --color-color-5: var(--color-5);
+  --color-color-4: var(--color-4);
+  --color-color-3: var(--color-3);
+  --color-color-2: var(--color-2);
+  --color-color-1: var(--color-1);
+  @keyframes rainbow {
+  0% {
+    background-position: 0%;}
+  100% {
+    background-position: 200%;}}}
 
 :root {
-    color-scheme: light;
+    color-scheme: dark;
 
-    /* Canvas + panels — soft off-white / pearl, calibrated for eye comfort. */
-    --canvas: #fdfbf7;
-    --canvas-soft: #f2f2ef;
-    --canvas-light: #ededeb;
-    /* Always-dark brand panel (login split, inverted pricing tier, code). */
+    /* Canvas + panels — the studio workspace: near-black canvas, elevated
+       charcoal panels and hairline rules. */
+    --canvas: #171717;
+    --canvas-soft: #1c1c1c;
+    --canvas-light: #212121;
     --canvas-night: #1c1c1c;
     --canvas-night-soft: #202020;
-    --surface-1: #f9f9f8;
-    --surface-2: #f2f2ef;
-    --surface-3: #ededeb;
-    --surface-4: #e5e5e0;
-    --hairline: #e2e2de;
-    --hairline-strong: #cbcbc5;
-    --hairline-cool: #ededeb;
-    --hairline-cool-2: #e5e5e0;
-    --hairline-tertiary: #b2b2b2;
+    --surface-1: #212121;
+    --surface-2: #262626;
+    --surface-3: #2e2e2e;
+    --surface-4: #383838;
+    --hairline: #2e2e2e;
+    --hairline-strong: #3f3f3f;
+    --hairline-cool: #2e2e2e;
+    --hairline-cool-2: #383838;
+    --hairline-tertiary: #525252;
 
-    /* Type — near-black warm ink ladder (never pure black). */
-    --ink: #171717;
-    --ink-muted: #707070;
-    --ink-subtle: #9a9a9a;
-    --ink-tertiary: #b2b2b2;
+    /* Type — soft-white ink ladder on the dark canvas. */
+    --ink: #ededed;
+    --ink-muted: #a3a3a3;
+    --ink-subtle: #8a8a8a;
+    --ink-tertiary: #707070;
     --on-dark: #ffffff;
 
     --background: var(--canvas);
@@ -152,7 +164,14 @@
     --primary-hover: #b3922c;
     --primary-soft: #f3e5ab;
     --primary-deep: #b3922c;
-    --primary-focus: rgba(212, 175, 55, 0.35);
+    --primary-focus: rgba(212, 175, 55, 0.45);
+
+    /* Animated gold ramp for the RainbowButton CTA (deep gold → yellow). */
+    --gold-1: #8a6d1f;
+    --gold-2: #b3922c;
+    --gold-3: #d4af37;
+    --gold-4: #f3e5ab;
+    --gold-5: #ffe27a;
 
     /* Rare accents reserved for VIP badges and tier status. */
     --accent-platinum: #e5e4e2;
@@ -167,26 +186,26 @@
     --accent-foreground: var(--ink);
     --border: var(--hairline);
     --input: var(--surface-1);
-    --ring: rgba(23, 23, 23, 0.45);
+    --ring: rgba(237, 237, 237, 0.55);
 
-    /* Charts stay monochrome: ink first, then descending warm greys. */
-    --chart-1: #171717;
-    --chart-2: #545454;
+    /* Charts stay monochrome: ink first, then descending greys. */
+    --chart-1: #ededed;
+    --chart-2: #a3a3a3;
     --chart-3: #707070;
-    --chart-4: #9a9a9a;
-    --chart-5: #cbcbc5;
+    --chart-4: #474747;
+    --chart-5: #2e2e2e;
 
     /* Functional status hues only — never used as brand colour. */
-    --semantic-success: #15803d;
-    --semantic-warning: #b45309;
-    --semantic-info: #2563eb;
-    --destructive: #dc2626;
-    --destructive-foreground: #ffffff;
+    --semantic-success: #4ade80;
+    --semantic-warning: #f5b544;
+    --semantic-info: #60a5fa;
+    --destructive: #f87171;
+    --destructive-foreground: #171717;
 
-    /* Elevation ladder from DESIGN.md — neutral, soft, never glowing. */
-    --shadow-level-1: 0 1px 3px rgba(0, 0, 0, 0.05);
-    --shadow-level-2: 0 8px 24px rgba(0, 0, 0, 0.07);
-    --shadow-level-3: 0 16px 48px rgba(0, 0, 0, 0.1);
+    /* Elevation ladder — neutral, soft, never glowing. */
+    --shadow-level-1: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-level-2: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-level-3: 0 16px 48px rgba(0, 0, 0, 0.6);
 
     --radius: 4px;
     --radius-md: 4px;
@@ -205,11 +224,11 @@
     --radius-token-4xl: 16px;
     --radius-token-pill: 9999px;
 
-    --sidebar: var(--canvas-soft);
+    --sidebar: #1c1c1c;
     --sidebar-foreground: var(--ink);
     --sidebar-primary: #d4af37;
     --sidebar-primary-foreground: var(--on-primary);
-    --sidebar-accent: var(--surface-3);
+    --sidebar-accent: var(--surface-2);
     --sidebar-accent-foreground: var(--ink);
     --sidebar-border: var(--hairline);
     --sidebar-ring: var(--ring);
@@ -226,66 +245,13 @@
     --rs-text-primary: var(--ink);
     --rs-text-secondary: var(--ink-muted);
     --rs-text-heading: var(--ink);
+    --color-1: oklch(66.2% 0.225 25.9);
+    --color-2: oklch(60.4% 0.26 302);
+    --color-3: oklch(69.6% 0.165 251);
+    --color-4: oklch(80.2% 0.134 225);
+    --color-5: oklch(90.7% 0.231 133);
 }
 
-/* Dark studio workspace: near-black canvas, elevated charcoal panels, hairline
-   rules and the full-strength Gold VIP accent. */
-.dark {
-    color-scheme: dark;
-
-    --canvas: #171717;
-    --canvas-soft: #1c1c1c;
-    --canvas-light: #212121;
-    --canvas-night: #1c1c1c;
-    --canvas-night-soft: #202020;
-    --surface-1: #212121;
-    --surface-2: #262626;
-    --surface-3: #2e2e2e;
-    --surface-4: #383838;
-    --hairline: #2e2e2e;
-    --hairline-strong: #3f3f3f;
-    --hairline-cool: #2e2e2e;
-    --hairline-cool-2: #383838;
-    --hairline-tertiary: #525252;
-
-    --ink: #ededed;
-    --ink-muted: #a3a3a3;
-    --ink-subtle: #8a8a8a;
-    --ink-tertiary: #707070;
-
-    --primary: #d4af37;
-    --on-primary: #171717;
-    --primary-foreground: var(--on-primary);
-    --primary-hover: #b3922c;
-    --primary-soft: #f3e5ab;
-    --primary-deep: #b3922c;
-    --primary-focus: rgba(212, 175, 55, 0.45);
-
-    --ring: rgba(237, 237, 237, 0.55);
-
-    --chart-1: #ededed;
-    --chart-2: #a3a3a3;
-    --chart-3: #707070;
-    --chart-4: #474747;
-    --chart-5: #2e2e2e;
-
-    --semantic-success: #4ade80;
-    --semantic-warning: #f5b544;
-    --semantic-info: #60a5fa;
-    --destructive: #f87171;
-    --destructive-foreground: #171717;
-
-    --shadow-level-1: 0 1px 3px rgba(0, 0, 0, 0.4);
-    --shadow-level-2: 0 8px 24px rgba(0, 0, 0, 0.5);
-    --shadow-level-3: 0 16px 48px rgba(0, 0, 0, 0.6);
-
-    --sidebar: #1c1c1c;
-    --sidebar-primary: #d4af37;
-    --sidebar-primary-foreground: var(--on-primary);
-    --sidebar-accent: var(--surface-2);
-    --sidebar-border: var(--hairline);
-    --sidebar-ring: var(--ring);
-}
 
 @layer base {
   * {
@@ -435,6 +401,48 @@
     letter-spacing: 0;
     }
 
+  /* RainbowButton — animated gold gradient face with a blurred copy behind it
+     for the glow. The `animate-rainbow` utility walks the background across
+     the 200%-wide gradient; the palette is gold instead of the upstream
+     rainbow. */
+  .gold-shimmer {
+    --speed: 3s;
+    background-image: linear-gradient(
+      110deg,
+      var(--gold-1),
+      var(--gold-2),
+      var(--gold-3),
+      var(--gold-4),
+      var(--gold-5),
+      var(--gold-4),
+      var(--gold-3),
+      var(--gold-2),
+      var(--gold-1)
+    );
+    background-size: 200% 100%;
+    }
+
+  .gold-shimmer::before {
+    position: absolute;
+    inset: -0.3rem;
+    z-index: -1;
+    border-radius: inherit;
+    background-image: linear-gradient(
+      110deg,
+      var(--gold-1),
+      var(--gold-3),
+      var(--gold-5),
+      var(--gold-3),
+      var(--gold-1)
+    );
+    background-size: 200% 100%;
+    content: "";
+    filter: blur(0.8rem);
+    opacity: 0.6;
+    pointer-events: none;
+    animation: rainbow 3s infinite linear;
+    }
+
   /* Hero ring background — keep the WebGL effect on the side rails. The
      mobile mask hugs the outer margins; the desktop mask opens up the rails. */
   .hero-rings-mask {
@@ -510,7 +518,15 @@
     }
   }
 
-/* DESIGN.md control geometry: buttons and text inputs use the 6px radius and
+/* Keep hash targets clear of the fixed marketing header. */
+#features,
+#pricing,
+#faq,
+#product,
+#roles,
+#get-started {
+  scroll-margin-top: 5.5rem;
+  }/* DESIGN.md control geometry: buttons and text inputs use the 6px radius and
    a single hairline border. */
 [data-slot="button"],
 [data-slot="input"] {
@@ -626,3 +642,12 @@
 .progress-logger-table tbody tr:has(td[rowspan]:hover) > td[rowspan] {
   background-color: var(--surface-2);
   }
+
+/* The gold CTA keeps its gradient when the visitor prefers reduced motion; only
+   the movement stops. */
+@media (prefers-reduced-motion: reduce) {
+  .gold-shimmer,
+  .gold-shimmer::before {
+    animation: none;
+  }
+}

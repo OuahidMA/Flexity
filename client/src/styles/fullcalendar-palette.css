@@ -1,121 +1,68 @@
 /* FullCalendar "monarch" theme palette.
-   Every value maps onto the app's semantic token ladder, so the calendar chrome
-   follows the light/dark theme instead of pinning a fixed canvas. Workout blocks
-   use a soft champagne-gold tint; rest days stay neutral. */
+   Every value maps onto the app's dark semantic token ladder, so the calendar
+   chrome follows the workspace instead of pinning a fixed canvas. Workout blocks
+   use a champagne-gold tint; rest days stay neutral. */
 
 :root {
-  --fc-workout-bg: #fbf6e4;
-  --fc-workout-fg: #7a5c12;
-  --fc-workout-border: #f3e5ab;
-  --fc-rest-bg: #f2f2ef;
-  --fc-rest-fg: #707070;
-  --fc-rest-border: #e2e2de;
-
-  /* primary — filled control */
-  --fc-monarch-primary: #171717;
-  --fc-monarch-primary-foreground: #f9f9f8;
-  --fc-monarch-primary-over: #2a2a2a;
-  --fc-monarch-primary-down: #000000;
-
-  /* secondary */
-  --fc-monarch-secondary: #ededeb;
-  --fc-monarch-secondary-foreground: #171717;
-  --fc-monarch-secondary-over: #e2e2de;
-  --fc-monarch-secondary-down: #cbcbc5;
-
-  /* tertiary */
-  --fc-monarch-tertiary: #f9f9f8;
-  --fc-monarch-tertiary-foreground: #171717;
-  --fc-monarch-tertiary-over: #f2f2ef;
-  --fc-monarch-tertiary-down: #ededeb;
-
-  /* calendar content */
-  --fc-monarch-event: #ededeb;
-  --fc-monarch-event-contrast: #171717;
-  --fc-monarch-highlight: rgba(23, 23, 23, 0.06);
-  --fc-monarch-now: #d4af37;
-
-  /* controls */
-  --fc-monarch-selected: #171717;
-  --fc-monarch-selected-foreground: #f9f9f8;
-  --fc-monarch-selected-over: #2a2a2a;
-  --fc-monarch-selected-down: #000000;
-  --fc-monarch-outline: rgba(23, 23, 23, 0.5);
-
-  /* popover */
-  --fc-monarch-popover: #f9f9f8;
-  --fc-monarch-popover-foreground: #171717;
-
-  /* neutral backgrounds */
-  --fc-monarch-background: #fdfbf7;
-  --fc-monarch-faint: rgba(23, 23, 23, 0.04);
-  --fc-monarch-muted: rgba(23, 23, 23, 0.06);
-  --fc-monarch-strong: rgba(23, 23, 23, 0.1);
-  --fc-monarch-stronger: rgba(23, 23, 23, 0.14);
-  --fc-monarch-strongest: rgba(23, 23, 23, 0.18);
-
-  /* neutral foregrounds */
-  --fc-monarch-foreground: #171717;
-  --fc-monarch-faint-foreground: #b2b2b2;
-  --fc-monarch-muted-foreground: #707070;
-  --fc-monarch-strong-foreground: #171717;
-
-  /* neutral borders */
-  --fc-monarch-border: #e2e2de;
-  --fc-monarch-strong-border: #cbcbc5;
-}
-
-.dark {
   --fc-workout-bg: rgba(212, 175, 55, 0.14);
   --fc-workout-fg: #d4af37;
   --fc-workout-border: rgba(212, 175, 55, 0.32);
-  --fc-rest-bg: #1c1c1c;
-  --fc-rest-fg: #8a8a8a;
-  --fc-rest-border: #2e2e2e;
+  --fc-rest-bg: var(--surface-2);
+  --fc-rest-fg: var(--ink-subtle);
+  --fc-rest-border: var(--hairline);
 
-  --fc-monarch-primary: #ededed;
-  --fc-monarch-primary-foreground: #171717;
+  /* primary — filled control */
+  --fc-monarch-primary: var(--ink);
+  --fc-monarch-primary-foreground: var(--canvas);
   --fc-monarch-primary-over: #ffffff;
   --fc-monarch-primary-down: #d4d4d4;
 
-  --fc-monarch-secondary: #212121;
-  --fc-monarch-secondary-foreground: #ededed;
-  --fc-monarch-secondary-over: #262626;
-  --fc-monarch-secondary-down: #1c1c1c;
+  /* secondary */
+  --fc-monarch-secondary: var(--surface-1);
+  --fc-monarch-secondary-foreground: var(--ink);
+  --fc-monarch-secondary-over: var(--surface-2);
+  --fc-monarch-secondary-down: var(--canvas-soft);
 
-  --fc-monarch-tertiary: #1c1c1c;
-  --fc-monarch-tertiary-foreground: #ededed;
-  --fc-monarch-tertiary-over: #212121;
-  --fc-monarch-tertiary-down: #171717;
+  /* tertiary */
+  --fc-monarch-tertiary: var(--canvas-soft);
+  --fc-monarch-tertiary-foreground: var(--ink);
+  --fc-monarch-tertiary-over: var(--surface-1);
+  --fc-monarch-tertiary-down: var(--canvas);
 
-  --fc-monarch-event: #212121;
-  --fc-monarch-event-contrast: #ededed;
+  /* calendar content */
+  --fc-monarch-event: var(--surface-1);
+  --fc-monarch-event-contrast: var(--ink);
   --fc-monarch-highlight: rgba(237, 237, 237, 0.08);
   --fc-monarch-now: #d4af37;
 
-  --fc-monarch-selected: #212121;
+  /* controls */
+  --fc-monarch-selected: var(--surface-1);
   --fc-monarch-selected-foreground: #ffffff;
-  --fc-monarch-selected-over: #262626;
-  --fc-monarch-selected-down: #1c1c1c;
+  --fc-monarch-selected-over: var(--surface-2);
+  --fc-monarch-selected-down: var(--canvas-soft);
   --fc-monarch-outline: rgba(237, 237, 237, 0.55);
 
-  --fc-monarch-popover: #1c1c1c;
-  --fc-monarch-popover-foreground: #ededed;
+  /* popover */
+  --fc-monarch-popover: var(--canvas-soft);
+  --fc-monarch-popover-foreground: var(--ink);
 
-  --fc-monarch-background: #171717;
+  /* neutral backgrounds */
+  --fc-monarch-background: var(--canvas);
   --fc-monarch-faint: rgba(237, 237, 237, 0.06);
   --fc-monarch-muted: rgba(237, 237, 237, 0.08);
   --fc-monarch-strong: rgba(237, 237, 237, 0.12);
   --fc-monarch-stronger: rgba(237, 237, 237, 0.16);
   --fc-monarch-strongest: rgba(237, 237, 237, 0.2);
 
-  --fc-monarch-foreground: #ededed;
-  --fc-monarch-faint-foreground: #707070;
-  --fc-monarch-muted-foreground: #8a8a8a;
+  /* neutral foregrounds */
+  --fc-monarch-foreground: var(--ink);
+  --fc-monarch-faint-foreground: var(--ink-tertiary);
+  --fc-monarch-muted-foreground: var(--ink-subtle);
   --fc-monarch-strong-foreground: #ffffff;
 
-  --fc-monarch-border: #2e2e2e;
-  --fc-monarch-strong-border: #3f3f3f;
+  /* neutral borders */
+  --fc-monarch-border: var(--hairline);
+  --fc-monarch-strong-border: var(--hairline-strong);
 }
 
 /* The dashboard panel already supplies the canvas; the calendar floats on it. */

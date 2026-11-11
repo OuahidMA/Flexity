@@ -17,7 +17,7 @@ import HeroSection from "@/components/HeroSection"
 import PricingSection from "@/components/PricingSection"
 import FAQ from "@/components/ui/faq-1"
 import FloatingHeader from "@/components/ui/floating-header"
-import { Button } from "@/components/ui/button"
+import { RainbowButton } from "@/components/ui/rainbow-button"
 import { useAuth } from "@/hooks/useAuth"
 import { getRoleHome } from "@/lib/roles"
 
@@ -70,8 +70,7 @@ export default function Home() {
               </p>
             </div>
 
-            <Button
-              variant="primary"
+            <RainbowButton
               size="lg"
               render={<Link to="/login" />}
               nativeButton={false}
@@ -79,12 +78,12 @@ export default function Home() {
             >
               Get started
               <ArrowUpRight className="size-4" aria-hidden="true" />
-            </Button>
+            </RainbowButton>
           </div>
         </section>
       </main>
 
-      <Footer />
+      <Footer compact />
     </div>
   )
 }
