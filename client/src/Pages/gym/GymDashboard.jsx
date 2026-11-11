@@ -331,7 +331,7 @@ export default function GymDashboard() {
             </div>
           </div>
 
-          {/* Active tenant theme tokens hydrated by AuthContext. */}
+          {/* Gym branding — disabled for now. Restore by uncommenting.
           <div className="rounded-lg border border-hairline bg-surface-1 p-5">
             <h3 className="display-sm text-ink">Gym branding</h3>
             <div className="mt-4 flex gap-2">
@@ -352,6 +352,7 @@ export default function GymDashboard() {
               ))}
             </div>
           </div>
+          */}
         </div>
       </div>
     </div>

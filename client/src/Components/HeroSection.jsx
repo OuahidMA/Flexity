@@ -58,7 +58,7 @@ export default function HeroSection() {
   const ringColorTwo = "#f3e5ab"
 
   return (
-    <section className="relative flex min-h-svh items-center overflow-hidden border-b border-hairline bg-canvas">
+    <section className="relative flex min-h-svh items-center overflow-hidden border-b border-hairline bg-canvas mb-12 lg:mb-16">
       {/* MagicRings — masked to the side rails at every viewport width. */}
       <div
         className="hero-rings-mask pointer-events-none absolute inset-0"

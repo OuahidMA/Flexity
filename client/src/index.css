@@ -238,6 +238,9 @@
        repaint the canvas or swap the typeface. */
     --rs-body: var(--canvas);
     --rs-html-font-size: 16px;
+    /* Height of the fixed marketing header, measured at runtime so each
+       full-screen section starts just below it instead of sliding under it. */
+    --header-height: 4rem;
     --rs-font-family-base: var(--font-sans);
     --rs-heading-font-family: var(--font-sans);
     --rs-heading-font-weight: 500;
@@ -266,8 +269,7 @@
     }
   html {
     @apply font-sans;
-    /* Anchor targets clear the fixed marketing header. */
-    scroll-padding-top: 5rem;
+    scroll-padding-top: 0;
     }
   h1,
   h2,
@@ -518,14 +520,16 @@
     }
   }
 
-/* Keep hash targets clear of the fixed marketing header. */
+/* Each marketing section fills one viewport, so hash targets land with the
+   section's top edge flush to the viewport. No previous section bleeds in,
+   and section content starts just below the fixed header (--header-height). */
 #features,
 #pricing,
 #faq,
 #product,
 #roles,
 #get-started {
-  scroll-margin-top: 5.5rem;
+  scroll-margin-top: 0;
   }/* DESIGN.md control geometry: buttons and text inputs use the 6px radius and
    a single hairline border. */
 [data-slot="button"],

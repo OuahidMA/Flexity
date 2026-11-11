@@ -123,7 +123,8 @@ export default function PricingSection({
   return (
     <section
       id="pricing"
-      className="relative isolate overflow-hidden border-b border-hairline bg-canvas py-24 lg:py-32"
+      className="relative isolate overflow-hidden min-h-svh border-b border-hairline bg-canvas pb-24 lg:pb-32 mb-12 lg:mb-16"
+      style={{ paddingTop: "var(--header-height)" }}
     >
       <Particles
         className="absolute inset-0 z-0"

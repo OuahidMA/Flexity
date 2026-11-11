@@ -58,10 +58,14 @@ const FEATURES = [
 
 export default function FeaturesSection() {
   return (
-    <section id="features" className="border-b border-hairline py-24 lg:py-32">
+    <section
+      id="features"
+      className="min-h-svh border-b border-hairline pb-24 lg:pb-32 mb-12 lg:mb-16"
+      style={{ paddingTop: "var(--header-height)" }}
+    >
       <div className="mx-auto max-w-[80rem] px-6 lg:px-12">
         <div className="max-w-2xl">
-          <p className="eyebrow text-ink-subtle">What you get</p>
+          <p className="eyebrow text-ink-subtle">Features</p>
           <h2 className="display-lg mt-5 text-ink">
             Everything a gym needs, in one place.
           </h2>

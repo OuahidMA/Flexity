@@ -53,7 +53,11 @@ const FAQ_ITEMS = [
  */
 export function FAQ() {
   return (
-    <section id="faq" className="border-b border-hairline py-24 lg:py-32">
+    <section
+      id="faq"
+      className="min-h-svh border-b border-hairline pb-24 lg:pb-32 mb-12 lg:mb-16"
+      style={{ paddingTop: "var(--header-height)" }}
+    >
       <div className="mx-auto flex w-full max-w-[80rem] flex-col items-center gap-10 px-6 lg:px-12">
         <div className="flex flex-col gap-2 text-center">
           <p className="eyebrow text-ink-subtle">FAQ</p>

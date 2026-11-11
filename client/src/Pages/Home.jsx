@@ -18,6 +18,7 @@ import PricingSection from "@/components/PricingSection"
 import FAQ from "@/components/ui/faq-1"
 import FloatingHeader from "@/components/ui/floating-header"
 import { RainbowButton } from "@/components/ui/rainbow-button"
+import { Ripple } from "@/components/ripple"
 import { useAuth } from "@/hooks/useAuth"
 import { getRoleHome } from "@/lib/roles"
 
@@ -31,10 +32,23 @@ export default function Home() {
     }
   }, [navigate, isAuthenticated, loading, role])
 
+  // Measure the fixed marketing header so every full-screen section can pad its
+  // top by `--header-height`, keeping section content just below the header.
+  useEffect(() => {
+    const root = document.documentElement
+    const update = () => {
+      const header = document.querySelector("header")
+      if (header) {
+        root.style.setProperty("--header-height", `${header.offsetHeight}px`)
+      }
+    }
+    update()
+  }, [])
+
   if (loading) {
     return (
-      <div className="flex min-h-svh items-center justify-center bg-canvas text-ink-muted">
-        <span className="eyebrow">Loading</span>
+      <div className="flex min-h-svh items-center justify-center bg-canvas text-primary">
+        <Ripple className="size-14" />
       </div>
     )
   }
